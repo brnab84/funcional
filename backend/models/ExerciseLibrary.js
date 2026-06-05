@@ -4,7 +4,7 @@ const exerciseLibrarySchema = new mongoose.Schema({
   category: { type: String, required: true },
   equipment: { type: String, default: 'none' },
   sport: { type: String, default: 'functional' },
-  active: { type: Boolean, default: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   createdAt: { type: Date, default: Date.now }
 });
 module.exports = mongoose.model('ExerciseLibrary', exerciseLibrarySchema);
