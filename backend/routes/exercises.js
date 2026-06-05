@@ -4,33 +4,19 @@ const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
 
 const DEFAULTS = [
-  // Lower
-  {name:'Air Squats',category:'lower',equipment:'none'},{name:'Goblet Squats',category:'lower',equipment:'kb'},
-  {name:'Jump Squats',category:'lower',equipment:'none'},{name:'Reverse Lunges',category:'lower',equipment:'none'},
-  {name:'Walking Lunges',category:'lower',equipment:'none'},{name:'Deficit Lunges',category:'lower',equipment:'none'},
-  {name:'Jump Lunges',category:'lower',equipment:'none'},{name:'Bulgarian Squats',category:'lower',equipment:'none'},
-  {name:'Deadlift',category:'lower',equipment:'barbell'},{name:'Hip Thrust',category:'lower',equipment:'none'},
-  {name:'Box Jump',category:'lower',equipment:'box'},{name:'Wall Sit',category:'lower',equipment:'none'},
-  // Upper
-  {name:'Push Up',category:'upper',equipment:'none'},{name:'Shoulder Press',category:'upper',equipment:'kb'},
-  {name:'Dips',category:'upper',equipment:'none'},{name:'Pull Up',category:'upper',equipment:'rings'},
-  {name:'Ring Row',category:'upper',equipment:'rings'},{name:'Row',category:'upper',equipment:'none'},
-  {name:'Triceps',category:'upper',equipment:'none'},
-  // Core
-  {name:'Sit Up',category:'core',equipment:'none'},{name:'V-Ups',category:'core',equipment:'none'},
-  {name:'Abs Crunch',category:'core',equipment:'none'},{name:'Abs Bike',category:'core',equipment:'none'},
-  {name:'Abs Ball',category:'core',equipment:'none'},{name:'Hollow Rock',category:'core',equipment:'none'},
-  {name:'Plank Get Up',category:'core',equipment:'none'},{name:'Roll Up',category:'core',equipment:'none'},
-  {name:'Russian Twist',category:'core',equipment:'none'},{name:'K2E',category:'core',equipment:'none'},
-  // Conditioning
-  {name:'Burpees',category:'conditioning',equipment:'none'},{name:'Burpee Box Jump',category:'conditioning',equipment:'box'},
-  {name:'Burpee to Plate',category:'conditioning',equipment:'none'},{name:'Burpee L',category:'conditioning',equipment:'none'},
-  {name:'Jumping Jacks',category:'conditioning',equipment:'none'},{name:'Jump Rope',category:'conditioning',equipment:'rope'},
-  {name:'Mountain Climbers',category:'conditioning',equipment:'none'},{name:'Sprawl',category:'conditioning',equipment:'none'},
-  {name:'Run',category:'conditioning',equipment:'none'},{name:'WC/WK',category:'conditioning',equipment:'none'},
-  // Power
-  {name:'Thruster',category:'power',equipment:'kb'},{name:'KB Snatch',category:'power',equipment:'kb'},
-  {name:'KB Swing',category:'power',equipment:'kb'},{name:'Wall Ball',category:'power',equipment:'wall_ball'},
+  {name:'Air Squats',category:'lower'},{name:'Goblet Squats',category:'lower'},{name:'Jump Squats',category:'lower'},
+  {name:'Reverse Lunges',category:'lower'},{name:'Walking Lunges',category:'lower'},{name:'Deficit Lunges',category:'lower'},
+  {name:'Jump Lunges',category:'lower'},{name:'Bulgarian Squats',category:'lower'},{name:'Deadlift',category:'lower'},
+  {name:'Hip Thrust',category:'lower'},{name:'Box Jump',category:'lower'},{name:'Wall Sit',category:'lower'},
+  {name:'Push Up',category:'upper'},{name:'Shoulder Press',category:'upper'},{name:'Dips',category:'upper'},
+  {name:'Pull Up',category:'upper'},{name:'Ring Row',category:'upper'},{name:'Row',category:'upper'},{name:'Triceps',category:'upper'},
+  {name:'Sit Up',category:'core'},{name:'V-Ups',category:'core'},{name:'Abs Crunch',category:'core'},
+  {name:'Abs Bike',category:'core'},{name:'Abs Ball',category:'core'},{name:'Hollow Rock',category:'core'},
+  {name:'Plank Get Up',category:'core'},{name:'Roll Up',category:'core'},{name:'Russian Twist',category:'core'},{name:'K2E',category:'core'},
+  {name:'Burpees',category:'conditioning'},{name:'Burpee Box Jump',category:'conditioning'},{name:'Burpee to Plate',category:'conditioning'},
+  {name:'Burpee L',category:'conditioning'},{name:'Jumping Jacks',category:'conditioning'},{name:'Jump Rope',category:'conditioning'},
+  {name:'Mountain Climbers',category:'conditioning'},{name:'Sprawl',category:'conditioning'},{name:'Run',category:'conditioning'},{name:'WC/WK',category:'conditioning'},
+  {name:'Thruster',category:'power'},{name:'KB Snatch',category:'power'},{name:'KB Swing',category:'power'},{name:'Wall Ball',category:'power'},
 ];
 
 router.get('/', auth, async (req, res) => {
@@ -38,45 +24,56 @@ router.get('/', auth, async (req, res) => {
     const sport = req.query.sport || 'functional';
     const exercises = await ExerciseLibrary.find({ active: true, sport }).sort('category name');
     res.json({ exercises });
+  } catch(err) { res.status(500).json({ message: 'GET error: ' + err.message }); }
+});
+
+// Distinct categories for a sport (for dropdown)
+router.get('/categories', auth, async (req, res) => {
+  try {
+    const sport = req.query.sport || 'functional';
+    const cats = await ExerciseLibrary.distinct('category', { active: true, sport });
+    const defaults = ['lower','upper','core','conditioning','power'];
+    const all = [...new Set([...defaults, ...cats])];
+    res.json({ categories: all });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
 router.post('/seed', auth, async (req, res) => {
+  const sport = req.body.sport || 'functional';
+  let added = 0, skipped = 0;
+  const errors = [];
   try {
-    const sport = req.body.sport || 'functional';
-    // Delete inactive and re-seed to ensure clean state
-    const existing = await ExerciseLibrary.find({ sport });
-    if (existing.length > 0) {
-      // Already has exercises, just activate them all
-      await ExerciseLibrary.updateMany({ sport }, { active: true });
-      const count = await ExerciseLibrary.countDocuments({ sport, active: true });
-      return res.json({ message: 'Already seeded', count });
+    for (const ex of DEFAULTS) {
+      try {
+        const exists = await ExerciseLibrary.findOne({ name: ex.name, sport });
+        if (exists) {
+          if (!exists.active) { exists.active = true; await exists.save(); }
+          skipped++;
+        } else {
+          await ExerciseLibrary.create({ name: ex.name, category: ex.category, sport, active: true });
+          added++;
+        }
+      } catch(e) { errors.push(`${ex.name}: ${e.message}`); }
     }
-    const toInsert = DEFAULTS.map(e => ({ ...e, sport, active: true }));
-    await ExerciseLibrary.insertMany(toInsert, { ordered: false });
     const count = await ExerciseLibrary.countDocuments({ sport, active: true });
-    res.json({ message: 'Seeded', count });
+    res.json({ message: 'Seeded', added, skipped, count, errors: errors.slice(0,5) });
   } catch(err) {
-    // If duplicate key errors, some were inserted - count what we have
-    const count = await ExerciseLibrary.countDocuments({ sport: req.body.sport || 'functional', active: true });
-    if (count > 0) return res.json({ message: 'Seeded', count });
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Seed error: ' + err.message, added, skipped, errors: errors.slice(0,5) });
   }
 });
 
 router.post('/', auth, async (req, res) => {
   try {
     const { name, category, equipment, sport } = req.body;
+    if (!name || !category) return res.status(400).json({ message: 'Name and category required' });
     const ex = await ExerciseLibrary.create({ name, category, equipment: equipment||'none', sport: sport||'functional' });
     res.status(201).json({ exercise: ex });
   } catch(err) { res.status(400).json({ message: err.message }); }
 });
 
 router.delete('/:id', auth, async (req, res) => {
-  try {
-    await ExerciseLibrary.findByIdAndUpdate(req.params.id, { active: false });
-    res.json({ ok: true });
-  } catch(err) { res.status(500).json({ message: err.message }); }
+  try { await ExerciseLibrary.findByIdAndUpdate(req.params.id, { active: false }); res.json({ ok: true }); }
+  catch(err) { res.status(500).json({ message: err.message }); }
 });
 
 module.exports = router;
