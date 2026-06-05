@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Functional WOD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="nav-logo">⚡</span>
+      <span class="nav-title">FUNCTIONAL WOD</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn active" data-view="today">Today</button>
+      <button class="nav-btn" data-view="history">History</button>
+      <button class="nav-btn" data-view="library">Library</button>
+    </div>
+  </nav>
+
+  <!-- VIEWS -->
+  <main class="main">
+
+    <!-- TODAY VIEW -->
+    <div id="view-today" class="view active">
+      <div class="today-header">
+        <div>
+          <p class="eyebrow" id="today-date">Loading...</p>
+          <h1 class="today-title">Today's WOD</h1>
+        </div>
+        <div class="today-actions">
+          <button class="btn-icon" id="btn-regenerate" title="Regenerate">↺</button>
+          <button class="btn-ai" id="btn-ai">
+            <span class="ai-dot"></span> AI Variant
+          </button>
+        </div>
+      </div>
+
+      <div id="ai-status" class="ai-status hidden"></div>
+
+      <!-- Variant tabs -->
+      <div class="variant-tabs">
+        <button class="vtab active" data-variant="1">Option 1</button>
+        <button class="vtab" data-variant="2">Option 2</button>
+        <button class="vtab" data-variant="3">Option 3</button>
+      </div>
+
+      <!-- Workout cards container -->
+      <div id="workout-display" class="workout-display">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Generating workouts...</p>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar" id="action-bar">
+        <button class="btn-approve" id="btn-approve">
+          ✓ Approve this workout
+        </button>
+        <p class="action-hint">Approved workouts are saved to history</p>
+      </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="view-history" class="view">
+      <div class="view-header">
+        <h2>Workout History</h2>
+        <div id="history-stats" class="history-stats"></div>
+      </div>
+      <div id="history-list" class="history-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+      <div id="history-pagination" class="pagination"></div>
+    </div>
+
+    <!-- LIBRARY VIEW -->
+    <div id="view-library" class="view">
+      <div class="view-header">
+        <h2>Exercise Library</h2>
+        <button class="btn-seed" id="btn-seed">Seed defaults</button>
+      </div>
+      <div class="library-add">
+        <input type="text" id="ex-name" placeholder="Exercise name" autocomplete="off">
+        <select id="ex-category">
+          <option value="lower">Lower Body</option>
+          <option value="upper">Upper Body</option>
+          <option value="core">Core</option>
+          <option value="conditioning">Conditioning</option>
+          <option value="power">Power</option>
+        </select>
+        <button class="btn-add" id="btn-add-ex">+ Add</button>
+      </div>
+      <div id="exercise-list" class="exercise-list">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- HISTORY MODAL -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
