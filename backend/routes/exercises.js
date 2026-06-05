@@ -35,11 +35,18 @@ router.get('/categories', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// Seed: delete ALL old ones for this sport and insert fresh
 router.post('/seed', async (req, res) => {
   const sport = (req.body && req.body.sport) || 'functional';
   try {
-    await ExerciseLibrary.deleteMany({ sport });
+    // Drop the old unique index on name that blocks inserts
+    try {
+      await ExerciseLibrary.collection.dropIndex('name_1');
+    } catch(e) { /* index may not exist, ignore */ }
+
+    // Delete ALL docs in collection (clean slate)
+    await ExerciseLibrary.deleteMany({});
+
+    // Insert fresh
     const docs = DEFAULTS.map(e => ({ name: e.name, category: e.category, sport }));
     await ExerciseLibrary.insertMany(docs);
     const count = await ExerciseLibrary.countDocuments({ sport });
