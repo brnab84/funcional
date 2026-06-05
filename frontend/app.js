@@ -111,9 +111,35 @@ function showVariant(v){
 async function approveWorkout(){
   const w=currentWorkouts.find(w=>w.variant===activeVariant);if(!w)return;
   const btn=document.getElementById('btn-approve');btn.disabled=true;btn.textContent='Saving...';
-  const r=await apiCall(`/api/workouts/${w._id}/approve`,{method:'PUT'});if(!r)return;
-  currentWorkouts=currentWorkouts.map(cw=>({...cw,status:cw._id===w._id?'approved':(cw.status==='approved'?'rejected':cw.status)}));
-  updateVariantTabs();btn.textContent='✓ Approved';showAiStatus('✓ Saved to history!');setTimeout(hideAiStatus,3000);
+  const r=await apiCall('/api/workouts/'+w._id+'/approve',{method:'PUT'});
+  if(!r||!r.ok){btn.disabled=false;btn.textContent='Error - retry';return;}
+  currentWorkouts=currentWorkouts.filter(cw=>cw._id!==w._id);
+  currentWorkouts=currentWorkouts.filter(cw=>cw.status!=='rejected');
+  afterApproval();
+  showAiStatus('Workout approved and saved!');setTimeout(hideAiStatus,3000);
+}
+function afterApproval(){
+  const tabs=document.querySelectorAll('.vtab');
+  const display=document.getElementById('workout-display');
+  const bar=document.querySelector('.action-bar');
+  if(currentWorkouts.length===0){
+    tabs.forEach(t=>{t.classList.remove('active');t.style.display='none';});
+    display.innerHTML='<div class="empty-state"><h3>Workout Approved!</h3><p>Click the refresh button to generate new options</p></div>';
+    bar.style.display='none';
+    return;
+  }
+  tabs.forEach((t,i)=>{
+    if(currentWorkouts[i]){t.style.display='';t.textContent='Option '+(i+1);t.classList.remove('active','approved');}
+    else{t.style.display='none';}
+  });
+  if(currentWorkouts.length>0){
+    tabs[0].classList.add('active');
+    activeVariant=currentWorkouts[0].variant;
+    display.innerHTML=renderWorkout(currentWorkouts[0]);
+    bar.style.display='';
+    document.getElementById('btn-approve').disabled=false;
+    document.getElementById('btn-approve').textContent='Approve this workout';
+  }
 }
 async function generateAiVariant(){
   const btn=document.getElementById('btn-ai');btn.disabled=true;showAiStatus('Asking AI coach...');
@@ -324,11 +350,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // Today
-  document.querySelectorAll('.vtab').forEach((tab,i)=>tab.addEventListener('click',()=>showVariant(i+1)));
+  document.querySelectorAll('.vtab').forEach((tab,i)=>tab.addEventListener('click',()=>{
+    if(currentWorkouts[i]){activeVariant=currentWorkouts[i].variant;showVariant(currentWorkouts[i].variant);}
+  }));
   document.getElementById('btn-approve').addEventListener('click',approveWorkout);
   document.getElementById('btn-regenerate').addEventListener('click',async()=>{
-    await Promise.all(currentWorkouts.map(w=>apiCall(`/api/workouts/${w._id}/reject`,{method:'PUT'})));
-    currentWorkouts=[];loadToday();
+    await Promise.all(currentWorkouts.map(w=>apiCall('/api/workouts/'+w._id+'/reject',{method:'PUT'})));
+    currentWorkouts=[];
+    document.querySelectorAll('.vtab').forEach((t,i)=>{t.style.display='';t.textContent='Option '+(i+1);});
+    document.querySelector('.action-bar').style.display='';
+    loadToday();
   });
   document.getElementById('btn-ai').addEventListener('click',generateAiVariant);
 
@@ -361,4 +392,5 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
   document.getElementById('modal-overlay').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
 });
+
 
