@@ -1,10 +1,10 @@
 const API='';
-const VERSION='3.1.0';
+const VERSION='3.2.0';
 let token=localStorage.getItem('wod_token');
 let currentUser=null,currentWorkouts=[],activeVariant=1,currentSport='functional';
-let pendingPhotos=[];
+let pendingPhotos=[],editingWorkout=null;
 
-function authHeader(){return token?{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}:{'Content-Type':'application/json'};}
+function authHeader(){return token?{'Authorization':'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};}
 async function apiCall(url,options={}){
   const res=await fetch(API+url,{...options,headers:{...authHeader(),...(options.headers||{})}});
   const data=await res.json();
@@ -18,7 +18,7 @@ function showApp(){
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
   if(currentUser){
     document.getElementById('nav-username').textContent=currentUser.name;
-    document.getElementById('settings-user-info').textContent=`${currentUser.name} · ${currentUser.email} · v${VERSION}`;
+    document.getElementById('settings-user-info').textContent=currentUser.name+' · '+currentUser.email+' · v'+VERSION;
     loadUserSettings();
   }
   loadToday();
@@ -62,196 +62,307 @@ function modalityBadgeClass(m){
   if(m.includes('DESCENDING'))return'badge-descending';if(m.includes('ZONE'))return'badge-zones';
   if(m.includes('MINI'))return'badge-miniamrap';return'badge-rounds';
 }
-function catDot(cat){return`<span class="ex-category-dot dot-${cat||'lower'}"></span>`;}
+function catDot(cat){return'<span class="ex-category-dot dot-'+(cat||'lower')+'"></span>';}
 
-function renderWorkout(workout){
-  if(!workout)return`<div class="empty-state"><h3>No workout</h3></div>`;
-  let html=`<div class="workout-card">`;
-  if(workout.warmup?.exercises?.length){
-    html+=`<div class="card-header"><div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">${workout.warmup.rounds||3} Rounds</span></div></div>
-    <div class="exercise-table">${workout.warmup.exercises.map((ex,i)=>`<div class="ex-row"><span class="ex-num">${String(i+1).padStart(2,'0')}</span><span class="ex-name">${catDot(ex.category)}${ex.name}</span><span class="ex-reps">${ex.reps||''}</span></div>`).join('')}</div>`;
+function renderWorkout(workout,editable){
+  if(!workout)return'<div class="empty-state"><h3>No workout</h3></div>';
+  let html='<div class="workout-card">';
+  if(workout.warmup&&workout.warmup.exercises&&workout.warmup.exercises.length){
+    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>'+(editable?'<button class="btn-edit-section" onclick="editWarmup()">Edit</button>':'')+'</div>';
+    html+='<div class="exercise-table">'+workout.warmup.exercises.map(function(ex,i){
+      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
+    }).join('')+'</div>';
   }
-  (workout.blocks||[]).forEach(block=>{
-    html+=`<div class="section-label">Block ${block.label}</div>
-    <div class="card-header"><div class="card-header-left"><span class="card-badge ${modalityBadgeClass(block.modality)}">${block.modality}</span><span class="card-config">${block.config||''}</span></div>${workout.source==='ai'?'<span class="card-source-ai">AI</span>':''}</div>
-    <div class="exercise-table">${block.exercises.map((ex,i)=>`<div class="ex-row"><span class="ex-num">${String(i+1).padStart(2,'0')}</span><span class="ex-name">${catDot(ex.category)}${ex.name}</span><span class="ex-reps">${ex.reps||''}</span></div>`).join('')}</div>`;
+  (workout.blocks||[]).forEach(function(block,bi){
+    html+='<div class="section-label">Block '+block.label+'</div>';
+    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>'+(editable?'<button class="btn-edit-section" onclick="editBlock('+bi+')">Edit</button>':'')+(workout.source==='ai'?'<span class="card-source-ai">AI</span>':'')+'</div>';
+    html+='<div class="exercise-table">'+block.exercises.map(function(ex,i){
+      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
+    }).join('')+'</div>';
   });
-  if(workout.pattern)html+=`<div class="section-label" style="color:var(--accent);border-top:none">📋 ${workout.pattern}</div>`;
-  return html+`</div>`;
+  if(workout.pattern)html+='<div class="section-label" style="color:var(--accent);border-top:none">Pattern: '+workout.pattern+'</div>';
+  return html+'</div>';
 }
 
+// ── TODAY ──────────────────────────────────────────────────
 async function loadToday(){
-  const display=document.getElementById('workout-display');
-  display.innerHTML=`<div class="loading-state"><div class="spinner"></div><p>Generating workouts...</p></div>`;
-  const r=await apiCall(`/api/workouts/today?sport=${currentSport}`);
+  var display=document.getElementById('workout-display');
+  display.innerHTML='<div class="loading-state"><div class="spinner"></div><p>Generating workouts...</p></div>';
+  var r=await apiCall('/api/workouts/today?sport='+currentSport);
   if(!r)return;
   currentWorkouts=r.data.workouts||[];
   if(!currentWorkouts.length){
-    display.innerHTML=`<div class="empty-state"><h3>No workouts</h3><p>Go to <strong>Library → Seed defaults</strong> first</p></div>`;
+    display.innerHTML='<div class="empty-state"><h3>No workouts</h3><p>Go to <strong>Library</strong> and click <strong>Seed defaults</strong> first</p></div>';
+    document.querySelector('.action-bar').style.display='none';
     return;
   }
-  updateVariantTabs();showVariant(1);
-}
-function updateVariantTabs(){
-  document.querySelectorAll('.vtab').forEach((tab,i)=>{
-    const w=currentWorkouts.find(w=>w.variant===i+1);
-    tab.classList.remove('active','approved');
-    if(w?.status==='approved')tab.classList.add('approved');
-  });
-}
-function showVariant(v){
-  activeVariant=v;
-  document.querySelectorAll('.vtab').forEach((tab,i)=>tab.classList.toggle('active',i+1===v));
-  const w=currentWorkouts.find(w=>w.variant===v);
-  document.getElementById('workout-display').innerHTML=renderWorkout(w);
-  const btn=document.getElementById('btn-approve');
-  btn.textContent=w?.status==='approved'?'✓ Approved':'✓ Approve this workout';
-  btn.disabled=w?.status==='approved';
-}
-async function approveWorkout(){
-  const w=currentWorkouts.find(w=>w.variant===activeVariant);if(!w)return;
-  const btn=document.getElementById('btn-approve');btn.disabled=true;btn.textContent='Saving...';
-  const r=await apiCall('/api/workouts/'+w._id+'/approve',{method:'PUT'});
-  if(!r||!r.ok){btn.disabled=false;btn.textContent='Error - retry';return;}
-  currentWorkouts=currentWorkouts.filter(cw=>cw._id!==w._id);
-  currentWorkouts=currentWorkouts.filter(cw=>cw.status!=='rejected');
-  afterApproval();
-  showAiStatus('Workout approved and saved!');setTimeout(hideAiStatus,3000);
-}
-function afterApproval(){
-  const tabs=document.querySelectorAll('.vtab');
-  const display=document.getElementById('workout-display');
-  const bar=document.querySelector('.action-bar');
-  if(currentWorkouts.length===0){
-    tabs.forEach(t=>{t.classList.remove('active');t.style.display='none';});
-    display.innerHTML='<div class="empty-state"><h3>Workout Approved!</h3><p>Click the refresh button to generate new options</p></div>';
-    bar.style.display='none';
-    return;
+  // Show approved today count
+  if(r.data.approvedToday>0){
+    showAiStatus(r.data.approvedToday+' workout(s) already approved today');
+    setTimeout(hideAiStatus,3000);
   }
-  tabs.forEach((t,i)=>{
-    if(currentWorkouts[i]){t.style.display='';t.textContent='Option '+(i+1);t.classList.remove('active','approved');}
-    else{t.style.display='none';}
-  });
-  if(currentWorkouts.length>0){
-    tabs[0].classList.add('active');
-    activeVariant=currentWorkouts[0].variant;
-    display.innerHTML=renderWorkout(currentWorkouts[0]);
-    bar.style.display='';
-    document.getElementById('btn-approve').disabled=false;
-    document.getElementById('btn-approve').textContent='Approve this workout';
-  }
+  resetTabs();
+  showVariant(0);
 }
-async function generateAiVariant(){
-  const btn=document.getElementById('btn-ai');btn.disabled=true;showAiStatus('Asking AI coach...');
-  const r=await apiCall('/api/workouts/ai',{method:'POST',body:JSON.stringify({sport:currentSport,variant:3})});
+
+function resetTabs(){
+  var tabs=document.querySelectorAll('.vtab');
+  tabs.forEach(function(t,i){
+    if(currentWorkouts[i]){
+      t.style.display='';
+      t.textContent='Option '+(i+1);
+      t.classList.remove('active','approved');
+    } else {
+      t.style.display='none';
+    }
+  });
+  document.querySelector('.action-bar').style.display='';
+}
+
+function showVariant(idx){
+  if(!currentWorkouts[idx])return;
+  activeVariant=idx;
+  document.querySelectorAll('.vtab').forEach(function(tab,i){tab.classList.toggle('active',i===idx);});
+  var w=currentWorkouts[idx];
+  document.getElementById('workout-display').innerHTML=renderWorkout(w,true);
+  var btn=document.getElementById('btn-approve');
+  btn.textContent='Approve this workout';
   btn.disabled=false;
-  if(!r||!r.ok){showAiStatus((r?.data?.message||'AI error')+' — ANTHROPIC_API_KEY needed.',true);setTimeout(hideAiStatus,6000);return;}
-  const idx=currentWorkouts.findIndex(w=>w.variant===3);
-  if(idx>=0)currentWorkouts[idx]=r.data.workout;else currentWorkouts.push(r.data.workout);
-  document.querySelectorAll('.vtab')[2].textContent='AI Option';showVariant(3);
-  showAiStatus('✓ AI workout ready!');setTimeout(hideAiStatus,4000);
 }
-function showAiStatus(msg,isError=false){const el=document.getElementById('ai-status');el.textContent=msg;el.className=`ai-status${isError?' error':''}`;}
+
+async function approveWorkout(){
+  var w=currentWorkouts[activeVariant];if(!w)return;
+  var btn=document.getElementById('btn-approve');btn.disabled=true;btn.textContent='Saving...';
+  var r=await apiCall('/api/workouts/'+w._id+'/approve',{method:'PUT'});
+  if(!r||!r.ok){btn.disabled=false;btn.textContent='Error - retry';return;}
+  // Remove approved from suggestions list
+  currentWorkouts.splice(activeVariant,1);
+  if(currentWorkouts.length===0){
+    resetTabs();
+    document.querySelectorAll('.vtab').forEach(function(t){t.style.display='none';});
+    document.getElementById('workout-display').innerHTML='<div class="empty-state"><h3>Workout Approved!</h3><p>Click refresh to generate new options, or check History</p></div>';
+    document.querySelector('.action-bar').style.display='none';
+  } else {
+    resetTabs();
+    showVariant(0);
+  }
+  showAiStatus('Workout approved and saved to history!');setTimeout(hideAiStatus,3000);
+}
+
+async function regenerateWorkouts(){
+  await apiCall('/api/workouts/regenerate',{method:'POST',body:JSON.stringify({sport:currentSport})});
+  currentWorkouts=[];
+  loadToday();
+}
+
+async function generateAiVariant(){
+  var btn=document.getElementById('btn-ai');btn.disabled=true;showAiStatus('Asking AI coach...');
+  var r=await apiCall('/api/workouts/ai',{method:'POST',body:JSON.stringify({sport:currentSport})});
+  btn.disabled=false;
+  if(!r||!r.ok){showAiStatus((r&&r.data&&r.data.message?r.data.message:'AI error'),true);setTimeout(hideAiStatus,6000);return;}
+  // Add AI workout to current options
+  currentWorkouts.push(r.data.workout);
+  resetTabs();
+  showVariant(currentWorkouts.length-1);
+  showAiStatus('AI workout ready!');setTimeout(hideAiStatus,4000);
+}
+
+function showAiStatus(msg,isError){var el=document.getElementById('ai-status');el.textContent=msg;el.className='ai-status'+(isError?' error':'');}
 function hideAiStatus(){document.getElementById('ai-status').className='ai-status hidden';}
 
-async function loadHistory(page=1){
-  const list=document.getElementById('history-list');
-  list.innerHTML=`<div class="loading-state"><div class="spinner"></div></div>`;
-  const[hRes,sRes]=await Promise.all([apiCall(`/api/workouts/history?sport=${currentSport}&page=${page}&limit=20`),apiCall(`/api/workouts/stats?sport=${currentSport}`)]);
-  if(!hRes)return;
-  document.getElementById('history-stats').innerHTML=`<span class="stat-chip">Total: <span>${sRes?.data?.total||0}</span></span><span class="stat-chip">Month: <span>${sRes?.data?.lastMonth||0}</span></span>`;
-  if(!hRes.data.workouts?.length){list.innerHTML=`<div class="empty-state"><h3>No History Yet</h3><p>Approve a workout to start building your log</p></div>`;return;}
-  list.innerHTML=hRes.data.workouts.map(w=>`<button class="history-item" onclick="openHistoryModal('${w._id}')"><span class="hist-date">${w.date}</span><div class="hist-modalities">${(w.blocks||[]).map(b=>`<span class="hist-badge">${b.modality}</span>`).join('')}${w.source==='ai'?'<span class="hist-badge" style="color:var(--blue)">AI</span>':''}${w.pattern?`<span class="hist-badge">${w.pattern}</span>`:''}</div><span class="hist-arrow">›</span></button>`).join('');
-  const pages=hRes.data.pages||1;
-  document.getElementById('history-pagination').innerHTML=pages>1?Array.from({length:pages},(_,i)=>`<button class="page-btn ${i+1===page?'active':''}" onclick="loadHistory(${i+1})">${i+1}</button>`).join(''):'';
-}
-const _hCache={};
-async function openHistoryModal(id){
-  if(!_hCache[id]){const r=await apiCall(`/api/workouts/history?sport=${currentSport}&limit=100`);if(r?.data?.workouts)r.data.workouts.forEach(w=>_hCache[w._id]=w);}
-  const w=_hCache[id];if(!w)return;
-  document.getElementById('modal-content').innerHTML=`<p class="eyebrow" style="margin-bottom:12px">${w.date}</p>${renderWorkout(w)}`;
+// ── EDIT ──────────────────────────────────────────────────
+function editWarmup(){
+  var w=currentWorkouts[activeVariant];if(!w)return;
+  var warmup=w.warmup;
+  var html='<h3 style="margin-bottom:12px">Edit Warm-up</h3>';
+  html+='<label class="field">Rounds: <input type="number" id="edit-warmup-rounds" value="'+(warmup.rounds||3)+'" min="1" max="10" style="width:60px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;"></label>';
+  html+='<div style="margin-top:12px">';
+  warmup.exercises.forEach(function(ex,i){
+    html+='<div class="edit-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:center">';
+    html+='<input class="edit-name" value="'+ex.name+'" style="flex:1;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;">';
+    html+='<input class="edit-reps" value="'+(ex.reps||'')+'" style="width:60px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;text-align:center">';
+    html+='<button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:1.2rem">x</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button onclick="saveWarmupEdit()" class="btn-save-settings" style="margin-top:12px">Save</button>';
+  document.getElementById('modal-content').innerHTML=html;
   document.getElementById('modal').classList.remove('hidden');
 }
 
+async function saveWarmupEdit(){
+  var w=currentWorkouts[activeVariant];if(!w)return;
+  var rounds=parseInt(document.getElementById('edit-warmup-rounds').value)||3;
+  var rows=document.querySelectorAll('#modal-content .edit-row');
+  var exercises=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.edit-name').value.trim();
+    var reps=row.querySelector('.edit-reps').value.trim();
+    if(name)exercises.push({name:name,reps:reps,category:'conditioning'});
+  });
+  w.warmup={rounds:rounds,exercises:exercises};
+  var r=await apiCall('/api/workouts/'+w._id+'/edit',{method:'PUT',body:JSON.stringify({warmup:w.warmup})});
+  document.getElementById('modal').classList.add('hidden');
+  showVariant(activeVariant);
+}
+
+function editBlock(bi){
+  var w=currentWorkouts[activeVariant];if(!w)return;
+  var block=w.blocks[bi];
+  var html='<h3 style="margin-bottom:12px">Edit Block '+block.label+'</h3>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px">';
+  html+='<select id="edit-block-modality" style="height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;">';
+  ['EMOM','OTM','AMRAP','FOR TIME','ROUNDS','TABATA','DESCENDING','ZONES'].forEach(function(m){
+    html+='<option'+(block.modality===m?' selected':'')+'>'+m+'</option>';
+  });
+  html+='</select>';
+  html+='<input id="edit-block-config" value="'+(block.config||'')+'" placeholder="Config (e.g. 7\')" style="flex:1;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;">';
+  html+='</div>';
+  html+='<div id="edit-block-exercises">';
+  block.exercises.forEach(function(ex){
+    html+='<div class="edit-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:center">';
+    html+='<input class="edit-name" value="'+ex.name+'" style="flex:1;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;">';
+    html+='<input class="edit-reps" value="'+(ex.reps||'')+'" style="width:60px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;text-align:center">';
+    html+='<button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:1.2rem">x</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button onclick="addEditRow()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px 12px;cursor:pointer;margin-bottom:12px">+ Add exercise</button>';
+  html+='<button onclick="saveBlockEdit('+bi+')" class="btn-save-settings" style="margin-top:8px">Save</button>';
+  document.getElementById('modal-content').innerHTML=html;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function addEditRow(){
+  var container=document.getElementById('edit-block-exercises');
+  var div=document.createElement('div');
+  div.className='edit-row';
+  div.style='display:flex;gap:8px;margin-bottom:8px;align-items:center';
+  div.innerHTML='<input class="edit-name" placeholder="Exercise name" style="flex:1;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;"><input class="edit-reps" placeholder="Reps" style="width:60px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 8px;text-align:center"><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:1.2rem">x</button>';
+  container.appendChild(div);
+}
+
+async function saveBlockEdit(bi){
+  var w=currentWorkouts[activeVariant];if(!w)return;
+  w.blocks[bi].modality=document.getElementById('edit-block-modality').value;
+  w.blocks[bi].config=document.getElementById('edit-block-config').value;
+  var rows=document.querySelectorAll('#edit-block-exercises .edit-row');
+  var exercises=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.edit-name').value.trim();
+    var reps=row.querySelector('.edit-reps').value.trim();
+    if(name)exercises.push({name:name,reps:reps,category:'conditioning'});
+  });
+  w.blocks[bi].exercises=exercises;
+  await apiCall('/api/workouts/'+w._id+'/edit',{method:'PUT',body:JSON.stringify({blocks:w.blocks})});
+  document.getElementById('modal').classList.add('hidden');
+  showVariant(activeVariant);
+}
+
+// ── HISTORY ──────────────────────────────────────────────
+async function loadHistory(page){
+  page=page||1;
+  var list=document.getElementById('history-list');
+  list.innerHTML='<div class="loading-state"><div class="spinner"></div></div>';
+  var hRes=await apiCall('/api/workouts/history?sport='+currentSport+'&page='+page+'&limit=50');
+  var sRes=await apiCall('/api/workouts/stats?sport='+currentSport);
+  if(!hRes)return;
+  document.getElementById('history-stats').innerHTML='<span class="stat-chip">Total: <span>'+(sRes&&sRes.data?sRes.data.total:0)+'</span></span><span class="stat-chip">Month: <span>'+(sRes&&sRes.data?sRes.data.lastMonth:0)+'</span></span>';
+  var workouts=hRes.data.workouts||[];
+  if(!workouts.length){list.innerHTML='<div class="empty-state"><h3>No History Yet</h3><p>Approve a workout to start building your log</p></div>';return;}
+  list.innerHTML=workouts.map(function(w){
+    return'<div class="history-item" id="hist-'+w._id+'"><button class="hist-main" onclick="openHistoryModal(\''+w._id+'\')"><span class="hist-date">'+w.date+'</span><div class="hist-modalities">'+(w.blocks||[]).map(function(b){return'<span class="hist-badge">'+b.modality+'</span>';}).join('')+(w.pattern?'<span class="hist-badge">'+w.pattern+'</span>':'')+'</div></button><button class="hist-delete" onclick="deleteHistoryItem(\''+w._id+'\')" title="Delete">x</button></div>';
+  }).join('');
+  var pages=hRes.data.pages||1;
+  document.getElementById('history-pagination').innerHTML=pages>1?Array.from({length:pages},function(_,i){return'<button class="page-btn '+(i+1===page?'active':'')+'" onclick="loadHistory('+(i+1)+')">'+(i+1)+'</button>';}).join(''):'';
+}
+
+var _hCache={};
+async function openHistoryModal(id){
+  if(!_hCache[id]){
+    var r=await apiCall('/api/workouts/history?sport='+currentSport+'&limit=100');
+    if(r&&r.data&&r.data.workouts)r.data.workouts.forEach(function(w){_hCache[w._id]=w;});
+  }
+  var w=_hCache[id];if(!w)return;
+  document.getElementById('modal-content').innerHTML='<p class="eyebrow" style="margin-bottom:12px">'+w.date+'</p>'+renderWorkout(w,false);
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+async function deleteHistoryItem(id){
+  if(!confirm('Delete this workout from history?'))return;
+  var r=await apiCall('/api/workouts/'+id,{method:'DELETE'});
+  if(r&&r.ok){
+    var el=document.getElementById('hist-'+id);
+    if(el)el.remove();
+    delete _hCache[id];
+  }
+}
+
+// ── LIBRARY ──────────────────────────────────────────────
 async function loadLibrary(){
-  const list=document.getElementById('exercise-list');
-  list.innerHTML=`<div class="loading-state"><div class="spinner"></div></div>`;
-  const r=await apiCall(`/api/exercises?sport=${currentSport}`);if(!r)return;
-  const exercises=r.data.exercises||[];
-  if(!exercises.length){list.innerHTML=`<div class="empty-state"><h3>Empty Library</h3><p>Click "Seed defaults" to load exercises from whiteboard patterns</p></div>`;return;}
-  // Group by category dynamically
-  const cats={};
-  exercises.forEach(ex=>{(cats[ex.category]=cats[ex.category]||[]).push(ex);});
-  const catLabels={lower:'🦵 Lower Body',upper:'💪 Upper Body',core:'🔥 Core',conditioning:'🏃 Conditioning',power:'⚡ Power'};
-  const order=['lower','upper','core','conditioning','power'];
-  const sortedCats=Object.keys(cats).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
-  list.innerHTML=sortedCats.map(cat=>`
-    <div class="ex-category-group">
-      <div class="ex-cat-header">${catLabels[cat]||cat.charAt(0).toUpperCase()+cat.slice(1)} <span class="ex-cat-count">${cats[cat].length}</span></div>
-      <div class="ex-cat-items">
-        ${cats[cat].map(ex=>`<div class="ex-pill" id="ex-${ex._id}"><span class="ex-pill-name"><span class="ex-category-dot dot-${ex.category}"></span>${ex.name}</span><button class="ex-pill-delete" onclick="deleteExercise('${ex._id}')">×</button></div>`).join('')}
-      </div>
-    </div>`).join('');
+  var list=document.getElementById('exercise-list');
+  list.innerHTML='<div class="loading-state"><div class="spinner"></div></div>';
+  var r=await apiCall('/api/exercises?sport='+currentSport);if(!r)return;
+  var exercises=r.data.exercises||[];
+  if(!exercises.length){list.innerHTML='<div class="empty-state"><h3>Empty Library</h3><p>Click "Seed defaults" to load exercises</p></div>';return;}
+  var cats={};
+  exercises.forEach(function(ex){(cats[ex.category]=cats[ex.category]||[]).push(ex);});
+  var catLabels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power'};
+  var order=['lower','upper','core','conditioning','power'];
+  var sortedCats=Object.keys(cats).sort(function(a,b){var ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
+  list.innerHTML=sortedCats.map(function(cat){
+    return'<div class="ex-category-group"><div class="ex-cat-header">'+(catLabels[cat]||cat.charAt(0).toUpperCase()+cat.slice(1))+' <span class="ex-cat-count">'+cats[cat].length+'</span></div><div class="ex-cat-items">'+cats[cat].map(function(ex){
+      return'<div class="ex-pill" id="ex-'+ex._id+'"><span class="ex-pill-name"><span class="ex-category-dot dot-'+ex.category+'"></span>'+ex.name+'</span><button class="ex-pill-delete" onclick="deleteExercise(\''+ex._id+'\')">x</button></div>';
+    }).join('')+'</div></div>';
+  }).join('');
 }
 async function addExercise(){
-  const name=document.getElementById('ex-name').value.trim();const category=document.getElementById('ex-category').value;if(!name)return;
-  await apiCall('/api/exercises',{method:'POST',body:JSON.stringify({name,category,sport:currentSport})});
+  var name=document.getElementById('ex-name').value.trim();var category=document.getElementById('ex-category').value;if(!name)return;
+  await apiCall('/api/exercises',{method:'POST',body:JSON.stringify({name:name,category:category,sport:currentSport})});
   document.getElementById('ex-name').value='';loadLibrary();
 }
-async function deleteExercise(id){await apiCall(`/api/exercises/${id}`,{method:'DELETE'});loadLibrary();}
+async function deleteExercise(id){await apiCall('/api/exercises/'+id,{method:'DELETE'});loadLibrary();}
 async function seedDefaults(){
-  const btn=document.getElementById('btn-seed');btn.textContent='Seeding...';btn.disabled=true;
-  const r=await apiCall('/api/exercises/seed',{method:'POST',body:JSON.stringify({sport:currentSport})});
-  if(r&&r.ok){
-    btn.textContent='Seeded '+r.data.count;
-    loadLibrary();loadCategories();
-  } else {
-    btn.textContent='Error';
-    alert('Seed failed: '+(r&&r.data&&r.data.message?r.data.message:'unknown')+(r&&r.data&&r.data.errors&&r.data.errors.length?String.fromCharCode(10)+r.data.errors.join(String.fromCharCode(10)):''));
-  }
-  setTimeout(()=>{btn.textContent='Seed defaults';btn.disabled=false;},3000);
+  var btn=document.getElementById('btn-seed');btn.textContent='Seeding...';btn.disabled=true;
+  var r=await apiCall('/api/exercises/seed',{method:'POST',body:JSON.stringify({sport:currentSport})});
+  if(r&&r.ok){btn.textContent='Seeded '+r.data.count;loadLibrary();}
+  else{btn.textContent='Error';alert('Seed failed: '+(r&&r.data?r.data.message:'unknown'));}
+  setTimeout(function(){btn.textContent='Seed defaults';btn.disabled=false;},3000);
 }
 
 async function loadCategories(){
-  const r=await apiCall('/api/exercises/categories?sport='+currentSport);
+  var r=await apiCall('/api/exercises/categories?sport='+currentSport);
   if(!r||!r.ok)return;
-  const sel=document.getElementById('ex-category');
-  const labels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power'};
-  const current=sel.value;
-  sel.innerHTML=r.data.categories.map(c=>'<option value="'+c+'">'+(labels[c]||c.charAt(0).toUpperCase()+c.slice(1))+'</option>').join('')+'<option value="__new__">+ New category...</option>';
+  var sel=document.getElementById('ex-category');
+  var labels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power'};
+  var current=sel.value;
+  sel.innerHTML=r.data.categories.map(function(c){return'<option value="'+c+'">'+(labels[c]||c.charAt(0).toUpperCase()+c.slice(1))+'</option>';}).join('')+'<option value="__new__">+ New category...</option>';
   if(r.data.categories.includes(current))sel.value=current;
 }
 
 function handleCategoryChange(){
-  const sel=document.getElementById('ex-category');
+  var sel=document.getElementById('ex-category');
   if(sel.value==='__new__'){
-    const newCat=prompt('New category name (e.g. mobility, olympic, gymnastics):');
+    var newCat=prompt('New category name:');
     if(newCat&&newCat.trim()){
-      const val=newCat.trim().toLowerCase();
-      const opt=document.createElement('option');
-      opt.value=val;opt.textContent=newCat.trim().charAt(0).toUpperCase()+newCat.trim().slice(1);
-      sel.insertBefore(opt,sel.querySelector('option[value="__new__"]'));
-      sel.value=val;
-    } else { sel.value=sel.options[0].value; }
+      var val=newCat.trim().toLowerCase();
+      var opt=document.createElement('option');opt.value=val;opt.textContent=newCat.trim();
+      sel.insertBefore(opt,sel.querySelector('option[value="__new__"]'));sel.value=val;
+    } else {sel.value=sel.options[0].value;}
   }
 }
 
-// ── PHOTO UPLOAD ────────────────────────────────────────────
-function togglePhotoPanel(){
-  const panel=document.getElementById('photo-panel');
-  panel.classList.toggle('hidden');
-}
+// ── PHOTO UPLOAD ────────────────────────────────────────
+function togglePhotoPanel(){document.getElementById('photo-panel').classList.toggle('hidden');}
 function handlePhotoSelect(files){
   pendingPhotos=[];
-  const preview=document.getElementById('photo-preview');
-  preview.innerHTML='';
-  Array.from(files).forEach(file=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const data=e.target.result.split(',')[1];
-      const mediaType=file.type||'image/jpeg';
-      pendingPhotos.push({data,mediaType,name:file.name});
-      preview.innerHTML+=`<div class="photo-thumb"><img src="${e.target.result}" alt="${file.name}"><span>${file.name}</span></div>`;
+  var preview=document.getElementById('photo-preview');preview.innerHTML='';
+  Array.from(files).forEach(function(file){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var data=e.target.result.split(',')[1];
+      pendingPhotos.push({data:data,mediaType:file.type||'image/jpeg',name:file.name});
+      preview.innerHTML+='<div class="photo-thumb"><img src="'+e.target.result+'"><span>'+file.name+'</span></div>';
       document.getElementById('btn-analyze').disabled=false;
     };
     reader.readAsDataURL(file);
@@ -259,139 +370,105 @@ function handlePhotoSelect(files){
 }
 async function analyzePhotos(){
   if(!pendingPhotos.length)return;
-  const btn=document.getElementById('btn-analyze');btn.textContent='Analyzing...';btn.disabled=true;
-  const results=document.getElementById('photo-results');results.innerHTML='';results.classList.add('hidden');
-  const r=await apiCall('/api/upload/photo',{method:'POST',body:JSON.stringify({images:pendingPhotos,sport:currentSport})});
+  var btn=document.getElementById('btn-analyze');btn.textContent='Analyzing...';btn.disabled=true;
+  var r=await apiCall('/api/upload/photo',{method:'POST',body:JSON.stringify({images:pendingPhotos,sport:currentSport})});
   btn.textContent='Analyze with AI';btn.disabled=false;
-  if(!r||!r.ok){results.innerHTML=`<p class="photo-error">${r?.data?.message||'Error analyzing photos. Check ANTHROPIC_API_KEY.'}</p>`;results.classList.remove('hidden');return;}
-  const d=r.data;
-  results.innerHTML=`
-    <div class="photo-result-box">
-      <p class="photo-result-title">✓ Analysis complete</p>
-      <p>${d.notes||''}</p>
-      <p><strong>${d.added?.length||0} new exercises added</strong> · ${d.skipped?.length||0} already existed</p>
-      ${d.patterns?.length?`<p>Patterns found: ${d.patterns.map(p=>`<span class="hist-badge">${p}</span>`).join(' ')}</p>`:''}
-      ${d.added?.length?`<p>Added: ${d.added.join(', ')}</p>`:''}
-    </div>`;
-  results.classList.remove('hidden');
-  loadLibrary();
+  var results=document.getElementById('photo-results');
+  if(!r||!r.ok){results.innerHTML='<p style="color:var(--accent2)">'+(r&&r.data?r.data.message:'Error')+'</p>';results.classList.remove('hidden');return;}
+  results.innerHTML='<div class="photo-result-box"><p style="color:var(--green);font-weight:700">Analysis complete</p><p>'+(r.data.added?r.data.added.length:0)+' new exercises added, '+(r.data.skipped?r.data.skipped.length:0)+' already existed</p></div>';
+  results.classList.remove('hidden');loadLibrary();
 }
 
-// ── SETTINGS ───────────────────────────────────────────────
+// ── SETTINGS ────────────────────────────────────────────
 function loadUserSettings(){
-  if(!currentUser?.settings)return;
-  const s=currentUser.settings;
-  const count=s.blockCount||2;
-  document.querySelectorAll('.bc-btn').forEach(btn=>btn.classList.toggle('active',parseInt(btn.dataset.count)===count));
-  renderBlockModalities(count,s.blockModalities||{});
-  const days=s.avoidRepeatDays||7;
-  document.getElementById('avoid-days').value=days;document.getElementById('days-label').textContent=days;
+  if(!currentUser||!currentUser.settings)return;
+  var s=currentUser.settings;
+  document.querySelectorAll('.bc-btn').forEach(function(btn){btn.classList.toggle('active',parseInt(btn.dataset.count)===(s.blockCount||2));});
+  renderBlockModalities(s.blockCount||2,s.blockModalities||{});
+  document.getElementById('avoid-days').value=s.avoidRepeatDays||7;
+  document.getElementById('days-label').textContent=s.avoidRepeatDays||7;
   renderSportList();
 }
 function renderBlockModalities(count,modalities){
-  const labels=['A','B','C','D'].slice(0,count);
-  const opts=['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
-  document.getElementById('block-modalities').innerHTML=labels.map(label=>`
-    <label class="field" style="margin-top:12px">
-      <span>Block ${label} modality</span>
-      <select class="block-mod-select" data-label="${label}">
-        ${opts.map(o=>`<option value="${o}" ${(modalities[label]||'random')===o?'selected':''}>${o==='random'?'🎲 Random':o}</option>`).join('')}
-      </select>
-    </label>`).join('');
+  var labels=['A','B','C','D'].slice(0,count);
+  var opts=['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
+  document.getElementById('block-modalities').innerHTML=labels.map(function(label){
+    return'<label class="field" style="margin-top:12px"><span>Block '+label+'</span><select class="block-mod-select" data-label="'+label+'">'+opts.map(function(o){return'<option value="'+o+'"'+((modalities[label]||'random')===o?' selected':'')+'>'+(o==='random'?'Random':o)+'</option>';}).join('')+'</select></label>';
+  }).join('');
 }
 function renderSportList(){
-  document.getElementById('sport-list').innerHTML=(currentUser?.sports||[]).map(s=>`<div class="sport-pill"><span class="ex-category-dot" style="background:var(--accent)"></span>${s.type}</div>`).join('');
+  document.getElementById('sport-list').innerHTML=(currentUser&&currentUser.sports?currentUser.sports:[]).map(function(s){return'<div class="sport-pill"><span class="ex-category-dot" style="background:var(--accent)"></span>'+s.type+'</div>';}).join('');
 }
 async function saveSetting(){
-  const blockCount=parseInt(document.querySelector('.bc-btn.active')?.dataset.count||2);
-  const blockModalities={};
-  document.querySelectorAll('.block-mod-select').forEach(sel=>blockModalities[sel.dataset.label]=sel.value);
-  const avoidRepeatDays=parseInt(document.getElementById('avoid-days').value);
-  const r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount,blockModalities,avoidRepeatDays})});
-  if(r?.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));const st=document.getElementById('settings-status');st.textContent='✓ Settings saved';st.className='settings-status';setTimeout(()=>st.className='settings-status hidden',2500);}
+  var blockCount=parseInt((document.querySelector('.bc-btn.active')||{}).dataset.count)||2;
+  var blockModalities={};
+  document.querySelectorAll('.block-mod-select').forEach(function(sel){blockModalities[sel.dataset.label]=sel.value;});
+  var avoidRepeatDays=parseInt(document.getElementById('avoid-days').value);
+  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:blockCount,blockModalities:blockModalities,avoidRepeatDays:avoidRepeatDays})});
+  if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));var st=document.getElementById('settings-status');st.textContent='Saved!';st.className='settings-status';setTimeout(function(){st.className='settings-status hidden';},2500);}
 }
 async function addSport(){
-  const sport=document.getElementById('new-sport').value.trim().toLowerCase();if(!sport)return;
-  const r=await apiCall('/api/auth/add-sport',{method:'POST',body:JSON.stringify({sport})});
-  if(r?.ok){currentUser.sports=r.data.sports;localStorage.setItem('wod_user',JSON.stringify(currentUser));document.getElementById('new-sport').value='';const sel=document.getElementById('sport-selector');if(!sel.querySelector(`option[value="${sport}"]`)){const opt=document.createElement('option');opt.value=sport;opt.textContent=sport.charAt(0).toUpperCase()+sport.slice(1);sel.appendChild(opt);}renderSportList();}
+  var sport=document.getElementById('new-sport').value.trim().toLowerCase();if(!sport)return;
+  var r=await apiCall('/api/auth/add-sport',{method:'POST',body:JSON.stringify({sport:sport})});
+  if(r&&r.ok){currentUser.sports=r.data.sports;localStorage.setItem('wod_user',JSON.stringify(currentUser));document.getElementById('new-sport').value='';var sel=document.getElementById('sport-selector');if(!sel.querySelector('option[value="'+sport+'"]')){var opt=document.createElement('option');opt.value=sport;opt.textContent=sport.charAt(0).toUpperCase()+sport.slice(1);sel.appendChild(opt);}renderSportList();}
 }
 
-// ── NAV ────────────────────────────────────────────────────
+// ── NAV ─────────────────────────────────────────────────
 function switchView(name){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-btn[data-view]').forEach(b=>b.classList.remove('active'));
-  document.getElementById(`view-${name}`).classList.add('active');
-  document.querySelector(`[data-view="${name}"]`).classList.add('active');
-  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelector('[data-view="'+name+'"]').classList.add('active');
+  if(name==='history')loadHistory();
+  if(name==='library'){loadLibrary();loadCategories();}
 }
 
-// ── INIT ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
-  const saved=localStorage.getItem('wod_user');
+// ── INIT ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  var saved=localStorage.getItem('wod_user');
   if(token&&saved){currentUser=JSON.parse(saved);showApp();}else{showAuth();}
 
-  // Auth
-  document.querySelectorAll('.auth-tab').forEach(tab=>tab.addEventListener('click',()=>{
-    document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
+  document.querySelectorAll('.auth-tab').forEach(function(tab){tab.addEventListener('click',function(){
+    document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('active');});tab.classList.add('active');
     document.getElementById('tab-login').classList.toggle('hidden',tab.dataset.tab!=='login');
     document.getElementById('tab-register').classList.toggle('hidden',tab.dataset.tab!=='register');showAuthError('');
-  }));
+  });});
   document.getElementById('btn-login').addEventListener('click',login);
-  document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+  document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
   document.getElementById('btn-register').addEventListener('click',register);
   document.getElementById('btn-logout').addEventListener('click',logout);
-
-  // Nav
-  document.querySelectorAll('.nav-btn[data-view]').forEach(btn=>btn.addEventListener('click',()=>switchView(btn.dataset.view)));
-  document.getElementById('sport-selector').addEventListener('change',e=>{
+  document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){btn.addEventListener('click',function(){switchView(btn.dataset.view);});});
+  document.getElementById('sport-selector').addEventListener('change',function(e){
     currentSport=e.target.value;
-    const view=document.querySelector('.view.active')?.id?.replace('view-','');
-    if(view==='today')loadToday();if(view==='history')loadHistory();if(view==='library')loadLibrary();
+    var view=(document.querySelector('.view.active')||{}).id;
+    if(view)view=view.replace('view-','');
+    if(view==='today')loadToday();if(view==='history')loadHistory();if(view==='library'){loadLibrary();loadCategories();}
   });
-
-  // Today
-  document.querySelectorAll('.vtab').forEach((tab,i)=>tab.addEventListener('click',()=>{
-    if(currentWorkouts[i]){activeVariant=currentWorkouts[i].variant;showVariant(currentWorkouts[i].variant);}
-  }));
+  document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});
   document.getElementById('btn-approve').addEventListener('click',approveWorkout);
-  document.getElementById('btn-regenerate').addEventListener('click',async()=>{
-    await Promise.all(currentWorkouts.map(w=>apiCall('/api/workouts/'+w._id+'/reject',{method:'PUT'})));
-    currentWorkouts=[];
-    document.querySelectorAll('.vtab').forEach((t,i)=>{t.style.display='';t.textContent='Option '+(i+1);});
-    document.querySelector('.action-bar').style.display='';
-    loadToday();
-  });
+  document.getElementById('btn-regenerate').addEventListener('click',regenerateWorkouts);
   document.getElementById('btn-ai').addEventListener('click',generateAiVariant);
-
-  // Library
   document.getElementById('btn-add-ex').addEventListener('click',addExercise);
-  document.getElementById('ex-name').addEventListener('keydown',e=>{if(e.key==='Enter')addExercise();});
+  document.getElementById('ex-name').addEventListener('keydown',function(e){if(e.key==='Enter')addExercise();});
   document.getElementById('btn-seed').addEventListener('click',seedDefaults);
   document.getElementById('ex-category').addEventListener('change',handleCategoryChange);
   document.getElementById('btn-upload-photo').addEventListener('click',togglePhotoPanel);
-  document.getElementById('photo-input').addEventListener('change',e=>handlePhotoSelect(e.target.files));
+  document.getElementById('photo-input').addEventListener('change',function(e){handlePhotoSelect(e.target.files);});
   document.getElementById('btn-analyze').addEventListener('click',analyzePhotos);
-
-  // Drag & drop
-  const drop=document.getElementById('photo-drop');
-  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag-over');});
-  drop.addEventListener('dragleave',()=>drop.classList.remove('drag-over'));
-  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag-over');handlePhotoSelect(e.dataTransfer.files);});
-
-  // Settings
-  document.querySelectorAll('.bc-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('.bc-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-    renderBlockModalities(parseInt(btn.dataset.count),currentUser?.settings?.blockModalities||{});
-  }));
-  document.getElementById('avoid-days').addEventListener('input',e=>document.getElementById('days-label').textContent=e.target.value);
+  var drop=document.getElementById('photo-drop');
+  if(drop){
+    drop.addEventListener('dragover',function(e){e.preventDefault();drop.classList.add('drag-over');});
+    drop.addEventListener('dragleave',function(){drop.classList.remove('drag-over');});
+    drop.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('drag-over');handlePhotoSelect(e.dataTransfer.files);});
+  }
+  document.querySelectorAll('.bc-btn').forEach(function(btn){btn.addEventListener('click',function(){
+    document.querySelectorAll('.bc-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
+    renderBlockModalities(parseInt(btn.dataset.count),(currentUser&&currentUser.settings?currentUser.settings.blockModalities:{})||{});
+  });});
+  document.getElementById('avoid-days').addEventListener('input',function(e){document.getElementById('days-label').textContent=e.target.value;});
   document.getElementById('btn-save-settings').addEventListener('click',saveSetting);
   document.getElementById('btn-add-sport').addEventListener('click',addSport);
-  document.getElementById('new-sport').addEventListener('keydown',e=>{if(e.key==='Enter')addSport();});
-
-  // Modal
-  document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
-  document.getElementById('modal-overlay').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
+  document.getElementById('new-sport').addEventListener('keydown',function(e){if(e.key==='Enter')addSport();});
+  document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
+  document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
-
-
-
