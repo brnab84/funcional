@@ -19,50 +19,36 @@ const DEFAULTS = [
   {name:'Thruster',category:'power'},{name:'KB Snatch',category:'power'},{name:'KB Swing',category:'power'},{name:'Wall Ball',category:'power'},
 ];
 
-// PUBLIC - no auth needed
 router.get('/', async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const exercises = await ExerciseLibrary.find({ active: true, sport }).sort('category name');
-    res.json({ exercises });
+    res.json({ exercises: await ExerciseLibrary.find({ sport }).sort('category name') });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
 router.get('/categories', async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const cats = await ExerciseLibrary.distinct('category', { active: true, sport });
-    const defaults = ['lower','upper','core','conditioning','power'];
-    const all = [...new Set([...defaults, ...cats])];
+    const cats = await ExerciseLibrary.distinct('category', { sport });
+    const all = [...new Set(['lower','upper','core','conditioning','power', ...cats])];
     res.json({ categories: all });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// PUBLIC seed - one by one, never crashes
+// Seed: delete ALL old ones for this sport and insert fresh
 router.post('/seed', async (req, res) => {
   const sport = (req.body && req.body.sport) || 'functional';
-  let added = 0, skipped = 0;
   try {
-    for (const ex of DEFAULTS) {
-      try {
-        const exists = await ExerciseLibrary.findOne({ name: ex.name, sport });
-        if (exists) {
-          if (!exists.active) { exists.active = true; await exists.save(); }
-          skipped++;
-        } else {
-          await ExerciseLibrary.create({ name: ex.name, category: ex.category, sport, active: true });
-          added++;
-        }
-      } catch(e) { skipped++; }
-    }
-    const count = await ExerciseLibrary.countDocuments({ sport, active: true });
-    res.json({ message: 'Seeded', added, skipped, count });
+    await ExerciseLibrary.deleteMany({ sport });
+    const docs = DEFAULTS.map(e => ({ name: e.name, category: e.category, sport }));
+    await ExerciseLibrary.insertMany(docs);
+    const count = await ExerciseLibrary.countDocuments({ sport });
+    res.json({ message: 'Seeded', count });
   } catch(err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// These need auth
 router.post('/', auth, async (req, res) => {
   try {
     const { name, category, equipment, sport } = req.body;
@@ -72,7 +58,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.delete('/:id', auth, async (req, res) => {
-  try { await ExerciseLibrary.findByIdAndUpdate(req.params.id, { active: false }); res.json({ ok: true }); }
+  try { await ExerciseLibrary.findByIdAndDelete(req.params.id); res.json({ ok: true }); }
   catch(err) { res.status(500).json({ message: err.message }); }
 });
 
