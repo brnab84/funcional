@@ -19,37 +19,42 @@ const DEFAULTS = [
   {name:'Thruster',category:'power'},{name:'KB Snatch',category:'power'},{name:'KB Swing',category:'power'},{name:'Wall Ball',category:'power'},
 ];
 
-router.get('/', async (req, res) => {
+// List exercises for current user
+router.get('/', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    res.json({ exercises: await ExerciseLibrary.find({ sport }).sort('category name') });
+    const exercises = await ExerciseLibrary.find({ sport, user: req.user._id }).sort('category name');
+    res.json({ exercises });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-router.get('/categories', async (req, res) => {
+router.get('/categories', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const cats = await ExerciseLibrary.distinct('category', { sport });
+    const cats = await ExerciseLibrary.distinct('category', { sport, user: req.user._id });
     const all = [...new Set(['lower','upper','core','conditioning','power', ...cats])];
     res.json({ categories: all });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-router.post('/seed', async (req, res) => {
+// Seed for current user - creates their own copy
+router.post('/seed', auth, async (req, res) => {
   const sport = (req.body && req.body.sport) || 'functional';
+  const userId = req.user._id;
   try {
-    // Drop the old unique index on name that blocks inserts
-    try {
-      await ExerciseLibrary.collection.dropIndex('name_1');
-    } catch(e) { /* index may not exist, ignore */ }
+    // Drop old unique index if exists
+    try { await ExerciseLibrary.collection.dropIndex('name_1'); } catch(e) {}
 
-    // Delete ALL docs in collection (clean slate)
-    await ExerciseLibrary.deleteMany({});
+    // Check if this user already has exercises
+    const existing = await ExerciseLibrary.countDocuments({ sport, user: userId });
+    if (existing > 0) {
+      return res.json({ message: 'Already seeded', count: existing });
+    }
 
-    // Insert fresh
-    const docs = DEFAULTS.map(e => ({ name: e.name, category: e.category, sport }));
+    // Insert for this user
+    const docs = DEFAULTS.map(e => ({ name: e.name, category: e.category, sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
-    const count = await ExerciseLibrary.countDocuments({ sport });
+    const count = await ExerciseLibrary.countDocuments({ sport, user: userId });
     res.json({ message: 'Seeded', count });
   } catch(err) {
     res.status(500).json({ message: err.message });
@@ -59,13 +64,13 @@ router.post('/seed', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const { name, category, equipment, sport } = req.body;
-    const ex = await ExerciseLibrary.create({ name, category, equipment: equipment||'none', sport: sport||'functional' });
+    const ex = await ExerciseLibrary.create({ name, category, equipment: equipment||'none', sport: sport||'functional', user: req.user._id });
     res.status(201).json({ exercise: ex });
   } catch(err) { res.status(400).json({ message: err.message }); }
 });
 
 router.delete('/:id', auth, async (req, res) => {
-  try { await ExerciseLibrary.findByIdAndDelete(req.params.id); res.json({ ok: true }); }
+  try { await ExerciseLibrary.findOneAndDelete({ _id: req.params.id, user: req.user._id }); res.json({ ok: true }); }
   catch(err) { res.status(500).json({ message: err.message }); }
 });
 
