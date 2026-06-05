@@ -1,5 +1,5 @@
 const API='';
-const VERSION='3.2.1';
+var VERSION='...';
 let token=localStorage.getItem('wod_token');
 let currentUser=null,currentWorkouts=[],activeVariant=1,currentSport='functional';
 let pendingPhotos=[],editingWorkout=null;
@@ -22,6 +22,9 @@ function showApp(){
     loadUserSettings();
   }
   loadToday();
+  fetch(API+'/api/health').then(function(r){return r.json();}).then(function(d){
+    if(d.version){VERSION=d.version;document.querySelectorAll('.version-label').forEach(function(el){el.textContent='v'+d.version;});}
+  }).catch(function(){});
 }
 async function login(){
   const email=document.getElementById('login-email').value.trim();
@@ -472,4 +475,5 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
