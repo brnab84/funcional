@@ -125,7 +125,7 @@ router.post('/ai', async (req, res) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
     });
     const d = await r.json();
     if (!d || !d.content || !d.content[0] || !d.content[0].text) {
@@ -152,5 +152,6 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
