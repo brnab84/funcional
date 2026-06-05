@@ -5,113 +5,135 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Functional WOD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- NAV -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">⚡</div>
+    <h1 class="auth-title">FUNCTIONAL WOD</h1>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Login</button>
+      <button class="auth-tab" data-tab="register">Register</button>
+    </div>
+    <div id="auth-error" class="auth-error hidden"></div>
+    <div id="tab-login" class="auth-form">
+      <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+      <input type="password" id="login-password" placeholder="Password">
+      <button class="btn-primary" id="btn-login">Login</button>
+    </div>
+    <div id="tab-register" class="auth-form hidden">
+      <input type="text" id="reg-name" placeholder="Your name">
+      <input type="email" id="reg-email" placeholder="Email">
+      <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
+      <button class="btn-primary" id="btn-register">Create account</button>
+    </div>
+  </div>
+</div>
+<div id="app" class="hidden">
   <nav class="nav">
-    <div class="nav-brand">
-      <span class="nav-logo">⚡</span>
-      <span class="nav-title">FUNCTIONAL WOD</span>
+    <div class="nav-brand"><span class="nav-logo">⚡</span><span class="nav-title">FUNCTIONAL WOD</span></div>
+    <div class="nav-center">
+      <select id="sport-selector" class="sport-select">
+        <option value="functional">Functional</option>
+        <option value="swimming">Swimming</option>
+      </select>
     </div>
     <div class="nav-links">
       <button class="nav-btn active" data-view="today">Today</button>
       <button class="nav-btn" data-view="history">History</button>
       <button class="nav-btn" data-view="library">Library</button>
+      <button class="nav-btn" data-view="settings">⚙</button>
+      <button class="nav-btn nav-logout" id="btn-logout" title="Logout">↩</button>
     </div>
   </nav>
-
-  <!-- VIEWS -->
   <main class="main">
-
-    <!-- TODAY VIEW -->
     <div id="view-today" class="view active">
       <div class="today-header">
-        <div>
-          <p class="eyebrow" id="today-date">Loading...</p>
-          <h1 class="today-title">Today's WOD</h1>
-        </div>
+        <div><p class="eyebrow" id="today-date"></p><h1 class="today-title">TODAY'S WOD</h1></div>
         <div class="today-actions">
           <button class="btn-icon" id="btn-regenerate" title="Regenerate">↺</button>
-          <button class="btn-ai" id="btn-ai">
-            <span class="ai-dot"></span> AI Variant
-          </button>
+          <button class="btn-ai" id="btn-ai"><span class="ai-dot"></span> AI Variant</button>
         </div>
       </div>
-
       <div id="ai-status" class="ai-status hidden"></div>
-
-      <!-- Variant tabs -->
       <div class="variant-tabs">
         <button class="vtab active" data-variant="1">Option 1</button>
         <button class="vtab" data-variant="2">Option 2</button>
         <button class="vtab" data-variant="3">Option 3</button>
       </div>
-
-      <!-- Workout cards container -->
-      <div id="workout-display" class="workout-display">
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Generating workouts...</p>
-        </div>
-      </div>
-
-      <!-- Action bar -->
-      <div class="action-bar" id="action-bar">
-        <button class="btn-approve" id="btn-approve">
-          ✓ Approve this workout
-        </button>
+      <div id="workout-display" class="workout-display"><div class="loading-state"><div class="spinner"></div><p>Generating...</p></div></div>
+      <div class="action-bar">
+        <button class="btn-approve" id="btn-approve">✓ Approve this workout</button>
         <p class="action-hint">Approved workouts are saved to history</p>
       </div>
     </div>
-
-    <!-- HISTORY VIEW -->
     <div id="view-history" class="view">
-      <div class="view-header">
-        <h2>Workout History</h2>
-        <div id="history-stats" class="history-stats"></div>
-      </div>
-      <div id="history-list" class="history-list">
-        <div class="loading-state"><div class="spinner"></div></div>
-      </div>
+      <div class="view-header"><h2>History</h2><div id="history-stats" class="history-stats"></div></div>
+      <div id="history-list" class="history-list"><div class="loading-state"><div class="spinner"></div></div></div>
       <div id="history-pagination" class="pagination"></div>
     </div>
-
-    <!-- LIBRARY VIEW -->
     <div id="view-library" class="view">
-      <div class="view-header">
-        <h2>Exercise Library</h2>
-        <button class="btn-seed" id="btn-seed">Seed defaults</button>
-      </div>
+      <div class="view-header"><h2>Exercise Library</h2><button class="btn-seed" id="btn-seed">Seed defaults</button></div>
       <div class="library-add">
         <input type="text" id="ex-name" placeholder="Exercise name" autocomplete="off">
         <select id="ex-category">
-          <option value="lower">Lower Body</option>
-          <option value="upper">Upper Body</option>
-          <option value="core">Core</option>
-          <option value="conditioning">Conditioning</option>
-          <option value="power">Power</option>
+          <option value="lower">Lower Body</option><option value="upper">Upper Body</option>
+          <option value="core">Core</option><option value="conditioning">Conditioning</option><option value="power">Power</option>
         </select>
         <button class="btn-add" id="btn-add-ex">+ Add</button>
       </div>
-      <div id="exercise-list" class="exercise-list">
-        <div class="loading-state"><div class="spinner"></div></div>
+      <div id="exercise-list" class="exercise-list"><div class="loading-state"><div class="spinner"></div></div></div>
+    </div>
+    <div id="view-settings" class="view">
+      <div class="view-header"><h2>Settings</h2></div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>Workout Structure</h3>
+          <label class="field"><span>Number of main blocks</span>
+            <div class="block-count-selector" id="block-count-selector">
+              <button class="bc-btn" data-count="1">A</button>
+              <button class="bc-btn active" data-count="2">A+B</button>
+              <button class="bc-btn" data-count="3">A+B+C</button>
+              <button class="bc-btn" data-count="4">A+B+C+D</button>
+            </div>
+          </label>
+          <div id="block-modalities" class="block-modalities"></div>
+        </div>
+        <div class="settings-card">
+          <h3>Anti-Repetition</h3>
+          <label class="field">
+            <span>Avoid repeating exercises from last <strong id="days-label">7</strong> days</span>
+            <input type="range" id="avoid-days" min="1" max="30" value="7" class="range-input">
+          </label>
+        </div>
+        <div class="settings-card">
+          <h3>Sports</h3>
+          <p class="card-hint">Add sports to manage separate workout libraries</p>
+          <div class="sport-list" id="sport-list"></div>
+          <div class="sport-add">
+            <input type="text" id="new-sport" placeholder="e.g. swimming, cycling...">
+            <button class="btn-add" id="btn-add-sport">+ Add</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Account</h3>
+          <p class="card-hint" id="settings-user-info"></p>
+          <button class="btn-save-settings" id="btn-save-settings">Save settings</button>
+          <div id="settings-status" class="settings-status hidden"></div>
+        </div>
       </div>
     </div>
-
   </main>
-
-  <!-- HISTORY MODAL -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-overlay" id="modal-overlay"></div>
-    <div class="modal-box">
-      <button class="modal-close" id="modal-close">✕</button>
-      <div id="modal-content"></div>
-    </div>
+</div>
+<div id="modal" class="modal hidden">
+  <div class="modal-overlay" id="modal-overlay"></div>
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div id="modal-content"></div>
   </div>
-
-  <script src="app.js"></script>
+</div>
+<script src="app.js"></script>
 </body>
 </html>
