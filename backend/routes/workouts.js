@@ -128,7 +128,14 @@ router.post('/ai', async (req, res) => {
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
     });
     const d = await r.json();
-    const parsed = JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
+    if (!d || !d.content || !d.content[0] || !d.content[0].text) {
+      return res.status(500).json({ message: 'AI returned empty response: ' + JSON.stringify(d).substring(0, 200) });
+    }
+    const rawText = d.content[0].text.replace(/```json|```/g, '').trim();
+    var parsed;
+    try { parsed = JSON.parse(rawText); } catch(pe) {
+      return res.status(500).json({ message: 'AI returned invalid JSON: ' + rawText.substring(0, 200) });
+    }
     const workout = await Workout.create({ user: req.user._id, sport, date: today, warmup: parsed.warmup, blocks: parsed.blocks, pattern: parsed.pattern, variant: 99, status: 'suggestion', source: 'ai' });
     res.json({ workout });
   } catch(err) { res.status(500).json({ message: err.message }); }
@@ -145,3 +152,4 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
