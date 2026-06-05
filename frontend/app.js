@@ -153,15 +153,17 @@ async function loadLibrary(){
   const r=await apiCall(`/api/exercises?sport=${currentSport}`);if(!r)return;
   const exercises=r.data.exercises||[];
   if(!exercises.length){list.innerHTML=`<div class="empty-state"><h3>Empty Library</h3><p>Click "Seed defaults" to load exercises from whiteboard patterns</p></div>`;return;}
-  // Group by category
-  const cats={lower:[],upper:[],core:[],conditioning:[],power:[]};
-  exercises.forEach(ex=>{if(cats[ex.category])cats[ex.category].push(ex);});
+  // Group by category dynamically
+  const cats={};
+  exercises.forEach(ex=>{(cats[ex.category]=cats[ex.category]||[]).push(ex);});
   const catLabels={lower:'🦵 Lower Body',upper:'💪 Upper Body',core:'🔥 Core',conditioning:'🏃 Conditioning',power:'⚡ Power'};
-  list.innerHTML=Object.entries(cats).filter(([,arr])=>arr.length>0).map(([cat,arr])=>`
+  const order=['lower','upper','core','conditioning','power'];
+  const sortedCats=Object.keys(cats).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+  list.innerHTML=sortedCats.map(cat=>`
     <div class="ex-category-group">
-      <div class="ex-cat-header">${catLabels[cat]} <span class="ex-cat-count">${arr.length}</span></div>
+      <div class="ex-cat-header">${catLabels[cat]||cat.charAt(0).toUpperCase()+cat.slice(1)} <span class="ex-cat-count">${cats[cat].length}</span></div>
       <div class="ex-cat-items">
-        ${arr.map(ex=>`<div class="ex-pill" id="ex-${ex._id}"><span class="ex-pill-name"><span class="ex-category-dot dot-${ex.category}"></span>${ex.name}</span><button class="ex-pill-delete" onclick="deleteExercise('${ex._id}')">×</button></div>`).join('')}
+        ${cats[cat].map(ex=>`<div class="ex-pill" id="ex-${ex._id}"><span class="ex-pill-name"><span class="ex-category-dot dot-${ex.category}"></span>${ex.name}</span><button class="ex-pill-delete" onclick="deleteExercise('${ex._id}')">×</button></div>`).join('')}
       </div>
     </div>`).join('');
 }
@@ -174,13 +176,38 @@ async function deleteExercise(id){await apiCall(`/api/exercises/${id}`,{method:'
 async function seedDefaults(){
   const btn=document.getElementById('btn-seed');btn.textContent='Seeding...';btn.disabled=true;
   const r=await apiCall('/api/exercises/seed',{method:'POST',body:JSON.stringify({sport:currentSport})});
-  if(r?.ok){
-    const msg=r.data.message==='Already seeded'?`✓ ${r.data.count} exercises`:`✓ Seeded ${r.data.count}`;
-    btn.textContent=msg;loadLibrary();
+  if(r&&r.ok){
+    btn.textContent='Seeded '+r.data.count;
+    loadLibrary();loadCategories();
   } else {
-    btn.textContent='Error - retry';
+    btn.textContent='Error';
+    alert('Seed failed: '+(r&&r.data&&r.data.message?r.data.message:'unknown')+(r&&r.data&&r.data.errors&&r.data.errors.length?String.fromCharCode(10)+r.data.errors.join(String.fromCharCode(10)):''));
   }
   setTimeout(()=>{btn.textContent='Seed defaults';btn.disabled=false;},3000);
+}
+
+async function loadCategories(){
+  const r=await apiCall('/api/exercises/categories?sport='+currentSport);
+  if(!r||!r.ok)return;
+  const sel=document.getElementById('ex-category');
+  const labels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power'};
+  const current=sel.value;
+  sel.innerHTML=r.data.categories.map(c=>'<option value="'+c+'">'+(labels[c]||c.charAt(0).toUpperCase()+c.slice(1))+'</option>').join('')+'<option value="__new__">+ New category...</option>';
+  if(r.data.categories.includes(current))sel.value=current;
+}
+
+function handleCategoryChange(){
+  const sel=document.getElementById('ex-category');
+  if(sel.value==='__new__'){
+    const newCat=prompt('New category name (e.g. mobility, olympic, gymnastics):');
+    if(newCat&&newCat.trim()){
+      const val=newCat.trim().toLowerCase();
+      const opt=document.createElement('option');
+      opt.value=val;opt.textContent=newCat.trim().charAt(0).toUpperCase()+newCat.trim().slice(1);
+      sel.insertBefore(opt,sel.querySelector('option[value="__new__"]'));
+      sel.value=val;
+    } else { sel.value=sel.options[0].value; }
+  }
 }
 
 // ── PHOTO UPLOAD ────────────────────────────────────────────
@@ -269,7 +296,7 @@ function switchView(name){
   document.querySelectorAll('.nav-btn[data-view]').forEach(b=>b.classList.remove('active'));
   document.getElementById(`view-${name}`).classList.add('active');
   document.querySelector(`[data-view="${name}"]`).classList.add('active');
-  if(name==='history')loadHistory();if(name==='library')loadLibrary();
+  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}
 }
 
 // ── INIT ───────────────────────────────────────────────────
@@ -309,6 +336,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btn-add-ex').addEventListener('click',addExercise);
   document.getElementById('ex-name').addEventListener('keydown',e=>{if(e.key==='Enter')addExercise();});
   document.getElementById('btn-seed').addEventListener('click',seedDefaults);
+  document.getElementById('ex-category').addEventListener('change',handleCategoryChange);
   document.getElementById('btn-upload-photo').addEventListener('click',togglePhotoPanel);
   document.getElementById('photo-input').addEventListener('change',e=>handlePhotoSelect(e.target.files));
   document.getElementById('btn-analyze').addEventListener('click',analyzePhotos);
@@ -333,3 +361,4 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
   document.getElementById('modal-overlay').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
 });
+
