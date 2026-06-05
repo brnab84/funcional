@@ -19,16 +19,16 @@ const DEFAULTS = [
   {name:'Thruster',category:'power'},{name:'KB Snatch',category:'power'},{name:'KB Swing',category:'power'},{name:'Wall Ball',category:'power'},
 ];
 
-router.get('/', auth, async (req, res) => {
+// PUBLIC - no auth needed
+router.get('/', async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
     const exercises = await ExerciseLibrary.find({ active: true, sport }).sort('category name');
     res.json({ exercises });
-  } catch(err) { res.status(500).json({ message: 'GET error: ' + err.message }); }
+  } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// Distinct categories for a sport (for dropdown)
-router.get('/categories', auth, async (req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
     const cats = await ExerciseLibrary.distinct('category', { active: true, sport });
@@ -38,10 +38,10 @@ router.get('/categories', auth, async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-router.post('/seed', auth, async (req, res) => {
-  const sport = req.body.sport || 'functional';
+// PUBLIC seed - one by one, never crashes
+router.post('/seed', async (req, res) => {
+  const sport = (req.body && req.body.sport) || 'functional';
   let added = 0, skipped = 0;
-  const errors = [];
   try {
     for (const ex of DEFAULTS) {
       try {
@@ -53,19 +53,19 @@ router.post('/seed', auth, async (req, res) => {
           await ExerciseLibrary.create({ name: ex.name, category: ex.category, sport, active: true });
           added++;
         }
-      } catch(e) { errors.push(`${ex.name}: ${e.message}`); }
+      } catch(e) { skipped++; }
     }
     const count = await ExerciseLibrary.countDocuments({ sport, active: true });
-    res.json({ message: 'Seeded', added, skipped, count, errors: errors.slice(0,5) });
+    res.json({ message: 'Seeded', added, skipped, count });
   } catch(err) {
-    res.status(500).json({ message: 'Seed error: ' + err.message, added, skipped, errors: errors.slice(0,5) });
+    res.status(500).json({ message: err.message });
   }
 });
 
+// These need auth
 router.post('/', auth, async (req, res) => {
   try {
     const { name, category, equipment, sport } = req.body;
-    if (!name || !category) return res.status(400).json({ message: 'Name and category required' });
     const ex = await ExerciseLibrary.create({ name, category, equipment: equipment||'none', sport: sport||'functional' });
     res.status(201).json({ exercise: ex });
   } catch(err) { res.status(400).json({ message: err.message }); }
