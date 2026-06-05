@@ -1,5 +1,5 @@
 const API='';
-const VERSION='3.0';
+const VERSION='3.1.0';
 let token=localStorage.getItem('wod_token');
 let currentUser=null,currentWorkouts=[],activeVariant=1,currentSport='functional';
 let pendingPhotos=[];
@@ -392,5 +392,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
   document.getElementById('modal-overlay').addEventListener('click',()=>document.getElementById('modal').classList.add('hidden'));
 });
+
 
 
