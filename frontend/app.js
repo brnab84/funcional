@@ -428,6 +428,10 @@ function switchView(name){
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
+  // Fetch version immediately for all screens
+  fetch(API+'/api/health').then(function(r){return r.json();}).then(function(d){
+    if(d.version){VERSION=d.version;document.querySelectorAll('.version-label').forEach(function(el){el.textContent='v'+d.version;});}
+  }).catch(function(){});
   var saved=localStorage.getItem('wod_user');
   if(token&&saved){currentUser=JSON.parse(saved);showApp();}else{showAuth();}
 
@@ -475,5 +479,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
