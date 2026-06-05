@@ -1,343 +1,165 @@
-// Workout Generator - Based on real gym patterns
-// Patterns extracted from whiteboard photos
-
-const WARMUP_EXERCISES = [
-  { name: 'Jumping Jacks', category: 'conditioning' },
-  { name: 'Air Squats', category: 'lower' },
-  { name: 'Mountain Climbers', category: 'core' },
-  { name: 'Sprawl', category: 'conditioning' },
-  { name: 'Shoulder Taps', category: 'upper' },
-  { name: 'Sit Up', category: 'core' },
-  { name: 'Push Up', category: 'upper' },
-  { name: 'Abs Crunch', category: 'core' },
-  { name: 'Abs Bike', category: 'core' },
-  { name: 'Plank Get Up', category: 'core' },
-  { name: 'Walking Kicks (W.K)', category: 'lower' },
-  { name: 'Espinales', category: 'lower' },
-  { name: 'Abs Ball', category: 'core' },
-  { name: 'Climbers', category: 'conditioning' },
-  { name: 'Jump Rope', category: 'conditioning' },
-];
-
-const WARMUP_REPS = {
-  conditioning: ['20', '25', '30', '50'],
-  lower: ['10', '15', '20'],
-  upper: ['10', '15', '20'],
-  core: ['15', '20', '25', '30'],
-};
-
-// Modalities from photos
-const MODALITIES = [
-  'EMOM',
-  'OTM',
-  'AMRAP',
-  'FOR TIME',       // "A Completar"
-  'ROUNDS',
-  'TABATA',         // 45x15 or 40x15
-  'DESCENDING',     // 21-15-9 or 21-15-12-9
-  'ZONES',          // Zona 1, 2, 3
-  'MINI AMRAP',
-];
-
 function seededRand(seed) {
   let s = 0;
   for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
-
 function shuffle(arr, rand) {
   const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(rand()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
-
 function pickBalanced(pool, count, rand) {
-  const categories = ['lower', 'upper', 'core', 'conditioning', 'power'];
-  const selected = [];
-  const shuffled = shuffle(pool, rand);
-  
-  // First pass: one per category
-  categories.forEach(cat => {
-    if (selected.length >= count) return;
-    const ex = shuffled.find(e => e.category === cat && !selected.find(s => s.name === e.name));
-    if (ex) selected.push(ex);
-  });
-  
-  // Second pass: fill remaining
-  shuffled.forEach(ex => {
-    if (selected.length >= count) return;
-    if (!selected.find(s => s.name === ex.name)) selected.push(ex);
-  });
-  
-  return selected.slice(0, count);
+  const cats=['lower','upper','core','conditioning','power'];
+  const sel=[], sh=shuffle(pool,rand);
+  cats.forEach(cat=>{ if(sel.length>=count)return; const ex=sh.find(e=>e.category===cat&&!sel.find(s=>s.name===e.name)); if(ex)sel.push(ex); });
+  sh.forEach(ex=>{ if(sel.length<count&&!sel.find(s=>s.name===ex.name))sel.push(ex); });
+  return sel.slice(0,count);
 }
-
-function buildWarmup(rand, rounds) {
-  const warmupRounds = rounds || [3, 4, 5, 7][Math.floor(rand() * 4)];
-  const shuffled = shuffle(WARMUP_EXERCISES, rand);
-  const count = [5, 6, 7][Math.floor(rand() * 3)];
-  const exercises = shuffled.slice(0, count).map(ex => {
-    const repsOptions = WARMUP_REPS[ex.category] || ['20'];
-    return {
-      name: ex.name,
-      reps: repsOptions[Math.floor(rand() * repsOptions.length)],
-      category: ex.category
-    };
-  });
-  return { rounds: warmupRounds, exercises };
+const WARMUP=[
+  {name:'Jumping Jacks',category:'conditioning',reps:['20','25','30']},
+  {name:'Air Squats',category:'lower',reps:['10','15','20']},
+  {name:'Mountain Climbers',category:'core',reps:['20','30','50']},
+  {name:'Sprawl',category:'conditioning',reps:['7','10']},
+  {name:'Shoulder Taps',category:'upper',reps:['10','15','20']},
+  {name:'Sit Up',category:'core',reps:['15','20']},
+  {name:'Push Up',category:'upper',reps:['10','15','20']},
+  {name:'Abs Crunch',category:'core',reps:['20','25','30']},
+  {name:'Abs Bike',category:'core',reps:['20','25','30']},
+  {name:'Plank Get Up',category:'core',reps:['10']},
+  {name:'Walking Kicks',category:'lower',reps:['5','10']},
+  {name:'Espinales',category:'lower',reps:['15','20']},
+  {name:'Abs Ball',category:'core',reps:['20','30']},
+  {name:'Climbers',category:'conditioning',reps:['20','30','50']},
+  {name:'Jump Rope',category:'conditioning',reps:['50','100','250','500']},
+];
+function buildWarmup(rand){
+  const rounds=[3,4,5,7][Math.floor(rand()*4)];
+  const count=[5,6,7][Math.floor(rand()*3)];
+  const pool=shuffle(WARMUP,rand);
+  return {rounds,exercises:pool.slice(0,count).map(ex=>({name:ex.name,reps:ex.reps[Math.floor(rand()*ex.reps.length)],category:ex.category}))};
 }
-
-function buildEMOM(exercises, rand) {
-  const minutes = [7, 10, 14, 21][Math.floor(rand() * 4)];
-  const count = minutes <= 7 ? 2 : minutes <= 14 ? 3 : 3;
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'A',
-    modality: 'EMOM',
-    config: `${minutes}'`,
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: ['8', '10', '12', '15'][Math.floor(rand() * 4)],
-      category: ex.category
-    }))
-  };
+function buildEMOM(pool,rand,label){
+  const mins=[7,10,14,21][Math.floor(rand()*4)];
+  const count=mins<=7?2:3;
+  return {label,modality:'EMOM',config:`${mins}'`,exercises:pickBalanced(pool,count,rand).map(ex=>({name:ex.name,reps:['8','10','12','15'][Math.floor(rand()*4)],category:ex.category}))};
 }
-
-function buildOTM(exercises, rand) {
-  const interval = [2, 2.5, 3, 4][Math.floor(rand() * 4)];
-  const rounds = [5, 6, 7][Math.floor(rand() * 3)];
-  const count = [4, 5, 6][Math.floor(rand() * 3)];
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'A',
-    modality: 'OTM',
-    config: `${interval}' — ${rounds} rounds`,
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: ['10', '12', '15', '20', '30'][Math.floor(rand() * 5)],
-      category: ex.category
-    }))
-  };
+function buildOTM(pool,rand,label){
+  const interval=[2,2.5,3,4][Math.floor(rand()*4)];
+  const rounds=[5,6,7][Math.floor(rand()*3)];
+  return {label,modality:'OTM',config:`OTM ${interval}' — ${rounds} rounds`,exercises:pickBalanced(pool,[4,5,6][Math.floor(rand()*3)],rand).map(ex=>({name:ex.name,reps:['10','12','15','20','30'][Math.floor(rand()*5)],category:ex.category}))};
 }
-
-function buildAMRAP(exercises, rand) {
-  const minutes = [5, 8, 9, 10, 12][Math.floor(rand() * 5)];
-  const count = [4, 5, 6][Math.floor(rand() * 3)];
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'A',
-    modality: 'AMRAP',
-    config: `${minutes}'`,
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: ['8', '10', '12', '15', '20'][Math.floor(rand() * 5)],
-      category: ex.category
-    }))
-  };
+function buildAMRAP(pool,rand,label){
+  const mins=[5,8,9,10,12][Math.floor(rand()*5)];
+  return {label,modality:'AMRAP',config:`${mins}'`,exercises:pickBalanced(pool,[4,5,6][Math.floor(rand()*3)],rand).map(ex=>({name:ex.name,reps:['8','10','12','15','20'][Math.floor(rand()*5)],category:ex.category}))};
 }
-
-function buildForTime(exercises, rand) {
-  const count = [6, 7, 8, 9][Math.floor(rand() * 4)];
-  const selected = pickBalanced(exercises, count, rand);
-  const repOptions = ['20', '25', '30', '40', '50', '100', '150', '200'];
-  return {
-    label: 'A',
-    modality: 'FOR TIME',
-    config: 'A Completar',
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: repOptions[Math.floor(rand() * repOptions.length)],
-      category: ex.category
-    }))
-  };
+function buildRounds(pool,rand,label){
+  const rounds=[2,3,4,5][Math.floor(rand()*4)];
+  return {label,modality:'ROUNDS',config:`${rounds} Rounds`,exercises:pickBalanced(pool,[4,5,6][Math.floor(rand()*3)],rand).map(ex=>({name:ex.name,reps:['10','15','20','30'][Math.floor(rand()*4)],category:ex.category}))};
 }
-
-function buildRounds(exercises, rand) {
-  const rounds = [2, 3, 4, 5][Math.floor(rand() * 4)];
-  const count = [4, 5, 6][Math.floor(rand() * 3)];
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'A',
-    modality: 'ROUNDS',
-    config: `${rounds} Rounds`,
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: ['10', '15', '20', '30'][Math.floor(rand() * 4)],
-      category: ex.category
-    }))
-  };
+function buildForTime(pool,rand){
+  const reps=['20','25','30','40','50','100','150','200'];
+  return [{label:'A',modality:'FOR TIME',config:'A Completar',exercises:pickBalanced(pool,[6,7,8,9][Math.floor(rand()*4)],rand).map(ex=>({name:ex.name,reps:reps[Math.floor(rand()*reps.length)],category:ex.category}))}];
 }
-
-function buildTabata(exercises, rand) {
-  const work = [40, 45][Math.floor(rand() * 2)];
-  const rest = [10, 15][Math.floor(rand() * 2)];
-  const series = [2, 3][Math.floor(rand() * 2)];
-  const count = [7, 8, 9, 10][Math.floor(rand() * 4)];
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'A',
-    modality: 'TABATA',
-    config: `${work}"x${rest}" — ${series} series`,
-    exercises: selected.map((ex, i) => ({
-      name: ex.name,
-      reps: `Station ${i + 1}`,
-      category: ex.category
-    }))
-  };
+function build45x15(pool,rand){
+  const work=[40,45][Math.floor(rand()*2)],rest=[10,15][Math.floor(rand()*2)],series=[2,3][Math.floor(rand()*2)];
+  const count=[7,8,9,10][Math.floor(rand()*4)];
+  return [{label:'A',modality:'TABATA',config:`${work}"x${rest}" — ${series} series`,exercises:pickBalanced(pool,count,rand).map((ex,i)=>({name:ex.name,reps:`Station ${i+1}`,category:ex.category}))}];
 }
-
-function buildDescending(exercises, rand) {
-  const schemes = ['21-15-9', '21-15-12-9', '15-12-9'][Math.floor(rand() * 3)];
-  const count = [4, 5][Math.floor(rand() * 2)];
-  const selected = pickBalanced(exercises, count, rand);
-  return {
-    label: 'EC',
-    modality: 'DESCENDING',
-    config: schemes,
-    exercises: selected.map(ex => ({
-      name: ex.name,
-      reps: schemes.split('-')[0],
-      category: ex.category
-    }))
-  };
-}
-
-function buildZones(exercises, rand) {
-  const zoneCount = [2, 3][Math.floor(rand() * 2)];
-  const blocks = [];
-  const usedNames = new Set();
-  
-  for (let z = 1; z <= zoneCount; z++) {
-    const available = exercises.filter(e => !usedNames.has(e.name));
-    const count = [2, 3][Math.floor(rand() * 2)];
-    const selected = pickBalanced(available, count, rand);
-    selected.forEach(e => usedNames.add(e.name));
-    blocks.push({
-      label: `Zone ${z}`,
-      modality: 'ZONES',
-      config: `Zona ${z}`,
-      exercises: selected.map(ex => ({
-        name: ex.name,
-        reps: ['10', '10+10', '15'][Math.floor(rand() * 3)],
-        category: ex.category
-      }))
-    });
-  }
-  return blocks;
-}
-
-function buildMiniAmrap(exercises, rand) {
-  const stations = [3, 4, 5][Math.floor(rand() * 3)];
-  const minutes = 5;
-  const blocks = [];
-  const shuffled = shuffle(exercises, rand);
-  
-  for (let s = 1; s <= stations; s++) {
-    const start = (s - 1) * 3;
-    const exForStation = shuffled.slice(start, start + 3);
-    if (exForStation.length === 0) break;
-    blocks.push({
-      label: `${s}`,
-      modality: 'MINI AMRAP',
-      config: `${minutes}'`,
-      exercises: exForStation.map(ex => ({
-        name: ex.name,
-        reps: ['5', '8', '10'][Math.floor(rand() * 3)],
-        category: ex.category
-      }))
-    });
-  }
-  return blocks;
-}
-
-function buildMultiBlock(exercises, rand) {
-  // Like photos with A + B blocks of different modalities
-  const modA = ['EMOM', 'OTM', 'ROUNDS'][Math.floor(rand() * 3)];
-  const modB = ['AMRAP', 'FOR TIME', 'ROUNDS'][Math.floor(rand() * 3)];
-  
-  const half = Math.floor(exercises.length / 2);
-  const exA = exercises.slice(0, half);
-  const exB = exercises.slice(half);
-  
-  const blockA = buildBlockByModality(modA, exA, rand);
-  blockA.label = 'A';
-  
-  const blockB = buildBlockByModality(modB, exB, rand);
-  blockB.label = 'B';
-  
-  return [blockA, blockB];
-}
-
-function buildBlockByModality(modality, exercises, rand) {
-  switch (modality) {
-    case 'EMOM': return buildEMOM(exercises, rand);
-    case 'OTM': return buildOTM(exercises, rand);
-    case 'AMRAP': return buildAMRAP(exercises, rand);
-    case 'FOR TIME': return buildForTime(exercises, rand);
-    case 'ROUNDS': return buildRounds(exercises, rand);
-    case 'TABATA': return buildTabata(exercises, rand);
-    default: return buildRounds(exercises, rand);
-  }
-}
-
-function generateWorkout(exercisePool, seed, variantNum = 1, recentExercises = []) {
-  const rand = seededRand(`${seed}-v${variantNum}`);
-  
-  // Filter out recently used exercises (avoid repeats)
-  const recentSet = new Set(recentExercises.map(e => e.toLowerCase()));
-  let pool = exercisePool.filter(e => !recentSet.has(e.name.toLowerCase()));
-  if (pool.length < 8) pool = exercisePool; // fallback if too few
-  
-  const warmup = buildWarmup(rand);
-  
-  // Pick main modality pattern
-  const patterns = [
-    'single', 'single', 'single',   // more weight to single block
-    'multi',                          // A + B
-    'tabata',
-    'zones',
-    'descending',
-    'mini_amrap'
+function buildDescending(pool,rand){
+  const scheme=['21-15-9','21-15-12-9','15-12-9'][Math.floor(rand()*3)];
+  const half=Math.floor(pool.length/2);
+  return [
+    {label:'EC',modality:'DESCENDING',config:scheme,exercises:pickBalanced(pool.slice(0,half),[4,5][Math.floor(rand()*2)],rand).map(ex=>({name:ex.name,reps:scheme.split('-')[0],category:ex.category}))},
+    buildRounds(pool.slice(half),rand,'A')
   ];
-  const pattern = patterns[Math.floor(rand() * patterns.length)];
-  
-  let blocks = [];
-  const shuffledPool = shuffle(pool, rand);
-  
-  switch (pattern) {
-    case 'single': {
-      const mods = ['EMOM', 'OTM', 'AMRAP', 'FOR TIME', 'ROUNDS'];
-      const mod = mods[Math.floor(rand() * mods.length)];
-      const block = buildBlockByModality(mod, shuffledPool, rand);
-      block.label = 'A';
-      blocks = [block];
-      break;
-    }
-    case 'multi':
-      blocks = buildMultiBlock(shuffledPool, rand);
-      break;
-    case 'tabata':
-      blocks = [buildTabata(shuffledPool, rand)];
-      break;
-    case 'zones':
-      blocks = buildZones(shuffledPool, rand);
-      break;
-    case 'descending': {
-      const desc = buildDescending(shuffledPool, rand);
-      blocks = [desc];
-      break;
-    }
-    case 'mini_amrap':
-      blocks = buildMiniAmrap(shuffledPool, rand);
-      break;
-    default:
-      blocks = [buildRounds(shuffledPool, rand)];
-  }
-  
-  return { warmup, blocks };
 }
-
-module.exports = { generateWorkout };
+function buildZones(pool,rand){
+  const zoneCount=[2,3][Math.floor(rand()*2)];
+  const blocks=[],used=new Set();
+  for(let z=1;z<=zoneCount;z++){
+    const avail=pool.filter(e=>!used.has(e.name));
+    const sel=pickBalanced(avail,[2,3][Math.floor(rand()*2)],rand);
+    sel.forEach(e=>used.add(e.name));
+    blocks.push({label:`Zone ${z}`,modality:'ZONES',config:`Zona ${z}`,exercises:sel.map(ex=>({name:ex.name,reps:['10','10+10','15','10+10+10'][Math.floor(rand()*4)],category:ex.category}))});
+  }
+  return blocks;
+}
+function buildRoundsInOut(pool,rand){
+  const rounds=[3,4,5][Math.floor(rand()*3)];
+  const inEx=pool.find(e=>e.category==='conditioning')||pool[0];
+  const outEx=pool.find(e=>e.name.includes('Burpee'))||pool[pool.length-1];
+  const main=pickBalanced(pool.filter(e=>e.name!==inEx.name&&e.name!==outEx.name),[4,5][Math.floor(rand()*2)],rand);
+  return [{label:'A',modality:'ROUNDS',config:`IN + ${rounds} Rounds + OUT`,exercises:[
+    {name:`IN: ${inEx.name}`,reps:['250','300','500'][Math.floor(rand()*3)],category:'conditioning'},
+    ...main.map(ex=>({name:ex.name,reps:['10','15','20'][Math.floor(rand()*3)],category:ex.category})),
+    {name:`OUT: ${outEx.name}`,reps:['20','25','30'][Math.floor(rand()*3)],category:'conditioning'}
+  ]}];
+}
+function buildMultiEMOM(pool,rand,blockCount){
+  const mins=[7,10][Math.floor(rand()*2)];
+  const labels=['A','B','C','D'].slice(0,blockCount);
+  const chunk=Math.ceil(pool.length/blockCount);
+  return labels.map((label,i)=>{
+    const sub=pool.slice(i*chunk,(i+1)*chunk);
+    return {label,modality:'EMOM',config:`${mins}'`,exercises:pickBalanced(sub.length?sub:pool,[2,3][Math.floor(rand()*2)],rand).map(ex=>({name:ex.name,reps:['10','12','15'][Math.floor(rand()*3)],category:ex.category}))};
+  });
+}
+function buildMixed(pool,rand,blockCount){
+  const mods=['EMOM','OTM','AMRAP','ROUNDS'];
+  const labels=['A','B','C','D'].slice(0,blockCount);
+  const used=new Set();
+  const chunk=Math.ceil(pool.length/blockCount);
+  return labels.map((label,i)=>{
+    let mod; do{mod=mods[Math.floor(rand()*mods.length)];}while(used.has(mod)&&used.size<mods.length);
+    used.add(mod);
+    const sub=pool.slice(i*chunk,(i+1)*chunk);
+    const p=sub.length?sub:pool;
+    if(mod==='EMOM')return buildEMOM(p,rand,label);
+    if(mod==='OTM')return buildOTM(p,rand,label);
+    if(mod==='AMRAP')return buildAMRAP(p,rand,label);
+    return buildRounds(p,rand,label);
+  });
+}
+function generateWorkout(exercisePool,seed,variantNum=1,recentExercises=[],userSettings={}){
+  const rand=seededRand(`${seed}-v${variantNum}`);
+  const blockCount=userSettings.blockCount||2;
+  const blockModalities=userSettings.blockModalities||{};
+  const recent=new Set(recentExercises.map(e=>e.toLowerCase()));
+  let pool=exercisePool.filter(e=>!recent.has(e.name.toLowerCase()));
+  if(pool.length<8)pool=exercisePool;
+  const warmup=buildWarmup(rand);
+  const sh=shuffle(pool,rand);
+  const hasCustom=Object.values(blockModalities).some(m=>m&&m!=='random');
+  let blocks=[],pattern='';
+  if(hasCustom){
+    const labels=['A','B','C','D'].slice(0,blockCount);
+    const chunk=Math.ceil(sh.length/blockCount);
+    blocks=labels.map((label,i)=>{
+      const mod=(blockModalities[label]||'random').toUpperCase();
+      const sub=sh.slice(i*chunk,(i+1)*chunk);
+      const p=sub.length?sub:sh;
+      if(mod==='EMOM')return buildEMOM(p,rand,label);
+      if(mod==='OTM')return buildOTM(p,rand,label);
+      if(mod==='AMRAP')return buildAMRAP(p,rand,label);
+      if(mod==='ROUNDS')return buildRounds(p,rand,label);
+      if(mod==='FOR TIME')return buildForTime(p,rand)[0];
+      return buildRounds(p,rand,label);
+    });
+    pattern=`EC+${labels.join('')}`;
+  } else {
+    const patterns=['MULTI_EMOM','MULTI_EMOM','SINGLE_AMRAP','FOR_TIME','FOR_TIME','TABATA','ROUNDS_INOUT','ZONES','DESCENDING','MIXED'];
+    pattern=patterns[Math.floor(rand()*patterns.length)];
+    switch(pattern){
+      case 'MULTI_EMOM': blocks=buildMultiEMOM(sh,rand,blockCount); break;
+      case 'SINGLE_AMRAP': blocks=[buildAMRAP(sh,rand,'A')]; break;
+      case 'FOR_TIME': blocks=buildForTime(sh,rand); break;
+      case 'TABATA': blocks=build45x15(sh,rand); break;
+      case 'ROUNDS_INOUT': blocks=buildRoundsInOut(sh,rand); break;
+      case 'ZONES': blocks=buildZones(sh,rand); break;
+      case 'DESCENDING': blocks=buildDescending(sh,rand); break;
+      default: blocks=buildMixed(sh,rand,blockCount);
+    }
+  }
+  return {warmup,blocks,pattern};
+}
+module.exports={generateWorkout};
