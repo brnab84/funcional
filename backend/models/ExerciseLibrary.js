@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const exerciseLibrarySchema = new mongoose.Schema({
   name: { type: String, required: true },
-  category: { type: String, enum: ['lower','upper','core','conditioning','power'], required: true },
+  category: { type: String, required: true },
   equipment: { type: String, default: 'none' },
   sport: { type: String, default: 'functional' },
   active: { type: Boolean, default: true },
