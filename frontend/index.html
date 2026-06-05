@@ -9,10 +9,13 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- AUTH -->
 <div id="auth-screen" class="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">⚡</div>
     <h1 class="auth-title">FUNCTIONAL WOD</h1>
+    <p class="auth-version">v3.0</p>
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login">Login</button>
       <button class="auth-tab" data-tab="register">Register</button>
@@ -31,27 +34,47 @@
     </div>
   </div>
 </div>
+
+<!-- APP -->
 <div id="app" class="hidden">
   <nav class="nav">
-    <div class="nav-brand"><span class="nav-logo">⚡</span><span class="nav-title">FUNCTIONAL WOD</span></div>
+    <div class="nav-brand">
+      <span class="nav-logo">⚡</span>
+      <div>
+        <span class="nav-title">FUNCTIONAL WOD</span>
+        <span class="nav-version">v3.0</span>
+      </div>
+    </div>
     <div class="nav-center">
       <select id="sport-selector" class="sport-select">
         <option value="functional">Functional</option>
         <option value="swimming">Swimming</option>
       </select>
     </div>
-    <div class="nav-links">
-      <button class="nav-btn active" data-view="today">Today</button>
-      <button class="nav-btn" data-view="history">History</button>
-      <button class="nav-btn" data-view="library">Library</button>
-      <button class="nav-btn" data-view="settings">⚙</button>
-      <button class="nav-btn nav-logout" id="btn-logout" title="Logout">↩</button>
+    <div class="nav-right">
+      <div class="nav-user">
+        <span class="nav-user-dot">●</span>
+        <span id="nav-username">User</span>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" data-view="today">Today</button>
+        <button class="nav-btn" data-view="history">History</button>
+        <button class="nav-btn" data-view="library">Library</button>
+        <button class="nav-btn" data-view="settings">⚙</button>
+        <button class="nav-btn nav-logout" id="btn-logout" title="Logout">↩</button>
+      </div>
     </div>
   </nav>
+
   <main class="main">
+
+    <!-- TODAY -->
     <div id="view-today" class="view active">
       <div class="today-header">
-        <div><p class="eyebrow" id="today-date"></p><h1 class="today-title">TODAY'S WOD</h1></div>
+        <div>
+          <p class="eyebrow" id="today-date"></p>
+          <h1 class="today-title">TODAY'S WOD</h1>
+        </div>
         <div class="today-actions">
           <button class="btn-icon" id="btn-regenerate" title="Regenerate">↺</button>
           <button class="btn-ai" id="btn-ai"><span class="ai-dot"></span> AI Variant</button>
@@ -63,36 +86,68 @@
         <button class="vtab" data-variant="2">Option 2</button>
         <button class="vtab" data-variant="3">Option 3</button>
       </div>
-      <div id="workout-display" class="workout-display"><div class="loading-state"><div class="spinner"></div><p>Generating...</p></div></div>
+      <div id="workout-display" class="workout-display">
+        <div class="loading-state"><div class="spinner"></div><p>Generating...</p></div>
+      </div>
       <div class="action-bar">
         <button class="btn-approve" id="btn-approve">✓ Approve this workout</button>
         <p class="action-hint">Approved workouts are saved to history</p>
       </div>
     </div>
+
+    <!-- HISTORY -->
     <div id="view-history" class="view">
       <div class="view-header"><h2>History</h2><div id="history-stats" class="history-stats"></div></div>
       <div id="history-list" class="history-list"><div class="loading-state"><div class="spinner"></div></div></div>
       <div id="history-pagination" class="pagination"></div>
     </div>
+
+    <!-- LIBRARY -->
     <div id="view-library" class="view">
-      <div class="view-header"><h2>Exercise Library</h2><button class="btn-seed" id="btn-seed">Seed defaults</button></div>
+      <div class="view-header">
+        <h2>Exercise Library</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn-seed" id="btn-seed">Seed defaults</button>
+          <button class="btn-upload-photo" id="btn-upload-photo">📷 Upload Photo</button>
+        </div>
+      </div>
+      <!-- Photo upload panel -->
+      <div id="photo-panel" class="photo-panel hidden">
+        <p class="photo-hint">Upload a whiteboard photo — Claude will extract exercises and patterns automatically</p>
+        <div class="photo-drop" id="photo-drop">
+          <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
+          <div class="photo-drop-inner" onclick="document.getElementById('photo-input').click()">
+            <span class="photo-icon">📷</span>
+            <p>Click to select photos or drag & drop</p>
+            <p class="photo-hint">JPG, PNG — multiple files supported</p>
+          </div>
+        </div>
+        <div id="photo-preview" class="photo-preview"></div>
+        <button class="btn-analyze" id="btn-analyze" disabled>Analyze with AI</button>
+        <div id="photo-results" class="photo-results hidden"></div>
+      </div>
       <div class="library-add">
         <input type="text" id="ex-name" placeholder="Exercise name" autocomplete="off">
         <select id="ex-category">
-          <option value="lower">Lower Body</option><option value="upper">Upper Body</option>
-          <option value="core">Core</option><option value="conditioning">Conditioning</option><option value="power">Power</option>
+          <option value="lower">Lower Body</option>
+          <option value="upper">Upper Body</option>
+          <option value="core">Core</option>
+          <option value="conditioning">Conditioning</option>
+          <option value="power">Power</option>
         </select>
         <button class="btn-add" id="btn-add-ex">+ Add</button>
       </div>
       <div id="exercise-list" class="exercise-list"><div class="loading-state"><div class="spinner"></div></div></div>
     </div>
+
+    <!-- SETTINGS -->
     <div id="view-settings" class="view">
       <div class="view-header"><h2>Settings</h2></div>
       <div class="settings-grid">
         <div class="settings-card">
           <h3>Workout Structure</h3>
           <label class="field"><span>Number of main blocks</span>
-            <div class="block-count-selector" id="block-count-selector">
+            <div class="block-count-selector">
               <button class="bc-btn" data-count="1">A</button>
               <button class="bc-btn active" data-count="2">A+B</button>
               <button class="bc-btn" data-count="3">A+B+C</button>
@@ -106,6 +161,7 @@
           <label class="field">
             <span>Avoid repeating exercises from last <strong id="days-label">7</strong> days</span>
             <input type="range" id="avoid-days" min="1" max="30" value="7" class="range-input">
+            <div class="range-labels"><span>1 day</span><span>30 days</span></div>
           </label>
         </div>
         <div class="settings-card">
@@ -125,8 +181,11 @@
         </div>
       </div>
     </div>
+
   </main>
 </div>
+
+<!-- MODAL -->
 <div id="modal" class="modal hidden">
   <div class="modal-overlay" id="modal-overlay"></div>
   <div class="modal-box">
@@ -134,6 +193,7 @@
     <div id="modal-content"></div>
   </div>
 </div>
+
 <script src="app.js"></script>
 </body>
 </html>
