@@ -9,7 +9,16 @@ const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Serve static files with no-cache for HTML/JS/CSS (ensures updates are immediate)
+app.use(express.static(path.join(__dirname, '../frontend'), {
+  setHeaders: function(res, filePath) {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/workouts', require('./routes/workouts'));
 app.use('/api/exercises', require('./routes/exercises'));
@@ -23,3 +32,4 @@ else {
     .then(() => { console.log('MongoDB connected'); startServer(); })
     .catch(err => { console.error('MongoDB error:', err.message); startServer(); });
 }
+
