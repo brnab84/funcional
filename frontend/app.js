@@ -195,7 +195,7 @@ async function loadToday(){
   if(!r)return;
   currentWorkouts=r.data.workouts||[];
   if(!currentWorkouts.length){
-    display.innerHTML='<div class="empty-state"><h3>No workouts</h3><p>Go to Library and click Seed defaults</p></div>';
+    display.innerHTML='<div class="empty-state"><h3>No workouts yet</h3><p>Click the refresh button \u21ba to generate today\'s options</p></div>';
     document.querySelector('.action-bar').style.display='none';return;
   }
   if(r.data.approvedToday>0){showAiStatus(r.data.approvedToday+' workout(s) approved today');setTimeout(hideAiStatus,3000);}
@@ -229,8 +229,19 @@ async function approveWorkout(){
   showAiStatus('Saved to history!');setTimeout(hideAiStatus,3000);
 }
 async function regenerateWorkouts(){
-  await apiCall('/api/workouts/regenerate',{method:'POST',body:JSON.stringify({sport:currentSport})});
-  currentWorkouts=[];loadToday();
+  var display=document.getElementById('workout-display');
+  display.innerHTML='<div class="loading-state"><div class="spinner"></div><p>Generating...</p></div>';
+  var r=await apiCall('/api/workouts/regenerate',{method:'POST',body:JSON.stringify({sport:currentSport})});
+  if(!r||!r.ok){
+    display.innerHTML='<div class="empty-state"><h3>Error</h3><p>'+(r&&r.data?r.data.message:'Unknown error')+'</p></div>';
+    return;
+  }
+  currentWorkouts=r.data.workouts||[];
+  if(!currentWorkouts.length){
+    display.innerHTML='<div class="empty-state"><h3>No exercises</h3><p>Go to Library and Seed defaults first</p></div>';
+    return;
+  }
+  resetTabs();showVariant(0);
 }
 async function generateAiVariant(){
   var btn=document.getElementById('btn-ai');btn.disabled=true;showAiStatus('Asking AI...');
@@ -475,5 +486,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
