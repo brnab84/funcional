@@ -12,7 +12,7 @@ function resetInactivityTimer(){
   if(!token)return; // not logged in
   inactivityTimer=setTimeout(function(){
     if(token){
-      alert('Session expired due to inactivity');
+      showToast('Session expired - please login again','warning');
       logout();
     }
   },SESSION_TIMEOUT);
@@ -20,6 +20,24 @@ function resetInactivityTimer(){
 ['click','keydown','scroll','touchstart','mousemove'].forEach(function(evt){
   document.addEventListener(evt,resetInactivityTimer,{passive:true});
 });
+
+// Toast notifications
+var toastTimer=null;
+function showToast(msg,type){
+  type=type||'success';
+  var icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  var el=document.getElementById('toast');
+  var iconEl=document.getElementById('toast-icon');
+  var msgEl=document.getElementById('toast-msg');
+  iconEl.textContent=icons[type]||icons.success;
+  msgEl.textContent=msg;
+  el.className='toast toast-'+type;
+  // Force reflow
+  el.offsetHeight;
+  el.classList.add('visible');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('visible');},3500);
+}
 
 // Sport configurations
 var SPORTS={
@@ -155,7 +173,7 @@ async function resetPassword(){
   showLoginForm();
   document.getElementById('login-email').value=email;
   showAuthError('');
-  alert('Password updated! You can now login with your new password.');
+  showToast('Password updated! Login with your new password','success');
 }
 
 function modalityBadgeClass(m){
@@ -198,8 +216,9 @@ async function loadToday(){
     display.innerHTML='<div class="empty-state"><h3>No workouts yet</h3><p>Click the refresh button \u21ba to generate today\'s options</p></div>';
     document.querySelector('.action-bar').style.display='none';return;
   }
-  if(r.data.approvedToday>0){showAiStatus(r.data.approvedToday+' workout(s) approved today');setTimeout(hideAiStatus,3000);}
+  if(r.data.approvedToday>0){showToast(r.data.approvedToday+' workout(s) already approved today','info');}
   resetTabs();showVariant(0);
+  showToast('3 new options generated','success');
 }
 function resetTabs(){
   document.querySelectorAll('.vtab').forEach(function(t,i){
@@ -226,7 +245,7 @@ async function approveWorkout(){
     document.getElementById('workout-display').innerHTML='<div class="empty-state"><h3>Approved!</h3><p>Click refresh for new options</p></div>';
     document.querySelector('.action-bar').style.display='none';
   }else{resetTabs();showVariant(0);}
-  showAiStatus('Saved to history!');setTimeout(hideAiStatus,3000);
+  showToast('Workout approved and saved to history','success');
 }
 async function regenerateWorkouts(){
   var display=document.getElementById('workout-display');
@@ -247,9 +266,9 @@ async function generateAiVariant(){
   var btn=document.getElementById('btn-ai');btn.disabled=true;showAiStatus('Asking AI...');
   var r=await apiCall('/api/workouts/ai',{method:'POST',body:JSON.stringify({sport:currentSport})});
   btn.disabled=false;
-  if(!r||!r.ok){showAiStatus(r&&r.data?r.data.message:'Error',true);setTimeout(hideAiStatus,6000);return;}
+  if(!r||!r.ok){showToast(r&&r.data?r.data.message:'AI error','error');return;}
   currentWorkouts.push(r.data.workout);resetTabs();showVariant(currentWorkouts.length-1);
-  showAiStatus('AI workout ready!');setTimeout(hideAiStatus,4000);
+  showToast('AI workout generated','success');
 }
 function showAiStatus(msg,err){var el=document.getElementById('ai-status');el.textContent=msg;el.className='ai-status'+(err?' error':'');}
 function hideAiStatus(){document.getElementById('ai-status').className='ai-status hidden';}
@@ -274,6 +293,7 @@ async function saveWarmupEdit(){
   w.warmup={rounds:rounds,exercises:exercises};
   await apiCall('/api/workouts/'+w._id+'/edit',{method:'PUT',body:JSON.stringify({warmup:w.warmup})});
   document.getElementById('modal').classList.add('hidden');showVariant(activeVariant);
+  showToast('Warmup updated','success');
 }
 function editBlock(bi){
   var w=currentWorkouts[activeVariant];if(!w)return;var block=w.blocks[bi];
@@ -303,6 +323,7 @@ async function saveBlockEdit(bi){
   w.blocks[bi].exercises=exercises;
   await apiCall('/api/workouts/'+w._id+'/edit',{method:'PUT',body:JSON.stringify({blocks:w.blocks})});
   document.getElementById('modal').classList.add('hidden');showVariant(activeVariant);
+  showToast('Block updated','success');
 }
 
 async function loadHistory(page){
@@ -330,7 +351,7 @@ async function openHistoryModal(id){
 async function deleteHistoryItem(id){
   if(!confirm('Delete this workout?'))return;
   var r=await apiCall('/api/workouts/'+id,{method:'DELETE'});
-  if(r&&r.ok){var el=document.getElementById('hist-'+id);if(el)el.remove();delete _hCache[id];}
+  if(r&&r.ok){var el=document.getElementById('hist-'+id);if(el)el.remove();delete _hCache[id];showToast('Workout deleted','info');}
 }
 
 async function loadLibrary(){
@@ -349,13 +370,13 @@ async function loadLibrary(){
     }).join('')+'</div></div>';
   }).join('');
 }
-async function addExercise(){var n=document.getElementById('ex-name').value.trim();var c=document.getElementById('ex-category').value;if(!n)return;await apiCall('/api/exercises',{method:'POST',body:JSON.stringify({name:n,category:c,sport:currentSport})});document.getElementById('ex-name').value='';loadLibrary();}
-async function deleteExercise(id){await apiCall('/api/exercises/'+id,{method:'DELETE'});loadLibrary();}
+async function addExercise(){var n=document.getElementById('ex-name').value.trim();var c=document.getElementById('ex-category').value;if(!n)return;await apiCall('/api/exercises',{method:'POST',body:JSON.stringify({name:n,category:c,sport:currentSport})});document.getElementById('ex-name').value='';loadLibrary();showToast('Exercise added','success');}
+async function deleteExercise(id){if(!confirm('Remove this exercise?'))return;await apiCall('/api/exercises/'+id,{method:'DELETE'});loadLibrary();showToast('Exercise removed','info');}
 async function seedDefaults(){
   var btn=document.getElementById('btn-seed');btn.textContent='Seeding...';btn.disabled=true;
   var r=await apiCall('/api/exercises/seed',{method:'POST',body:JSON.stringify({sport:currentSport})});
-  if(r&&r.ok){btn.textContent='Seeded '+r.data.count;loadLibrary();}
-  else{btn.textContent='Error';alert(r&&r.data?r.data.message:'Error');}
+  if(r&&r.ok){btn.textContent='Seeded '+r.data.count;loadLibrary();showToast(r.data.count+' exercises loaded','success');}
+  else{btn.textContent='Error';showToast(r&&r.data?r.data.message:'Seed failed','error');}
   setTimeout(function(){btn.textContent='Seed defaults';btn.disabled=false;},3000);
 }
 async function loadCategories(){
@@ -400,7 +421,7 @@ async function saveSetting(){
   document.querySelectorAll('.block-mod-select').forEach(function(sel){bm[sel.dataset.label]=sel.value;});
   var ad=parseInt(document.getElementById('avoid-days').value);
   var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad})});
-  if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));var st=document.getElementById('settings-status');st.textContent='Saved!';st.className='settings-status';setTimeout(function(){st.className='settings-status hidden';},2500);}
+  if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));showToast('Settings saved','success');}
 }
 
 function switchView(name){
@@ -486,6 +507,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
