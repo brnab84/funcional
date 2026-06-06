@@ -6,36 +6,40 @@ const auth = require('../middleware/auth');
 const { generateWorkout } = require('../generator');
 router.use(auth);
 
-// GET /today — only return current SUGGESTIONS (not approved/rejected)
+// GET /today — READ ONLY, no auto-generate
 router.get('/today', async (req, res) => {
   try {
-    var today = new Date().toISOString().split('T')[0];
-    var sport = req.query.sport || req.user.settings.defaultSport || 'functional';
-    var suggestions = await Workout.find({ user: req.user._id, date: today, sport: sport, status: 'suggestion' }).sort('variant');
-    var approvedToday = await Workout.countDocuments({ user: req.user._id, date: today, sport: sport, status: 'approved' });
-    res.json({ workouts: suggestions, approvedToday: approvedToday });
-  } catch(err) { res.status(500).json({ message: err.message }); }
-});
-      if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Go to Library and Seed defaults first.' });
-
-      const days = req.user.settings.avoidRepeatDays || 7;
-      const since = new Date(Date.now() - days * 86400000);
-      const recent = await Workout.find({ user: uid, status: 'approved', sport, createdAt: { $gte: since } });
-      const recentEx = recent.flatMap(w => w.blocks.flatMap(b => b.exercises.map(e => e.name)));
-
-      suggestions = [];
-      for (let v = 1; v <= 3; v++) {
-        const { warmup, blocks, pattern } = generateWorkout(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings);
-        suggestions.push(await Workout.create({ user: uid, sport, date: today, warmup, blocks, pattern, variant: v, status: 'suggestion', source: 'local' }));
-      }
-    }
-
-    const approvedToday = await Workout.countDocuments({ user: uid, date: today, sport, status: 'approved' });
+    const today = new Date().toISOString().split('T')[0];
+    const sport = req.query.sport || req.user.settings.defaultSport || 'functional';
+    const suggestions = await Workout.find({ user: req.user._id, date: today, sport, status: 'suggestion' }).sort('variant');
+    const approvedToday = await Workout.countDocuments({ user: req.user._id, date: today, sport, status: 'approved' });
     res.json({ workouts: suggestions, approvedToday });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// APPROVE — only marks this one, does NOT reject others
+// POST /regenerate — generates 3 new suggestions (only writes when user clicks)
+router.post('/regenerate', async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const sport = (req.body && req.body.sport) || req.user.settings.defaultSport || 'functional';
+    const uid = req.user._id;
+    await Workout.deleteMany({ user: uid, date: today, sport, status: 'suggestion' });
+    const exercises = await ExerciseLibrary.find({ sport, user: uid });
+    if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Seed defaults first.' });
+    const days = req.user.settings.avoidRepeatDays || 7;
+    const since = new Date(Date.now() - days * 86400000);
+    const recent = await Workout.find({ user: uid, status: 'approved', sport, createdAt: { $gte: since } });
+    const recentEx = recent.flatMap(w => w.blocks.flatMap(b => b.exercises.map(e => e.name)));
+    const created = [];
+    for (let v = 1; v <= 3; v++) {
+      const { warmup, blocks, pattern } = generateWorkout(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings);
+      created.push(await Workout.create({ user: uid, sport, date: today, warmup, blocks, pattern, variant: v, status: 'suggestion', source: 'local' }));
+    }
+    res.json({ workouts: created });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
+// PUT /approve
 router.put('/:id/approve', async (req, res) => {
   try {
     const workout = await Workout.findOne({ _id: req.params.id, user: req.user._id });
@@ -47,7 +51,7 @@ router.put('/:id/approve', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// REJECT
+// PUT /reject
 router.put('/:id/reject', async (req, res) => {
   try {
     await Workout.findOneAndUpdate({ _id: req.params.id, user: req.user._id, status: 'suggestion' }, { status: 'rejected' });
@@ -55,38 +59,7 @@ router.put('/:id/reject', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// REGENERATE — delete current suggestions, frontend calls GET /today after
-router.post('/regenerate', async (req, res) => {
-  try {
-    var today = new Date().toISOString().split('T')[0];
-    var sport = (req.body && req.body.sport) || req.user.settings.defaultSport || 'functional';
-    var uid = req.user._id;
-
-    // Delete current suggestions for today
-    await Workout.deleteMany({ user: uid, date: today, sport: sport, status: 'suggestion' });
-
-    // Generate 3 new ones
-    var exercises = await ExerciseLibrary.find({ sport: sport, user: uid });
-    if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Seed defaults first.' });
-
-    var days = req.user.settings.avoidRepeatDays || 7;
-    var since = new Date(Date.now() - days * 86400000);
-    var recent = await Workout.find({ user: uid, status: 'approved', sport: sport, createdAt: { $gte: since } });
-    var recentEx = recent.reduce(function(arr, w) { return arr.concat(w.blocks.reduce(function(a, b) { return a.concat(b.exercises.map(function(e) { return e.name; })); }, [])); }, []);
-
-    var created = [];
-    for (var v = 1; v <= 3; v++) {
-      var result = generateWorkout(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings);
-      created.push(await Workout.create({ user: uid, sport: sport, date: today, warmup: result.warmup, blocks: result.blocks, pattern: result.pattern, variant: v, status: 'suggestion', source: 'local' }));
-    }
-    res.json({ workouts: created });
-  } catch(err) { res.status(500).json({ message: err.message }); }
-});
-    res.json({ ok: true });
-  } catch(err) { res.status(500).json({ message: err.message }); }
-});
-
-// EDIT a workout (exercises, reps, config)
+// PUT /edit
 router.put('/:id/edit', async (req, res) => {
   try {
     const workout = await Workout.findOne({ _id: req.params.id, user: req.user._id });
@@ -99,7 +72,7 @@ router.put('/:id/edit', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// HISTORY — approved workouts
+// GET /history
 router.get('/history', async (req, res) => {
   try {
     const sport = req.query.sport || req.user.settings.defaultSport || 'functional';
@@ -112,7 +85,7 @@ router.get('/history', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// DELETE from history — one at a time
+// DELETE single
 router.delete('/:id', async (req, res) => {
   try {
     await Workout.findOneAndDelete({ _id: req.params.id, user: req.user._id });
@@ -120,16 +93,7 @@ router.delete('/:id', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// BULK DELETE from history
-router.post('/bulk-delete', async (req, res) => {
-  try {
-    const ids = req.body.ids || [];
-    await Workout.deleteMany({ _id: { $in: ids }, user: req.user._id });
-    res.json({ ok: true, deleted: ids.length });
-  } catch(err) { res.status(500).json({ message: err.message }); }
-});
-
-// AI variant
+// POST /ai
 router.post('/ai', async (req, res) => {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -140,7 +104,7 @@ router.post('/ai', async (req, res) => {
     const recent = await Workout.find({ user: req.user._id, status: 'approved', sport }).sort({ createdAt: -1 }).limit(7);
     const exList = exercises.map(e => e.name + ' (' + e.category + ')').join('\n');
     const recentList = recent.map(w => w.date+': '+w.blocks.map(b=>b.modality+' - '+b.exercises.map(e=>e.name).join(', ')).join(' | ')).join('\n');
-    const prompt = 'You are a functional fitness coach. Generate a workout for '+today+'.\nUser settings: '+JSON.stringify(req.user.settings)+'\nExercises:\n'+exList+'\nRecent (avoid repeating):\n'+(recentList||'None')+'\nChoose ONE pattern: EC+MultiBlock(EMOM/OTM/AMRAP/ROUNDS A+B+C), EC+ForTime, EC+Tabata(45x15), EC+Zones, EC+RoundsInOut.\nReturn ONLY JSON:\n{"pattern":"EC+ABC","warmup":{"rounds":3,"exercises":[{"name":"..","reps":"20","category":"conditioning"}]},"blocks":[{"label":"A","modality":"EMOM","config":"7\'","exercises":[{"name":"..","reps":"10","category":"lower"}]}]}';
+    const prompt = 'You are a functional fitness coach. Generate a workout for '+today+'.\nUser settings: '+JSON.stringify(req.user.settings)+'\nExercises:\n'+exList+'\nRecent (avoid repeating):\n'+(recentList||'None')+'\nReturn ONLY JSON:\n{"pattern":"EC+ABC","warmup":{"rounds":3,"exercises":[{"name":"..","reps":"20","category":"conditioning"}]},"blocks":[{"label":"A","modality":"EMOM","config":"7\'","exercises":[{"name":"..","reps":"10","category":"lower"}]}]}';
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -148,19 +112,19 @@ router.post('/ai', async (req, res) => {
     });
     const d = await r.json();
     if (!d || !d.content || !d.content[0] || !d.content[0].text) {
-      return res.status(500).json({ message: 'AI returned empty response: ' + JSON.stringify(d).substring(0, 200) });
+      return res.status(500).json({ message: 'AI error: ' + JSON.stringify(d).substring(0, 200) });
     }
-    const rawText = d.content[0].text.replace(/```json|```/g, '').trim();
-    var parsed;
-    try { parsed = JSON.parse(rawText); } catch(pe) {
-      return res.status(500).json({ message: 'AI returned invalid JSON: ' + rawText.substring(0, 200) });
+    const raw = d.content[0].text.replace(/```json|```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch(pe) {
+      return res.status(500).json({ message: 'AI invalid JSON: ' + raw.substring(0, 200) });
     }
     const workout = await Workout.create({ user: req.user._id, sport, date: today, warmup: parsed.warmup, blocks: parsed.blocks, pattern: parsed.pattern, variant: 99, status: 'suggestion', source: 'ai' });
     res.json({ workout });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// STATS
+// GET /stats
 router.get('/stats', async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
@@ -171,7 +135,3 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
