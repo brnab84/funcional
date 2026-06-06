@@ -26,7 +26,13 @@ router.post('/regenerate', async (req, res) => {
     const uid = req.user._id;
     await Workout.deleteMany({ user: uid, date: today, sport, status: 'suggestion' });
     const exercises = await ExerciseLibrary.find({ sport, user: uid });
-    if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Seed defaults first.' });
+    if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises for ' + sport + '. Go to Library and Seed defaults.' });
+    // Validate exercises belong to correct sport categories
+    var swimCats = ['stroke','kick','drill','pull','sprint','endurance'];
+    var funcCats = ['lower','upper','core','conditioning','power'];
+    var expectedCats = (sport === 'swimming') ? swimCats : funcCats;
+    var validExercises = exercises.filter(function(e) { return expectedCats.includes(e.category); });
+    if (validExercises.length < 8) return res.status(400).json({ message: 'Exercise library has wrong categories for ' + sport + '. Go to Library and re-seed defaults.' });
     const days = req.user.settings.avoidRepeatDays || 7;
     const since = new Date(Date.now() - days * 86400000);
     const recent = await Workout.find({ user: uid, status: 'approved', sport, createdAt: { $gte: since } });
@@ -35,7 +41,7 @@ router.post('/regenerate', async (req, res) => {
     const created = [];
     for (let v = 1; v <= 3; v++) {
       var gen = (sport === 'swimming') ? generateSwimWorkout : generateWorkout;
-      const { warmup, blocks, pattern } = gen(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings, approvedMods);
+      const { warmup, blocks, pattern } = gen(validExercises, today + '-' + Date.now(), v, recentEx, req.user.settings, approvedMods);
       created.push(await Workout.create({ user: uid, sport, date: today, warmup, blocks, pattern, variant: v, status: 'suggestion', source: 'local' }));
     }
     res.json({ workouts: created });
@@ -138,6 +144,7 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
