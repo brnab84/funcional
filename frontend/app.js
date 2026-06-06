@@ -106,6 +106,40 @@ function logout(){
 }
 function showAuthError(msg){var el=document.getElementById('auth-error');el.textContent=msg;el.classList.toggle('hidden',!msg);}
 
+function showResetForm(){
+  document.getElementById('tab-login').classList.add('hidden');
+  document.getElementById('tab-register').classList.add('hidden');
+  document.getElementById('tab-reset').classList.remove('hidden');
+  document.querySelector('.auth-tabs').style.display='none';
+  showAuthError('');
+}
+function showLoginForm(){
+  document.getElementById('tab-login').classList.remove('hidden');
+  document.getElementById('tab-register').classList.add('hidden');
+  document.getElementById('tab-reset').classList.add('hidden');
+  document.querySelector('.auth-tabs').style.display='';
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='login');});
+  showAuthError('');
+}
+async function resetPassword(){
+  var email=document.getElementById('reset-email').value.trim();
+  var pw=document.getElementById('reset-password').value;
+  var confirm=document.getElementById('reset-confirm').value;
+  showAuthError('');
+  if(!email)return showAuthError('Enter your email');
+  if(pw.length<6)return showAuthError('Password must be at least 6 characters');
+  if(pw!==confirm)return showAuthError('Passwords do not match');
+  var btn=document.getElementById('btn-reset');btn.textContent='Resetting...';btn.disabled=true;
+  var r=await fetch(API+'/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,newPassword:pw})});
+  var data=await r.json();
+  btn.textContent='Reset Password';btn.disabled=false;
+  if(!r.ok)return showAuthError(data.message);
+  showLoginForm();
+  document.getElementById('login-email').value=email;
+  showAuthError('');
+  alert('Password updated! You can now login with your new password.');
+}
+
 function modalityBadgeClass(m){
   m=(m||'').toUpperCase();
   if(m.includes('EMOM'))return'badge-emom';if(m.includes('OTM'))return'badge-otm';
@@ -398,6 +432,10 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btn-login').addEventListener('click',login);
   document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
   document.getElementById('btn-register').addEventListener('click',register);
+  document.getElementById('btn-show-reset').addEventListener('click',showResetForm);
+  document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
+  document.getElementById('btn-reset').addEventListener('click',resetPassword);
+  document.getElementById('reset-confirm').addEventListener('keydown',function(e){if(e.key==='Enter')resetPassword();});
   document.getElementById('btn-logout').addEventListener('click',logout);
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){btn.addEventListener('click',function(){switchView(btn.dataset.view);});});
   document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});
@@ -419,3 +457,4 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
