@@ -12,9 +12,16 @@ function markActivity(){
 function checkInactivity(){
   if(!token)return;
   var last=parseInt(localStorage.getItem('wod_last_activity')||'0');
-  if(last>0&&(Date.now()-last)>SESSION_TIMEOUT){
-    showToast('Session expired - please login again','warning');
-    setTimeout(logout,1500);
+  if(last===0){markActivity();return;}
+  var elapsed=Date.now()-last;
+  if(elapsed>SESSION_TIMEOUT){
+    // Session expired
+    token=null;currentUser=null;
+    localStorage.removeItem('wod_token');
+    localStorage.removeItem('wod_user');
+    localStorage.removeItem('wod_last_activity');
+    showToast('Session expired ('+Math.round(elapsed/60000)+' min inactive)','warning');
+    setTimeout(function(){showAuth();},1500);
   }
 }
 ['click','keydown','scroll','touchstart'].forEach(function(evt){
@@ -475,15 +482,17 @@ async function checkVersion(){
     if(d.version){
       var stored=localStorage.getItem('wod_version');
       if(stored&&stored!==d.version){
-        // New version detected
+        // New version detected — force logout + clean reload
         localStorage.setItem('wod_version',d.version);
-        // Clear all caches
+        localStorage.removeItem('wod_token');
+        localStorage.removeItem('wod_user');
+        localStorage.removeItem('wod_last_activity');
+        token=null;currentUser=null;
         if('caches' in window){var keys=await caches.keys();await Promise.all(keys.map(function(k){return caches.delete(k);}));}
-        // Force SW update
-        if('serviceWorker' in navigator&&navigator.serviceWorker.controller){
-          navigator.serviceWorker.getRegistration().then(function(reg){if(reg)reg.update();});
+        if('serviceWorker' in navigator){
+          var regs=await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(function(r){return r.unregister();}));
         }
-        // Hard reload
         window.location.replace(window.location.href);
         return;
       }
@@ -510,6 +519,8 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   }
 
+  // Check inactivity immediately on load
+  checkInactivity();
   // Check version (cache bust if new)
   checkVersion();
 
@@ -558,6 +569,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
