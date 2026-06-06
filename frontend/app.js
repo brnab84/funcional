@@ -75,6 +75,8 @@ function applySportTheme(sport){
   var nt=document.getElementById('nav-title');if(nt)nt.textContent=cfg.title;
   // Today
   var tt=document.getElementById('today-title');if(tt)tt.textContent=cfg.todayTitle;
+  // Update sport-specific category order for library
+  document.title=cfg.title;
   // Page title
   document.title=cfg.title;
   // Highlight sport button
@@ -188,7 +190,10 @@ function modalityBadgeClass(m){
   if(m.includes('AMRAP')&&!m.includes('MINI'))return'badge-amrap';if(m.includes('FOR TIME'))return'badge-fortime';
   if(m.includes('ROUNDS'))return'badge-rounds';if(m.includes('TABATA'))return'badge-tabata';
   if(m.includes('DESCENDING'))return'badge-descending';if(m.includes('ZONE'))return'badge-zones';
-  if(m.includes('MINI'))return'badge-miniamrap';return'badge-rounds';
+  if(m.includes('MINI'))return'badge-miniamrap';
+  if(m.includes('SPRINT'))return'badge-sprint';if(m.includes('ENDUR'))return'badge-endurance';
+  if(m.includes('TECH'))return'badge-technique';if(m.includes('INTERVAL'))return'badge-intervals';
+  if(m.includes('EASY'))return'badge-easy';return'badge-rounds';
 }
 function catDot(cat){return'<span class="ex-category-dot dot-'+(cat||'lower')+'"></span>';}
 
@@ -367,7 +372,8 @@ async function loadLibrary(){
   var exercises=r.data.exercises||[];
   if(!exercises.length){list.innerHTML='<div class="empty-state"><h3>Empty Library</h3><p>Click Seed defaults</p></div>';return;}
   var cats={};exercises.forEach(function(ex){(cats[ex.category]=cats[ex.category]||[]).push(ex);});
-  var catLabels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power'};
+  var catLabels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power',
+    stroke:'Stroke',kick:'Kick',drill:'Drill',pull:'Pull',sprint:'Sprint',endurance:'Endurance',rest:'Rest'};
   var order=['lower','upper','core','conditioning','power'];
   var sorted=Object.keys(cats).sort(function(a,b){var ia=order.indexOf(a),ib=order.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib);});
   list.innerHTML=sorted.map(function(cat){
@@ -513,6 +519,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
