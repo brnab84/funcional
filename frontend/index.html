@@ -48,12 +48,20 @@
       <input type="email" id="login-email" placeholder="Email" autocomplete="email">
       <input type="password" id="login-password" placeholder="Password">
       <button class="btn-primary" id="btn-login">Login</button>
+      <button class="auth-link" id="btn-show-reset" type="button">Forgot password?</button>
     </div>
     <div id="tab-register" class="auth-form hidden">
       <input type="text" id="reg-name" placeholder="Your name">
       <input type="email" id="reg-email" placeholder="Email">
       <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
       <button class="btn-primary" id="btn-register">Create account</button>
+    </div>
+    <div id="tab-reset" class="auth-form hidden">
+      <input type="email" id="reset-email" placeholder="Your email" autocomplete="email">
+      <input type="password" id="reset-password" placeholder="New password (min 6 chars)">
+      <input type="password" id="reset-confirm" placeholder="Confirm new password">
+      <button class="btn-primary" id="btn-reset">Reset Password</button>
+      <button class="auth-link" id="btn-back-login" type="button">Back to login</button>
     </div>
   </div>
 </div>
@@ -191,3 +199,4 @@
 <script src="/app.js"></script>
 </body>
 </html>
+
