@@ -31,10 +31,11 @@ router.post('/regenerate', async (req, res) => {
     const since = new Date(Date.now() - days * 86400000);
     const recent = await Workout.find({ user: uid, status: 'approved', sport, createdAt: { $gte: since } });
     const recentEx = recent.flatMap(w => w.blocks.flatMap(b => b.exercises.map(e => e.name)));
+    const approvedMods = recent.flatMap(w => w.blocks.map(b => b.modality));
     const created = [];
     for (let v = 1; v <= 3; v++) {
       var gen = (sport === 'swimming') ? generateSwimWorkout : generateWorkout;
-      const { warmup, blocks, pattern } = gen(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings);
+      const { warmup, blocks, pattern } = gen(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings, approvedMods);
       created.push(await Workout.create({ user: uid, sport, date: today, warmup, blocks, pattern, variant: v, status: 'suggestion', source: 'local' }));
     }
     res.json({ workouts: created });
@@ -137,6 +138,7 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
