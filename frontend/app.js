@@ -4,6 +4,22 @@ var token=localStorage.getItem('wod_token');
 var currentUser=null,currentWorkouts=[],activeVariant=0;
 var currentSport=localStorage.getItem('wod_sport')||'functional';
 var pendingPhotos=[];
+var SESSION_TIMEOUT=10*60*1000; // 10 minutes
+var inactivityTimer=null;
+
+function resetInactivityTimer(){
+  if(inactivityTimer)clearTimeout(inactivityTimer);
+  if(!token)return; // not logged in
+  inactivityTimer=setTimeout(function(){
+    if(token){
+      alert('Session expired due to inactivity');
+      logout();
+    }
+  },SESSION_TIMEOUT);
+}
+['click','keydown','scroll','touchstart','mousemove'].forEach(function(evt){
+  document.addEventListener(evt,resetInactivityTimer,{passive:true});
+});
 
 // Sport configurations
 var SPORTS={
@@ -68,6 +84,7 @@ function showApp(){
     loadUserSettings();
   }
   applySportTheme(currentSport);
+  resetInactivityTimer();
   loadToday();
 }
 
@@ -100,6 +117,7 @@ async function register(){
   showApp();
 }
 function logout(){
+  if(inactivityTimer)clearTimeout(inactivityTimer);
   token=null;currentUser=null;
   localStorage.removeItem('wod_token');localStorage.removeItem('wod_user');
   showAuth();
@@ -457,4 +475,5 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
