@@ -288,3 +288,25 @@
   .auth-box{padding:24px 16px;}
   .auth-title{font-size:1.4rem;}
 }
+
+
+/* PWA standalone mode */
+@media(display-mode:standalone){
+  body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
+  .nav{padding-top:env(safe-area-inset-top);padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+  .main{padding-bottom:calc(60px + env(safe-area-inset-bottom));}
+  .auth-screen{padding-top:env(safe-area-inset-top);}
+}
+
+/* iOS overscroll */
+html{overscroll-behavior:none;-webkit-overflow-scrolling:touch;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+input,textarea,select{user-select:text;-webkit-user-select:text;}
+
+/* Smooth scroll */
+.main,.modal-box,.history-list{-webkit-overflow-scrolling:touch;}
+
+/* Pull-to-refresh prevention in standalone */
+@media(display-mode:standalone){
+  body{overscroll-behavior-y:contain;}
+}
