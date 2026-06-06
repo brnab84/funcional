@@ -359,3 +359,12 @@ input,textarea,select{user-select:text;-webkit-user-select:text;}
 @media(display-mode:standalone){.toast{bottom:calc(16px + env(safe-area-inset-bottom));;}}
 
 
+
+
+/* Swimming rest settings */
+.swim-rest-grid{display:flex;flex-direction:column;gap:8px;}
+.swim-rest-row{display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text);}
+.swim-rest-row span:first-child{width:50px;font-family:var(--font-mono);font-weight:700;color:var(--accent);}
+.swim-rest-input{width:70px;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);text-align:center;font-family:var(--font-mono);font-size:0.85rem;outline:none;}
+.swim-rest-input:focus{border-color:var(--accent);}
+.rest-unit{color:var(--muted);font-size:0.78rem;}
