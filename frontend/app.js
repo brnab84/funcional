@@ -475,10 +475,16 @@ async function checkVersion(){
     if(d.version){
       var stored=localStorage.getItem('wod_version');
       if(stored&&stored!==d.version){
-        // New version detected - clear caches and reload
+        // New version detected
         localStorage.setItem('wod_version',d.version);
+        // Clear all caches
         if('caches' in window){var keys=await caches.keys();await Promise.all(keys.map(function(k){return caches.delete(k);}));}
-        window.location.reload(true);
+        // Force SW update
+        if('serviceWorker' in navigator&&navigator.serviceWorker.controller){
+          navigator.serviceWorker.getRegistration().then(function(reg){if(reg)reg.update();});
+        }
+        // Hard reload
+        window.location.replace(window.location.href);
         return;
       }
       localStorage.setItem('wod_version',d.version);
@@ -493,7 +499,16 @@ document.addEventListener('DOMContentLoaded',function(){
   applySportTheme(currentSport);
 
   // Register SW
-  if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').then(function(reg){
+      // Check for updates every 60 seconds
+      setInterval(function(){reg.update();},60000);
+    }).catch(function(){});
+    // Listen for SW update message - auto reload
+    navigator.serviceWorker.addEventListener('message',function(e){
+      if(e.data&&e.data.type==='SW_UPDATED'){window.location.reload(true);}
+    });
+  }
 
   // Check version (cache bust if new)
   checkVersion();
@@ -543,6 +558,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
