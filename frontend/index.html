@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0d0f12">
+  <meta name="theme-color" content="#0d0f12" id="meta-theme">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="WOD">
@@ -13,16 +13,32 @@
   <title>Functional WOD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body class="sport-functional">
 
 <!-- AUTH -->
 <div id="auth-screen" class="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">⚡</div>
-    <h1 class="auth-title">FUNCTIONAL WOD</h1>
+    <div class="auth-logo" id="auth-logo"></div>
+    <h1 class="auth-title" id="auth-title">FUNCTIONAL WOD</h1>
     <p class="auth-version version-label">loading...</p>
+
+    <!-- Sport selector -->
+    <div class="auth-sport-selector">
+      <label class="auth-sport-label">Select your sport</label>
+      <div class="auth-sport-options" id="auth-sport-options">
+        <button class="auth-sport-btn active" data-sport="functional">
+          <span class="auth-sport-icon">&#9889;</span>
+          <span>Functional</span>
+        </button>
+        <button class="auth-sport-btn" data-sport="swimming">
+          <span class="auth-sport-icon">&#127946;</span>
+          <span>Swimming</span>
+        </button>
+      </div>
+    </div>
+
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login">Login</button>
       <button class="auth-tab" data-tab="register">Register</button>
@@ -46,44 +62,36 @@
 <div id="app" class="hidden">
   <nav class="nav">
     <div class="nav-brand">
-      <span class="nav-logo">⚡</span>
+      <span class="nav-logo" id="nav-logo"></span>
       <div>
-        <span class="nav-title">FUNCTIONAL WOD</span>
+        <span class="nav-title" id="nav-title">FUNCTIONAL WOD</span>
         <span class="nav-version version-label">...</span>
       </div>
     </div>
-    <div class="nav-center">
-      <select id="sport-selector" class="sport-select">
-        <option value="functional">Functional</option>
-        <option value="swimming">Swimming</option>
-      </select>
-    </div>
     <div class="nav-right">
       <div class="nav-user">
-        <span class="nav-user-dot">●</span>
+        <span class="nav-user-dot">&#9679;</span>
         <span id="nav-username">User</span>
       </div>
       <div class="nav-links">
         <button class="nav-btn active" data-view="today">Today</button>
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="library">Library</button>
-        <button class="nav-btn" data-view="settings">⚙</button>
-        <button class="nav-btn nav-logout" id="btn-logout" title="Logout">↩</button>
+        <button class="nav-btn" data-view="settings">&#9881;</button>
+        <button class="nav-btn nav-logout" id="btn-logout" title="Logout">&#8617;</button>
       </div>
     </div>
   </nav>
 
   <main class="main">
-
-    <!-- TODAY -->
     <div id="view-today" class="view active">
       <div class="today-header">
         <div>
           <p class="eyebrow" id="today-date"></p>
-          <h1 class="today-title">TODAY'S WOD</h1>
+          <h1 class="today-title" id="today-title">TODAY'S WOD</h1>
         </div>
         <div class="today-actions">
-          <button class="btn-icon" id="btn-regenerate" title="Regenerate">↺</button>
+          <button class="btn-icon" id="btn-regenerate" title="Regenerate">&#8634;</button>
           <button class="btn-ai" id="btn-ai"><span class="ai-dot"></span> AI Variant</button>
         </div>
       </div>
@@ -93,40 +101,34 @@
         <button class="vtab" data-variant="2">Option 2</button>
         <button class="vtab" data-variant="3">Option 3</button>
       </div>
-      <div id="workout-display" class="workout-display">
-        <div class="loading-state"><div class="spinner"></div><p>Generating...</p></div>
-      </div>
+      <div id="workout-display" class="workout-display"><div class="loading-state"><div class="spinner"></div><p>Generating...</p></div></div>
       <div class="action-bar">
-        <button class="btn-approve" id="btn-approve">✓ Approve this workout</button>
+        <button class="btn-approve" id="btn-approve">Approve this workout</button>
         <p class="action-hint">Approved workouts are saved to history</p>
       </div>
     </div>
 
-    <!-- HISTORY -->
     <div id="view-history" class="view">
       <div class="view-header"><h2>History</h2><div id="history-stats" class="history-stats"></div></div>
       <div id="history-list" class="history-list"><div class="loading-state"><div class="spinner"></div></div></div>
       <div id="history-pagination" class="pagination"></div>
     </div>
 
-    <!-- LIBRARY -->
     <div id="view-library" class="view">
       <div class="view-header">
         <h2>Exercise Library</h2>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn-seed" id="btn-seed">Seed defaults</button>
-          <button class="btn-upload-photo" id="btn-upload-photo">📷 Upload Photo</button>
+          <button class="btn-upload-photo" id="btn-upload-photo">Upload Photo</button>
         </div>
       </div>
-      <!-- Photo upload panel -->
       <div id="photo-panel" class="photo-panel hidden">
-        <p class="photo-hint">Upload a whiteboard photo — Claude will extract exercises and patterns automatically</p>
+        <p class="photo-hint">Upload a whiteboard photo for AI analysis</p>
         <div class="photo-drop" id="photo-drop">
           <input type="file" id="photo-input" accept="image/*" multiple style="display:none">
           <div class="photo-drop-inner" onclick="document.getElementById('photo-input').click()">
-            <span class="photo-icon">📷</span>
-            <p>Click to select photos or drag & drop</p>
-            <p class="photo-hint">JPG, PNG — multiple files supported</p>
+            <span class="photo-icon">&#128247;</span>
+            <p>Click to select photos</p>
           </div>
         </div>
         <div id="photo-preview" class="photo-preview"></div>
@@ -136,18 +138,14 @@
       <div class="library-add">
         <input type="text" id="ex-name" placeholder="Exercise name" autocomplete="off">
         <select id="ex-category">
-          <option value="lower">Lower Body</option>
-          <option value="upper">Upper Body</option>
-          <option value="core">Core</option>
-          <option value="conditioning">Conditioning</option>
-          <option value="power">Power</option>
+          <option value="lower">Lower Body</option><option value="upper">Upper Body</option>
+          <option value="core">Core</option><option value="conditioning">Conditioning</option><option value="power">Power</option>
         </select>
         <button class="btn-add" id="btn-add-ex">+ Add</button>
       </div>
       <div id="exercise-list" class="exercise-list"><div class="loading-state"><div class="spinner"></div></div></div>
     </div>
 
-    <!-- SETTINGS -->
     <div id="view-settings" class="view">
       <div class="view-header"><h2>Settings</h2></div>
       <div class="settings-grid">
@@ -166,19 +164,10 @@
         <div class="settings-card">
           <h3>Anti-Repetition</h3>
           <label class="field">
-            <span>Avoid repeating exercises from last <strong id="days-label">7</strong> days</span>
+            <span>Avoid repeating from last <strong id="days-label">7</strong> days</span>
             <input type="range" id="avoid-days" min="1" max="30" value="7" class="range-input">
             <div class="range-labels"><span>1 day</span><span>30 days</span></div>
           </label>
-        </div>
-        <div class="settings-card">
-          <h3>Sports</h3>
-          <p class="card-hint">Add sports to manage separate workout libraries</p>
-          <div class="sport-list" id="sport-list"></div>
-          <div class="sport-add">
-            <input type="text" id="new-sport" placeholder="e.g. swimming, cycling...">
-            <button class="btn-add" id="btn-add-sport">+ Add</button>
-          </div>
         </div>
         <div class="settings-card">
           <h3>Account</h3>
@@ -188,26 +177,17 @@
         </div>
       </div>
     </div>
-
   </main>
 </div>
 
-<!-- MODAL -->
 <div id="modal" class="modal hidden">
   <div class="modal-overlay" id="modal-overlay"></div>
   <div class="modal-box">
-    <button class="modal-close" id="modal-close">✕</button>
+    <button class="modal-close" id="modal-close">&#10005;</button>
     <div id="modal-content"></div>
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
