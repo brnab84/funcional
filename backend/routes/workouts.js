@@ -4,6 +4,7 @@ const Workout = require('../models/Workout');
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
 const { generateWorkout } = require('../generator');
+const { generateSwimWorkout } = require('../swim-generator');
 router.use(auth);
 
 // GET /today — READ ONLY, no auto-generate
@@ -135,3 +136,4 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
