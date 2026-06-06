@@ -9,15 +9,13 @@ router.use(auth);
 // GET /today — only return current SUGGESTIONS (not approved/rejected)
 router.get('/today', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const sport = req.query.sport || req.user.settings.defaultSport || 'functional';
-    const uid = req.user._id;
-
-    // Only get suggestions — approved/rejected stay in history
-    let suggestions = await Workout.find({ user: uid, date: today, sport, status: 'suggestion' }).sort('variant');
-
-    if (suggestions.length === 0) {
-      const exercises = await ExerciseLibrary.find({ sport, user: uid });
+    var today = new Date().toISOString().split('T')[0];
+    var sport = req.query.sport || req.user.settings.defaultSport || 'functional';
+    var suggestions = await Workout.find({ user: req.user._id, date: today, sport: sport, status: 'suggestion' }).sort('variant');
+    var approvedToday = await Workout.countDocuments({ user: req.user._id, date: today, sport: sport, status: 'approved' });
+    res.json({ workouts: suggestions, approvedToday: approvedToday });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
       if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Go to Library and Seed defaults first.' });
 
       const days = req.user.settings.avoidRepeatDays || 7;
@@ -60,9 +58,30 @@ router.put('/:id/reject', async (req, res) => {
 // REGENERATE — delete current suggestions, frontend calls GET /today after
 router.post('/regenerate', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const sport = (req.body && req.body.sport) || 'functional';
-    await Workout.deleteMany({ user: req.user._id, date: today, sport, status: 'suggestion' });
+    var today = new Date().toISOString().split('T')[0];
+    var sport = (req.body && req.body.sport) || req.user.settings.defaultSport || 'functional';
+    var uid = req.user._id;
+
+    // Delete current suggestions for today
+    await Workout.deleteMany({ user: uid, date: today, sport: sport, status: 'suggestion' });
+
+    // Generate 3 new ones
+    var exercises = await ExerciseLibrary.find({ sport: sport, user: uid });
+    if (exercises.length < 8) return res.status(400).json({ message: 'Need at least 8 exercises. Seed defaults first.' });
+
+    var days = req.user.settings.avoidRepeatDays || 7;
+    var since = new Date(Date.now() - days * 86400000);
+    var recent = await Workout.find({ user: uid, status: 'approved', sport: sport, createdAt: { $gte: since } });
+    var recentEx = recent.reduce(function(arr, w) { return arr.concat(w.blocks.reduce(function(a, b) { return a.concat(b.exercises.map(function(e) { return e.name; })); }, [])); }, []);
+
+    var created = [];
+    for (var v = 1; v <= 3; v++) {
+      var result = generateWorkout(exercises, today + '-' + Date.now(), v, recentEx, req.user.settings);
+      created.push(await Workout.create({ user: uid, sport: sport, date: today, warmup: result.warmup, blocks: result.blocks, pattern: result.pattern, variant: v, status: 'suggestion', source: 'local' }));
+    }
+    res.json({ workouts: created });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
     res.json({ ok: true });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
@@ -152,6 +171,7 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
