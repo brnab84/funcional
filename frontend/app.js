@@ -5,21 +5,27 @@ var currentUser=null,currentWorkouts=[],activeVariant=0;
 var currentSport=localStorage.getItem('wod_sport')||'functional';
 var pendingPhotos=[];
 var SESSION_TIMEOUT=10*60*1000; // 10 minutes
-var inactivityTimer=null;
 
-function resetInactivityTimer(){
-  if(inactivityTimer)clearTimeout(inactivityTimer);
-  if(!token)return; // not logged in
-  inactivityTimer=setTimeout(function(){
-    if(token){
-      showToast('Session expired - please login again','warning');
-      logout();
-    }
-  },SESSION_TIMEOUT);
+function markActivity(){
+  if(token)localStorage.setItem('wod_last_activity',Date.now().toString());
 }
-['click','keydown','scroll','touchstart','mousemove'].forEach(function(evt){
-  document.addEventListener(evt,resetInactivityTimer,{passive:true});
+function checkInactivity(){
+  if(!token)return;
+  var last=parseInt(localStorage.getItem('wod_last_activity')||'0');
+  if(last>0&&(Date.now()-last)>SESSION_TIMEOUT){
+    showToast('Session expired - please login again','warning');
+    setTimeout(logout,1500);
+  }
+}
+['click','keydown','scroll','touchstart'].forEach(function(evt){
+  document.addEventListener(evt,markActivity,{passive:true});
 });
+// Check on visibility change (user returns to app after being away)
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible')checkInactivity();
+});
+// Check every 30 seconds
+setInterval(checkInactivity,30000);
 
 // Toast notifications
 var toastTimer=null;
@@ -102,7 +108,7 @@ function showApp(){
     loadUserSettings();
   }
   applySportTheme(currentSport);
-  resetInactivityTimer();
+  markActivity();
   loadToday();
 }
 
@@ -135,7 +141,7 @@ async function register(){
   showApp();
 }
 function logout(){
-  if(inactivityTimer)clearTimeout(inactivityTimer);
+  localStorage.removeItem('wod_last_activity');
   token=null;currentUser=null;
   localStorage.removeItem('wod_token');localStorage.removeItem('wod_user');
   showAuth();
@@ -507,6 +513,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
