@@ -1,4 +1,8 @@
 :root{--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;--text:#e8eaf0;--muted:#6b7280;--accent:#f5c518;--accent2:#ff4757;--green:#2ed573;--blue:#1e90ff;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:10px;}
+
+/* Sport themes */
+body.sport-functional{--accent:#f5c518;--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;}
+body.sport-swimming{--accent:#00b4d8;--bg:#071a2e;--bg2:#0c2240;--bg3:#122d50;--border:#1a3a5c;--accent2:#ff6b6b;--green:#48dbfb;}
 *{box-sizing:border-box;margin:0;padding:0;}body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;font-size:15px;line-height:1.5;}
 .auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;}
 .auth-box{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;}
@@ -157,6 +161,17 @@
 .hidden{display:none!important;}
 
 
+
+/* Auth sport selector */
+.auth-sport-selector{margin-bottom:20px;}
+.auth-sport-label{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);display:block;margin-bottom:10px;}
+.auth-sport-options{display:flex;gap:10px;}
+.auth-sport-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all 0.2s;font-family:var(--font-body);font-size:0.85rem;font-weight:600;}
+.auth-sport-btn:hover{border-color:var(--accent);color:var(--text);}
+.auth-sport-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,0.08);}
+body.sport-swimming .auth-sport-btn.active{border-color:#00b4d8;color:#00b4d8;background:rgba(0,180,216,0.08);}
+.auth-sport-icon{font-size:1.8rem;display:block;}
+
 /* v3.2.0 additions */
 .btn-edit-section{background:none;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:2px 8px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
 .btn-edit-section:hover{border-color:var(--accent);color:var(--accent);}
@@ -310,3 +325,4 @@ input,textarea,select{user-select:text;-webkit-user-select:text;}
 @media(display-mode:standalone){
   body{overscroll-behavior-y:contain;}
 }
+
