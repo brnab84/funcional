@@ -84,6 +84,9 @@ function applySportTheme(sport){
     btn.classList.toggle('active',btn.dataset.sport===sport);
   });
   localStorage.setItem('wod_sport',sport);
+  // Show/hide swimming-specific settings
+  var swimCard=document.getElementById('swim-rest-card');
+  if(swimCard)swimCard.style.display=(sport==='swimming')?'':'none';
 }
 
 function authHeader(){return token?{'Authorization':'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};}
@@ -419,6 +422,16 @@ function loadUserSettings(){
   if(!currentUser||!currentUser.settings)return;var s=currentUser.settings;
   document.querySelectorAll('.bc-btn').forEach(function(btn){btn.classList.toggle('active',parseInt(btn.dataset.count)===(s.blockCount||2));});
   renderBlockModalities(s.blockCount||2,s.blockModalities||{});
+  // Load swim rest times
+  var srt=s.swimRestTimes||{};
+  if(document.getElementById('rest-50')){
+    document.getElementById('rest-50').value=srt.d50||30;
+    document.getElementById('rest-100').value=srt.d100||45;
+    document.getElementById('rest-200').value=srt.d200||60;
+    document.getElementById('rest-300').value=srt.d300||75;
+    document.getElementById('rest-400').value=srt.d400||90;
+    document.getElementById('rest-500').value=srt.d500||120;
+  }
   document.getElementById('avoid-days').value=s.avoidRepeatDays||7;document.getElementById('days-label').textContent=s.avoidRepeatDays||7;
 }
 function renderBlockModalities(count,mods){
@@ -432,7 +445,18 @@ async function saveSetting(){
   var bc=parseInt((document.querySelector('.bc-btn.active')||{}).dataset.count)||2;var bm={};
   document.querySelectorAll('.block-mod-select').forEach(function(sel){bm[sel.dataset.label]=sel.value;});
   var ad=parseInt(document.getElementById('avoid-days').value);
-  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad})});
+  var swimRestTimes=null;
+  if(currentSport==='swimming'){
+    swimRestTimes={
+      d50:parseInt(document.getElementById('rest-50').value)||30,
+      d100:parseInt(document.getElementById('rest-100').value)||45,
+      d200:parseInt(document.getElementById('rest-200').value)||60,
+      d300:parseInt(document.getElementById('rest-300').value)||75,
+      d400:parseInt(document.getElementById('rest-400').value)||90,
+      d500:parseInt(document.getElementById('rest-500').value)||120
+    };
+  }
+  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,swimRestTimes:swimRestTimes})});
   if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));showToast('Settings saved','success');}
 }
 
@@ -519,6 +543,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
