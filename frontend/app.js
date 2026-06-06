@@ -211,35 +211,27 @@ function renderWorkout(workout,editable){
   if(!workout)return'<div class="empty-state"><h3>No workout</h3></div>';
   var html='<div class="workout-card">';
   if(workout.warmup&&workout.warmup.exercises&&workout.warmup.exercises.length){
-    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>'+'</div>'+(editable?'<button class="btn-edit-icon" onclick="editWarmup()" title="Edit">&#9998;</button>':'')';
+    html+='<div class="card-header">';
+    html+='<div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>';
+    if(editable)html+='<button class="btn-edit-section" onclick="editWarmup()">edit</button>';
+    html+='</div>';
     html+='<div class="exercise-table">'+workout.warmup.exercises.map(function(ex,i){
       return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
   }
   (workout.blocks||[]).forEach(function(block,bi){
     html+='<div class="section-label">Block '+block.label+'</div>';
-    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>'+'</div>'+(workout.source==='ai'?'<span class="card-source-ai">AI</span>':'')+(editable?'<button class="btn-edit-icon" onclick="editBlock('+bi+')" title="Edit">&#9998;</button>':'')';
+    html+='<div class="card-header">';
+    html+='<div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>';
+    if(workout.source==='ai')html+='<span class="card-source-ai">AI</span>';
+    if(editable)html+='<button class="btn-edit-section" onclick="editBlock('+bi+')">edit</button>';
+    html+='</div>';
     html+='<div class="exercise-table">'+block.exercises.map(function(ex,i){
       return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
   });
   if(workout.pattern)html+='<div class="section-label" style="color:var(--accent);border-top:none">Pattern: '+workout.pattern+'</div>';
   return html+'</div>';
-}
-
-async function loadToday(){
-  var display=document.getElementById('workout-display');
-  display.innerHTML='<div class="loading-state"><div class="spinner"></div><p>Generating...</p></div>';
-  var r=await apiCall('/api/workouts/today?sport='+currentSport);
-  if(!r)return;
-  currentWorkouts=r.data.workouts||[];
-  if(!currentWorkouts.length){
-    display.innerHTML='<div class="empty-state"><h3>No workouts yet</h3><p>Click the refresh button \u21ba to generate today\'s options</p></div>';
-    document.querySelector('.action-bar').style.display='none';return;
-  }
-  if(r.data.approvedToday>0){showToast(r.data.approvedToday+' workout(s) already approved today','info');}
-  resetTabs();showVariant(0);
-  showToast('3 new options generated','success');
 }
 function resetTabs(){
   document.querySelectorAll('.vtab').forEach(function(t,i){
@@ -569,6 +561,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
