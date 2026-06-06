@@ -49,4 +49,20 @@ router.post('/add-sport', authMW, async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
+
+// POST /api/auth/reset-password (simple - email + new password)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password required' });
+    if (newPassword.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ message: 'No account found with that email' });
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
 module.exports = router;
+
