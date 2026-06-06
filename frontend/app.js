@@ -428,6 +428,8 @@ function switchView(name){
 
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
+  // Register service worker for PWA
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
   // Fetch version immediately for all screens
   fetch(API+'/api/health').then(function(r){return r.json();}).then(function(d){
     if(d.version){VERSION=d.version;document.querySelectorAll('.version-label').forEach(function(el){el.textContent='v'+d.version;});}
@@ -479,6 +481,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
