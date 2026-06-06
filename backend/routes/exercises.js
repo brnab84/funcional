@@ -79,7 +79,8 @@ router.post('/seed', auth, async (req, res) => {
     }
 
     // Insert for this user
-    const docs = DEFAULTS.map(e => ({ name: e.name, category: e.category, sport, user: userId }));
+    var src = (sport === 'swimming') ? SWIM_DEFAULTS : DEFAULTS;
+    const docs = src.map(e => ({ name: e.name, category: e.category, sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
     const count = await ExerciseLibrary.countDocuments({ sport, user: userId });
     res.json({ message: 'Seeded', count });
@@ -102,5 +103,6 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
 
 
