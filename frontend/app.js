@@ -4,7 +4,7 @@ var token=localStorage.getItem('wod_token');
 var currentUser=null,currentWorkouts=[],activeVariant=0;
 var currentSport=localStorage.getItem('wod_sport')||'functional';
 var pendingPhotos=[];
-var SESSION_TIMEOUT=10*60*1000; // 10 minutes
+var SESSION_TIMEOUT=5*60*1000; // 5 minutes
 
 function markActivity(){
   if(token)localStorage.setItem('wod_last_activity',Date.now().toString());
@@ -211,14 +211,14 @@ function renderWorkout(workout,editable){
   if(!workout)return'<div class="empty-state"><h3>No workout</h3></div>';
   var html='<div class="workout-card">';
   if(workout.warmup&&workout.warmup.exercises&&workout.warmup.exercises.length){
-    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>'+(editable?'<button class="btn-edit-section" onclick="editWarmup()">Edit</button>':'')+'</div>';
+    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>'+'</div>'+(editable?'<button class="btn-edit-icon" onclick="editWarmup()" title="Edit">&#9998;</button>':'')';
     html+='<div class="exercise-table">'+workout.warmup.exercises.map(function(ex,i){
       return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
   }
   (workout.blocks||[]).forEach(function(block,bi){
     html+='<div class="section-label">Block '+block.label+'</div>';
-    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>'+(editable?'<button class="btn-edit-section" onclick="editBlock('+bi+')">Edit</button>':'')+(workout.source==='ai'?'<span class="card-source-ai">AI</span>':'')+'</div>';
+    html+='<div class="card-header"><div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>'+'</div>'+(workout.source==='ai'?'<span class="card-source-ai">AI</span>':'')+(editable?'<button class="btn-edit-icon" onclick="editBlock('+bi+')" title="Edit">&#9998;</button>':'')';
     html+='<div class="exercise-table">'+block.exercises.map(function(ex,i){
       return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
@@ -569,6 +569,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
