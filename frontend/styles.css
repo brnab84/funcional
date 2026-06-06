@@ -162,6 +162,10 @@ body.sport-swimming{--accent:#00b4d8;--bg:#071a2e;--bg2:#0c2240;--bg3:#122d50;--
 
 
 
+
+/* Auth link (forgot password, back to login) */
+.auth-link{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:0.82rem;cursor:pointer;padding:8px 0;transition:color 0.15s;text-decoration:underline;text-underline-offset:3px;width:100%;text-align:center;}
+.auth-link:hover{color:var(--accent);}
 /* Auth sport selector */
 .auth-sport-selector{margin-bottom:20px;}
 .auth-sport-label{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);display:block;margin-bottom:10px;}
@@ -325,4 +329,5 @@ input,textarea,select{user-select:text;-webkit-user-select:text;}
 @media(display-mode:standalone){
   body{overscroll-behavior-y:contain;}
 }
+
 
