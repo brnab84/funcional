@@ -20,6 +20,33 @@ const DEFAULTS = [
 ];
 
 // List exercises for current user
+
+const SWIM_DEFAULTS = [
+  // Strokes
+  {name:'Freestyle',category:'stroke'},{name:'Backstroke',category:'stroke'},
+  {name:'Breaststroke',category:'stroke'},{name:'Butterfly',category:'stroke'},
+  {name:'IM (Individual Medley)',category:'stroke'},{name:'Easy Freestyle',category:'stroke'},
+  {name:'Build Freestyle',category:'stroke'},{name:'Easy Backstroke',category:'stroke'},
+  {name:'Easy Mixed Strokes',category:'stroke'},
+  // Kick
+  {name:'Flutter Kick',category:'kick'},{name:'Dolphin Kick',category:'kick'},
+  {name:'Breaststroke Kick',category:'kick'},{name:'Kick with Board',category:'kick'},
+  {name:'Side Kick',category:'kick'},
+  // Drill
+  {name:'Catch-up Drill',category:'drill'},{name:'Fingertip Drag',category:'drill'},
+  {name:'Superman Drill',category:'drill'},{name:'One-arm Drill',category:'drill'},
+  {name:'Sculling',category:'drill'},{name:'Fist Drill',category:'drill'},
+  {name:'K-D-S (Kick/Drill/Swim)',category:'drill'},{name:'IM Drill',category:'drill'},
+  // Pull
+  {name:'Pull with Buoy',category:'pull'},{name:'Pull with Paddles',category:'pull'},
+  // Sprint
+  {name:'Sprint Freestyle',category:'sprint'},{name:'Sprint Backstroke',category:'sprint'},
+  {name:'Fast Freestyle',category:'sprint'},{name:'Freestyle Descending',category:'sprint'},
+  // Endurance
+  {name:'Distance Freestyle',category:'endurance'},{name:'Continuous Swim',category:'endurance'},
+  {name:'Pyramid Set',category:'endurance'},
+];
+
 router.get('/', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
@@ -75,3 +102,4 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
