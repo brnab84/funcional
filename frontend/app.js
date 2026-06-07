@@ -243,7 +243,7 @@ function renderWorkout(workout,editable){
     html+='<div class="section-label">Block '+block.label+'</div>';
     html+='<div class="card-header">';
     html+='<div class="card-header-left"><span class="card-badge '+modalityBadgeClass(block.modality)+'">'+block.modality+'</span><span class="card-config">'+(block.config||'')+'</span></div>';
-    if(workout.source==='ai')html+='<span class="card-source-ai">AI</span>';
+    if(workout.source==='ai')html+='<span class="card-source-ai">AI</span>';if(workout.source==='imported')html+='<span class="card-source-ai" style="background:rgba(46,213,115,0.15);color:var(--green);border-color:var(--green)">IMPORTED</span>';if(workout.source==='manual')html+='<span class="card-source-ai" style="background:rgba(30,144,255,0.15);color:var(--blue);border-color:var(--blue)">MANUAL</span>';
     if(editable)html+='<button class="btn-edit-section" onclick="editBlock('+bi+')">edit</button>';
     html+='</div>';
     html+='<div class="exercise-table">'+block.exercises.map(function(ex,i){
@@ -412,7 +412,7 @@ async function saveManualWorkout(){
     if(exs.length>0)blocks.push({label:label,modality:mod,config:config,exercises:exs});
   });
   if(warmupExs.length===0&&blocks.length===0){showToast("Add at least one exercise","error");return;}
-  var r=await apiCall("/api/workouts/manual",{method:"POST",body:JSON.stringify({sport:currentSport,warmup:{rounds:warmupRounds,exercises:warmupExs},blocks:blocks,pattern:"MANUAL"})});
+  var r=await apiCall("/api/workouts/manual",{method:"POST",body:JSON.stringify({sport:currentSport,warmup:{rounds:warmupRounds,exercises:warmupExs},blocks:blocks,pattern:"MANUAL",source:"manual"})});
   document.getElementById("modal").classList.add("hidden");
   if(r&&r.ok){currentWorkouts.push(r.data.workout);resetTabs();showVariant(currentWorkouts.length-1);showToast("Manual workout created","success");}
   else{showToast(r&&r.data?r.data.message:"Error","error");}
@@ -521,7 +521,7 @@ async function saveImportedWorkout(){
     sport:currentSport,
     warmup:w.warmup||{rounds:1,exercises:[]},
     blocks:w.blocks||[],
-    pattern:w.pattern||"IMPORTED"
+    pattern:w.pattern||"IMPORTED",source:"imported"
   })});
   document.getElementById("modal").classList.add("hidden");
   if(r&&r.ok){
@@ -815,6 +815,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
