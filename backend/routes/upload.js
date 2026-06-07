@@ -55,13 +55,32 @@ router.post('/import', auth, async (req, res) => {
       });
     }
 
-    var prompt = 'Parse this ' + (sport || 'functional') + ' workout into a structured JSON format.\n';
-    if (text) prompt += 'Workout text:\n' + text + '\n';
-    if (images && images.length) prompt += 'The image contains a workout to parse.\n';
-    prompt += 'Categories: ' + cats + '\n';
+    var prompt = '';
+    if (sport === 'swimming') {
+      prompt += 'You are an expert swimming coach. Parse this pool workout into structured JSON.\n';
+      prompt += 'SWIMMING NOTATION RULES:\n';
+      prompt += '- "4 x" before a block means repeat that entire block 4 times\n';
+      prompt += '- "cada 1.10" or "c/1:10" means send-off time (departure interval)\n';
+      prompt += '- "con 20\'\'" means rest 20 seconds between reps\n';
+      prompt += '- A1=easy aerobic, A2=threshold, A3=speed/VO2max, MAX=maximum effort\n';
+      prompt += '- Aletas=fins, Manoplas=paddles, Snorkel=snorkel\n';
+      prompt += '- Crol=freestyle, Espalda=backstroke, Pecho=breaststroke, Patada=kick\n';
+      prompt += '- Prog 1-4 = progressive (each rep faster)\n';
+      prompt += '- Suaves = easy/recovery swimming\n';
+      prompt += '- Sections separated by "----" or "---" are different blocks\n';
+      prompt += '- IMPORTANT: preserve exact distances, reps, rest times, and equipment from the original\n';
+      prompt += '- IMPORTANT: include total meters for each exercise in reps field\n';
+      prompt += '- IMPORTANT: keep workout in Spanish as written\n';
+    } else {
+      prompt += 'Parse this functional workout into structured JSON.\n';
+    }
+    if (text) prompt += '\nWorkout text:\n' + text + '\n';
+    if (images && images.length) prompt += '\nThe image contains a workout to parse.\n';
+    prompt += '\nCategories: ' + cats + '\n';
     prompt += 'Modalities: ' + mods + '\n';
-    prompt += 'Return ONLY valid JSON (no markdown, no explanation):\n';
-    prompt += '{"pattern":"...","warmup":{"rounds":1,"exercises":[{"name":"...","reps":"...","category":"..."}]},"blocks":[{"label":"A","modality":"...","config":"...","exercises":[{"name":"...","reps":"...","category":"..."}]}]}';
+    prompt += 'Return ONLY valid JSON (no markdown, no backticks, no explanation):\n';
+    prompt += '{"pattern":"session type","totalMeters":3000,"warmup":{"rounds":1,"exercises":[{"name":"exercise","reps":"4x200m","category":"stroke","meters":800}]},"blocks":[{"label":"A","modality":"A1-A2","config":"description","exercises":[{"name":"exercise","reps":"4x100m c/40\'\'","category":"stroke","meters":400}]}]}\n';
+    prompt += 'CRITICAL: each exercise MUST have a "meters" field with the total distance in meters for that line.';
 
     content.push({ type: 'text', text: prompt });
 
@@ -85,3 +104,4 @@ router.post('/import', auth, async (req, res) => {
 });
 
 module.exports = router;
+
