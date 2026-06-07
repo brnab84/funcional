@@ -227,6 +227,37 @@ function modalityBadgeClass(m){
 }
 function catDot(cat){return'<span class="ex-category-dot dot-'+(cat||'lower')+'"></span>';}
 
+
+// Calculate total meters for swimming workouts
+function calcTotalMeters(workout){
+  if(!workout)return 0;
+  var total=0;
+  var parseMeters=function(ex){
+    // Check explicit meters field first
+    if(ex.meters)return parseInt(ex.meters)||0;
+    // Parse from reps string: "4x200m" → 800, "300m" → 300, "1x500m" → 500
+    var reps=String(ex.reps||'');
+    var m1=reps.match(/(\d+)\s*x\s*(\d+)\s*m/i);
+    if(m1)return parseInt(m1[1])*parseInt(m1[2]);
+    var m2=reps.match(/^(\d+)\s*m/i);
+    if(m2)return parseInt(m2[1]);
+    // "200m + 100m" pattern
+    var m3=reps.match(/(\d+)m/gi);
+    if(m3){var s=0;m3.forEach(function(x){s+=parseInt(x);});return s;}
+    return 0;
+  };
+  if(workout.warmup&&workout.warmup.exercises){
+    var wuRounds=workout.warmup.rounds||1;
+    workout.warmup.exercises.forEach(function(ex){total+=parseMeters(ex)*wuRounds;});
+  }
+  (workout.blocks||[]).forEach(function(block){
+    block.exercises.forEach(function(ex){total+=parseMeters(ex);});
+  });
+  // Check totalMeters from AI import
+  if(workout.totalMeters&&workout.totalMeters>total)total=workout.totalMeters;
+  return total;
+}
+
 function renderWorkout(workout,editable){
   if(!workout)return'<div class="empty-state"><h3>No workout</h3></div>';
   var html='<div class="workout-card">';
@@ -251,6 +282,13 @@ function renderWorkout(workout,editable){
     }).join('')+'</div>';
   });
   if(workout.pattern)html+='<div class="section-label" style="color:var(--accent);border-top:none">Pattern: '+workout.pattern+'</div>';
+  if(currentSport==='swimming'){
+    var meters=calcTotalMeters(workout);
+    if(meters>0){
+      var km=(meters/1000).toFixed(1);
+      html+='<div class="section-label" style="color:var(--green);border-top:none;font-size:0.9rem;font-weight:700">Total: '+meters+'m ('+km+' km)</div>';
+    }
+  }
   return html+'</div>';
 }
 async function loadToday(){
@@ -815,6 +853,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
