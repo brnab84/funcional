@@ -1,6 +1,6 @@
 {
   "name": "funcional-workouts",
-  "version": "7.3.0",
+  "version": "7.4.0",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
@@ -18,3 +18,4 @@
   },
   "engines": { "node": ">=18.0.0" }
 }
+
