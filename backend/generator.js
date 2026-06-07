@@ -83,7 +83,7 @@ function realisticReps(category, modality, rand) {
   return arr2[Math.floor(rand() * arr2.length)];
 }
 
-function buildBlock(pool, rand, label, modality) {
+function buildBlock(pool, rand, label, modality, stats) {
   if (modality === 'EMOM') {
     var mins = [7,10,14][Math.floor(rand() * 3)];
     var count = mins <= 7 ? 2 : 3;
@@ -175,7 +175,7 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
     var chunk = sh.slice(i * chunkSize, (i + 1) * chunkSize);
     if (chunk.length < 3) chunk = sh; // fallback if not enough
 
-    blocks.push(buildBlock(chunk, rand, label, mod));
+    blocks.push(buildBlock(chunk, rand, label, mod, stats));
   });
 
   var pattern = 'EC+' + labels.join('');
@@ -183,4 +183,5 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
 }
 
 module.exports = { generateWorkout: generateWorkout };
+
 
