@@ -567,7 +567,7 @@ function loadUserSettings(){
 }
 function renderBlockModalities(count,mods){
   var labels=['A','B','C','D'].slice(0,count);
-  var opts=['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
+  var opts=currentSport==='swimming'?['random','SPRINT','ENDURANCE','TECHNIQUE','INTERVALS']:['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
   document.getElementById('block-modalities').innerHTML=labels.map(function(label){
     return'<label class="field" style="margin-top:12px"><span>Block '+label+'</span><select class="block-mod-select" data-label="'+label+'">'+opts.map(function(o){return'<option value="'+o+'"'+((mods[label]||'random')===o?' selected':'')+'>'+(o==='random'?'Random':o)+'</option>';}).join('')+'</select></label>';
   }).join('');
@@ -696,6 +696,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
