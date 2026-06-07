@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
     avoidRepeatDays: { type: Number, default: 7 },
     defaultSport: { type: String, default: 'functional' },
     theme: { type: String, default: 'dark' },
+    poolLength: { type: Number, default: 25 },
     swimRestTimes: {
       d50: { type: Number, default: 30 },
       d100: { type: Number, default: 45 },
@@ -29,5 +30,6 @@ userSchema.pre('save', async function(next) {
 });
 userSchema.methods.comparePassword = async function(c) { return bcrypt.compare(c, this.password); };
 module.exports = mongoose.model('User', userSchema);
+
 
 
