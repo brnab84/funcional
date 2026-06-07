@@ -100,6 +100,7 @@
         </div>
         <div class="today-actions">
           <button class="btn-icon" id="btn-regenerate" title="Regenerate">&#8634;</button>
+          <button class="btn-manual" id="btn-manual">+ Manual</button>
           <button class="btn-ai" id="btn-ai"><span class="ai-dot"></span> AI Variant</button>
         </div>
       </div>
@@ -178,6 +179,22 @@
           </label>
         </div>
         
+
+        <div class="settings-card">
+          <h3>Appearance</h3>
+          <label class="field"><span>Theme</span></label>
+          <div class="theme-options" id="theme-options">
+            <button class="theme-btn active" data-theme="dark">
+              <div class="theme-preview tp-dark"></div>Dark
+            </button>
+            <button class="theme-btn" data-theme="ambient">
+              <div class="theme-preview tp-ambient"></div>Ambient
+            </button>
+            <button class="theme-btn" data-theme="dim">
+              <div class="theme-preview tp-dim"></div>Dim
+            </button>
+          </div>
+        </div>
         <div class="settings-card" id="swim-rest-card" style="display:none">
           <h3>Rest Times (Swimming)</h3>
           <p class="card-hint">Max rest between reps per distance</p>
@@ -217,6 +234,7 @@
 <script src="/app.js"></script>
 </body>
 </html>
+
 
 
 
