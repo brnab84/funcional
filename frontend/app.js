@@ -4,6 +4,8 @@ var token=localStorage.getItem('wod_token');
 var currentUser=null,currentWorkouts=[],activeVariant=0;
 var currentSport=localStorage.getItem('wod_sport')||'functional';
 var pendingPhotos=[];
+var currentTheme=localStorage.getItem('wod_theme')||'dark';
+var exerciseCache=[];
 var SESSION_TIMEOUT=5*60*1000; // 5 minutes
 
 function markActivity(){
@@ -70,7 +72,7 @@ function applySportTheme(sport){
   currentSport=sport;
   var cfg=getSportConfig();
   // Body class
-  document.body.className=cfg.bodyClass;
+  document.body.className=cfg.bodyClass+' theme-'+currentTheme;
   // Meta theme
   var meta=document.getElementById('meta-theme');
   if(meta)meta.content=cfg.themeColor;
@@ -94,6 +96,19 @@ function applySportTheme(sport){
   // Show/hide swimming-specific settings
   var swimCard=document.getElementById('swim-rest-card');
   if(swimCard)swimCard.style.display=(sport==='swimming')?'':'none';
+}
+
+function applyTheme(theme){
+  currentTheme=theme;
+  localStorage.setItem('wod_theme',theme);
+  // Remove old theme classes, keep sport class
+  var body=document.body;
+  body.classList.remove('theme-dark','theme-ambient','theme-dim');
+  body.classList.add('theme-'+theme);
+  // Update theme buttons
+  document.querySelectorAll('.theme-btn').forEach(function(btn){
+    btn.classList.toggle('active',btn.dataset.theme===theme);
+  });
 }
 
 function authHeader(){return token?{'Authorization':'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};}
@@ -286,6 +301,137 @@ async function generateAiVariant(){
 function showAiStatus(msg,err){var el=document.getElementById('ai-status');el.textContent=msg;el.className='ai-status'+(err?' error':'');}
 function hideAiStatus(){document.getElementById('ai-status').className='ai-status hidden';}
 
+// ── MANUAL WORKOUT BUILDER ─────────────────
+async function openManualBuilder(){
+  // Load user's exercises for autocomplete
+  var r=await apiCall('/api/exercises?sport='+currentSport);
+  exerciseCache=(r&&r.data&&r.data.exercises)?r.data.exercises:[];
+  var catLabels={lower:'Lower Body',upper:'Upper Body',core:'Core',conditioning:'Conditioning',power:'Power',
+    stroke:'Stroke',kick:'Kick',drill:'Drill',pull:'Pull',sprint:'Sprint',endurance:'Endurance'};
+  var swimCats=['stroke','kick','drill','pull','sprint','endurance'];
+  var funcCats=['lower','upper','core','conditioning','power'];
+  var cats=currentSport==='swimming'?swimCats:funcCats;
+  var mods=currentSport==='swimming'?['SPRINT','ENDURANCE','TECHNIQUE','INTERVALS']:['EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
+
+  var html='<h3 style="margin-bottom:16px">Create Workout</h3>';
+  html+='<div class="manual-builder" id="manual-builder">';
+
+  // Warmup section
+  html+='<div class="manual-section"><div class="manual-section-header"><span class="manual-section-title">Warm-up</span>';
+  html+='<div class="manual-row"><label style="font-size:0.78rem;color:var(--muted)">Rounds</label><input type="number" id="m-warmup-rounds" value="3" min="1" max="10" class="manual-input manual-input-sm"></div></div>';
+  html+='<div id="m-warmup-list"></div>';
+  html+='<button class="manual-btn-add" onclick="addManualExercise('warmup')">+ Add exercise</button></div>';
+
+  // Block section
+  html+='<div id="m-blocks-container"></div>';
+  html+='<button class="manual-btn-add" onclick="addManualBlock()" style="border-color:var(--accent);color:var(--accent)">+ Add Block</button>';
+
+  html+='<button class="btn-approve" onclick="saveManualWorkout()" style="margin-top:12px">Save Workout</button>';
+  html+='</div>';
+
+  document.getElementById('modal-content').innerHTML=html;
+  document.getElementById('modal').classList.remove('hidden');
+
+  // Store modalities and cats for use in addManualBlock
+  window._manualMods=mods;
+  window._manualCats=cats;
+  window._manualCatLabels=catLabels;
+  window._blockCount=0;
+
+  // Add one warmup exercise and one block by default
+  addManualExercise('warmup');
+  addManualBlock();
+}
+
+function addManualExercise(section){
+  var container=document.getElementById('m-'+section+'-list');
+  if(!container)return;
+  var div=document.createElement('div');div.className='manual-row';
+  var datalistId='dl-'+section+'-'+Date.now();
+  div.innerHTML='<input class="manual-input m-ex-name" list="'+datalistId+'" placeholder="Exercise name">'
+    +'<datalist id="'+datalistId+'">'+exerciseCache.map(function(e){return'<option value="'+e.name+'">';}).join('')+'</datalist>'
+    +'<input class="manual-input manual-input-sm m-ex-reps" placeholder="Reps">'
+    +'<button class="manual-btn-remove" onclick="this.parentElement.remove()">×</button>';
+  container.appendChild(div);
+}
+
+function addManualBlock(){
+  window._blockCount++;
+  var label=String.fromCharCode(64+window._blockCount); // A,B,C,D
+  var container=document.getElementById('m-blocks-container');
+  var div=document.createElement('div');
+  div.className='manual-section';div.id='m-block-'+label;
+  div.innerHTML='<div class="manual-section-header"><span class="manual-section-title">Block '+label+'</span>'
+    +'<button class="manual-btn-remove" onclick="this.closest('.manual-section').remove()" style="font-size:1.2rem">×</button></div>'
+    +'<div class="manual-row"><select class="manual-select m-block-mod">'+window._manualMods.map(function(m){return'<option>'+m+'</option>';}).join('')+'</select>'
+    +'<input class="manual-input m-block-config" placeholder="Config (e.g. 10' or 3 Rounds)"></div>'
+    +'<div id="m-block-'+label+'-list"></div>'
+    +'<button class="manual-btn-add" onclick="addManualExercise('block-'+label+'')">+ Add exercise</button>';
+  container.appendChild(div);
+  addManualExercise('block-'+label);
+  addManualExercise('block-'+label);
+}
+
+async function saveManualWorkout(){
+  // Build warmup
+  var warmupRounds=parseInt(document.getElementById('m-warmup-rounds').value)||1;
+  var warmupExs=[];
+  document.querySelectorAll('#m-warmup-list .manual-row').forEach(function(row){
+    var name=row.querySelector('.m-ex-name').value.trim();
+    var reps=row.querySelector('.m-ex-reps').value.trim();
+    if(name){
+      var cat='conditioning';
+      var found=exerciseCache.find(function(e){return e.name===name;});
+      if(found)cat=found.category;
+      warmupExs.push({name:name,reps:reps,category:cat});
+    }
+  });
+
+  // Build blocks
+  var blocks=[];
+  document.querySelectorAll('#m-blocks-container .manual-section').forEach(function(section){
+    var label=section.querySelector('.manual-section-title').textContent.replace('Block ','');
+    var mod=section.querySelector('.m-block-mod').value;
+    var config=section.querySelector('.m-block-config').value;
+    var exs=[];
+    section.querySelectorAll('.manual-row').forEach(function(row){
+      var nameEl=row.querySelector('.m-ex-name');
+      var repsEl=row.querySelector('.m-ex-reps');
+      if(nameEl&&repsEl){
+        var name=nameEl.value.trim();
+        var reps=repsEl.value.trim();
+        if(name){
+          var cat='conditioning';
+          var found=exerciseCache.find(function(e){return e.name===name;});
+          if(found)cat=found.category;
+          exs.push({name:name,reps:reps,category:cat});
+        }
+      }
+    });
+    if(exs.length>0)blocks.push({label:label,modality:mod,config:config,exercises:exs});
+  });
+
+  if(warmupExs.length===0&&blocks.length===0){
+    showToast('Add at least one exercise','error');return;
+  }
+
+  var r=await apiCall('/api/workouts/manual',{method:'POST',body:JSON.stringify({
+    sport:currentSport,
+    warmup:{rounds:warmupRounds,exercises:warmupExs},
+    blocks:blocks,
+    pattern:'MANUAL'
+  })});
+
+  document.getElementById('modal').classList.add('hidden');
+  if(r&&r.ok){
+    currentWorkouts.push(r.data.workout);
+    resetTabs();showVariant(currentWorkouts.length-1);
+    showToast('Manual workout created','success');
+  }else{
+    showToast(r&&r.data?r.data.message:'Error creating workout','error');
+  }
+}
+
 function editWarmup(){
   var w=currentWorkouts[activeVariant];if(!w)return;
   var wu=w.warmup;
@@ -421,6 +567,7 @@ function loadUserSettings(){
   if(!currentUser||!currentUser.settings)return;var s=currentUser.settings;
   document.querySelectorAll('.bc-btn').forEach(function(btn){btn.classList.toggle('active',parseInt(btn.dataset.count)===(s.blockCount||2));});
   renderBlockModalities(s.blockCount||2,s.blockModalities||{});
+  if(s.theme){currentTheme=s.theme;applyTheme(s.theme);}
   // Load swim rest times
   var srt=s.swimRestTimes||{};
   if(document.getElementById('rest-50')){
@@ -455,7 +602,7 @@ async function saveSetting(){
       d500:parseInt(document.getElementById('rest-500').value)||120
     };
   }
-  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,swimRestTimes:swimRestTimes})});
+  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,theme:currentTheme,swimRestTimes:swimRestTimes})});
   if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));showToast('Settings saved','success');}
 }
 
@@ -546,6 +693,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btn-approve').addEventListener('click',approveWorkout);
   document.getElementById('btn-regenerate').addEventListener('click',regenerateWorkouts);
   document.getElementById('btn-ai').addEventListener('click',generateAiVariant);
+  document.getElementById('btn-manual').addEventListener('click',openManualBuilder);
+  document.querySelectorAll('.theme-btn').forEach(function(btn){btn.addEventListener('click',function(){applyTheme(btn.dataset.theme);});});
   document.getElementById('btn-add-ex').addEventListener('click',addExercise);
   document.getElementById('ex-name').addEventListener('keydown',function(e){if(e.key==='Enter')addExercise();});
   document.getElementById('btn-seed').addEventListener('click',seedDefaults);
@@ -561,6 +710,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
