@@ -82,11 +82,10 @@ app.get('*', (req, res) => {
   const htmlPath = path.join(__dirname, '../frontend/index.html');
   fs.readFile(htmlPath, 'utf8', (err, html) => {
     if (err) return res.status(500).send('Error loading app');
-    let versioned = html
-      .replace('/styles.css"', '/styles.css?v=' + VERSION + '"')
-      .replace('/sw.js', '/sw.js?v=' + VERSION);
-    // Cache-bust all js module files
+    let versioned = html.replace('/sw.js', '/sw.js?v=' + VERSION);
+    // Cache-bust all js and css module files
     versioned = versioned.replace(/\/js\/([\w.-]+)"/g, '/js/$1?v=' + VERSION + '"');
+    versioned = versioned.replace(/\/css\/([\w.-]+)"/g, '/css/$1?v=' + VERSION + '"');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.send(versioned);
   });
@@ -113,4 +112,5 @@ if (!MONGO_URI) {
     .then(() => { console.log('MongoDB connected'); startServer(); })
     .catch(err => { console.error('MongoDB error:', err.message); startServer(); });
 }
+
 
