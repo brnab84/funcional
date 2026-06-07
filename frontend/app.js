@@ -261,6 +261,10 @@ function calcTotalMeters(workout){
 function renderWorkout(workout,editable){
   if(!workout)return'<div class="empty-state"><h3>No workout</h3></div>';
   var html='<div class="workout-card">';
+  // Source badge at top
+  if(workout.source==='ai')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(245,197,24,0.2);color:#f5c518;border:1px solid rgba(245,197,24,0.4);font-size:0.7rem">AI Generated</span></div>';
+  if(workout.source==='imported')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(46,213,115,0.2);color:#2ed573;border:1px solid rgba(46,213,115,0.4);font-size:0.7rem">Imported</span></div>';
+  if(workout.source==='manual')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(30,144,255,0.2);color:#1e90ff;border:1px solid rgba(30,144,255,0.4);font-size:0.7rem">Manual</span></div>';
   if(workout.warmup&&workout.warmup.exercises&&workout.warmup.exercises.length){
     html+='<div class="card-header">';
     html+='<div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>';
@@ -555,19 +559,28 @@ async function parseImport(){
 
 async function saveImportedWorkout(){
   var w=window._importedWorkout;if(!w)return;
-  var r=await apiCall("/api/workouts/manual",{method:"POST",body:JSON.stringify({
-    sport:currentSport,
-    warmup:w.warmup||{rounds:1,exercises:[]},
-    blocks:w.blocks||[],
-    pattern:w.pattern||"IMPORTED",source:"imported"
-  })});
-  document.getElementById("modal").classList.add("hidden");
-  if(r&&r.ok){
-    currentWorkouts.push(r.data.workout);
-    resetTabs();showVariant(currentWorkouts.length-1);
-    showToast("Workout imported!","success");
-  }else{
-    showToast(r&&r.data?r.data.message:"Error saving","error");
+  var btn=document.getElementById("btn-import-save");
+  if(btn){btn.disabled=true;btn.textContent="Saving...";}
+  try{
+    var r=await apiCall("/api/workouts/manual",{method:"POST",body:JSON.stringify({
+      sport:currentSport,
+      warmup:w.warmup||{rounds:1,exercises:[]},
+      blocks:w.blocks||[],
+      pattern:w.pattern||"IMPORTED",
+      source:"imported"
+    })});
+    document.getElementById("modal").classList.add("hidden");
+    if(r&&r.ok){
+      currentWorkouts.push(r.data.workout);
+      resetTabs();showVariant(currentWorkouts.length-1);
+      showToast("Workout imported!","success");
+    }else{
+      showToast(r&&r.data?r.data.message:"Error saving workout","error");
+      if(btn){btn.disabled=false;btn.textContent="Save as workout";}
+    }
+  }catch(e){
+    showToast("Error: "+e.message,"error");
+    if(btn){btn.disabled=false;btn.textContent="Save as workout";}
   }
 }
 
@@ -853,6 +866,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
