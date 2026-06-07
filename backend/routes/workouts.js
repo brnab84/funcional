@@ -4,6 +4,7 @@ const Workout = require('../models/Workout');
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
 const TrainingStats = require('../models/TrainingStats');
+const { categoriesFor } = require('../utils/constants');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
 router.use(auth);
@@ -36,9 +37,7 @@ router.post('/regenerate', async (req, res) => {
     }
 
     // Validate categories match the sport
-    const swimCats = ['stroke','kick','drill','pull','sprint','endurance'];
-    const funcCats = ['lower','upper','core','conditioning','power'];
-    const validCats = sport === 'swimming' ? swimCats : funcCats;
+    const validCats = categoriesFor(sport);
     const valid = exercises.filter(e => validCats.includes(e.category));
     if (valid.length < 8) {
       return res.status(400).json({ message: 'Exercises have wrong categories for ' + sport + '. Re-seed defaults in Library.' });
@@ -239,6 +238,7 @@ router.get('/learning', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
