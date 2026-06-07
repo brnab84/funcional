@@ -197,6 +197,13 @@
         </div>
         <div class="settings-card" id="swim-rest-card" style="display:none">
           <h3>Rest Times (Swimming)</h3>
+          <label class="field"><span>Pool Length</span>
+            <select id="pool-length" class="manual-select" style="width:100%">
+              <option value="25">25 meters</option>
+              <option value="50">50 meters</option>
+            </select>
+          </label>
+          <br>
           <p class="card-hint">Max rest between reps per distance</p>
           <div class="swim-rest-grid">
             <label class="swim-rest-row"><span>50m</span><input type="number" id="rest-50" min="10" max="300" value="30" class="swim-rest-input"><span class="rest-unit">sec</span></label>
@@ -234,6 +241,7 @@
 <script src="/app.js"></script>
 </body>
 </html>
+
 
 
 
