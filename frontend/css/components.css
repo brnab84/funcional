@@ -1,0 +1,103 @@
+/* Settings */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.settings-card h3{font-family:var(--font-display);font-size:1.1rem;letter-spacing:1px;margin-bottom:16px;color:var(--accent);}
+.card-hint{font-size:0.82rem;color:var(--muted);margin-bottom:14px;}
+.field{display:flex;flex-direction:column;gap:6px;font-size:0.85rem;color:var(--muted);}
+.block-count-selector{display:flex;gap:8px;margin-top:8px;}
+.bc-btn{flex:1;height:38px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:0.75rem;cursor:pointer;transition:all 0.15s;}
+.bc-btn.active{background:rgba(245,197,24,0.15);border-color:var(--accent);color:var(--accent);}
+.block-modalities select{width:100%;height:38px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 10px;font-family:var(--font-body);font-size:0.85rem;outline:none;margin-top:4px;}
+.range-input{width:100%;accent-color:var(--accent);margin-top:8px;cursor:pointer;}
+.range-labels{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:4px;}
+.sport-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.sport-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:999px;font-size:0.85rem;text-transform:capitalize;}
+.sport-add{display:flex;gap:8px;}
+.sport-add input{flex:1;height:38px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);padding:0 12px;font-family:var(--font-body);font-size:0.85rem;outline:none;}
+.sport-add input:focus{border-color:var(--accent);}
+.btn-save-settings{width:100%;height:42px;border-radius:8px;background:var(--accent);border:none;color:#0d0f12;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:8px;}
+.btn-save-settings:hover{background:#ffd32a;}
+.settings-status{margin-top:10px;font-size:0.85rem;color:var(--green);font-family:var(--font-mono);text-align:center;}.settings-status.hidden{display:none;}
+.modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}.modal.hidden{display:none;}
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);}
+.modal-box{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;z-index:1;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:0.85rem;}
+.modal-close:hover{color:var(--text);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state h3{font-family:var(--font-display);font-size:1.5rem;letter-spacing:2px;margin-bottom:8px;}
+.hidden{display:none!important;}
+
+
+
+
+/* Auth link (forgot password, back to login) */
+.auth-link{background:none;border:none;color:var(--muted);font-family:var(--font-body);font-size:0.82rem;cursor:pointer;padding:8px 0;transition:color 0.15s;text-decoration:underline;text-underline-offset:3px;width:100%;text-align:center;}
+.auth-link:hover{color:var(--accent);}
+/* Auth sport selector */
+.auth-sport-selector{margin-bottom:20px;}
+.auth-sport-label{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);display:block;margin-bottom:10px;}
+.auth-sport-options{display:flex;gap:10px;}
+.auth-sport-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 12px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all 0.2s;font-family:var(--font-body);font-size:0.85rem;font-weight:600;}
+.auth-sport-btn:hover{border-color:var(--accent);color:var(--text);}
+.auth-sport-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,0.08);}
+body.sport-swimming .auth-sport-btn.active{border-color:#00b4d8;color:#00b4d8;background:rgba(0,180,216,0.08);}
+.auth-sport-icon{font-size:1.8rem;display:block;}
+
+
+
+/* Theme variants */
+body.theme-dark{--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;--text:#e8eaf0;--muted:#6b7280;}
+body.theme-ambient{--bg:#1a1510;--bg2:#211c14;--bg3:#2a2318;--border:#3d3428;--text:#e8dfd0;--muted:#8a7e6b;}
+body.theme-dim{--bg:#1e2128;--bg2:#252930;--bg3:#2d323a;--border:#3a4050;--text:#d0d4dc;--muted:#7a8090;}
+body.theme-ambient.sport-swimming{--bg:#0e1a1f;--bg2:#142228;--bg3:#1a2c34;--border:#263a44;}
+body.theme-dim.sport-swimming{--bg:#182028;--bg2:#1e2830;--bg3:#253038;--border:#304050;}
+
+/* Theme selector */
+.theme-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.theme-btn{flex:1;min-width:70px;padding:10px 8px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:0.75rem;font-family:var(--font-mono);text-align:center;transition:all 0.2s;}
+.theme-btn:hover{border-color:var(--accent);color:var(--text);}
+.theme-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,0.08);}
+body.sport-swimming .theme-btn.active{background:rgba(0,180,216,0.08);}
+.theme-preview{width:100%;height:8px;border-radius:3px;margin-bottom:6px;}
+.tp-dark{background:linear-gradient(90deg,#0d0f12,#1a1e26);}
+.tp-ambient{background:linear-gradient(90deg,#1a1510,#2a2318);}
+.tp-dim{background:linear-gradient(90deg,#1e2128,#2d323a);}
+
+/* Manual workout builder */
+.manual-builder{display:flex;flex-direction:column;gap:16px;}
+.manual-section{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.manual-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.manual-section-title{font-family:var(--font-display);font-size:1.1rem;color:var(--accent);}
+.manual-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
+.manual-input{flex:1;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 8px;font-size:0.85rem;font-family:var(--font-body);}
+.manual-input-sm{width:70px;text-align:center;}
+.manual-select{height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 8px;font-size:0.82rem;}
+.manual-btn-add{background:none;border:1px dashed var(--border);color:var(--muted);border-radius:6px;padding:8px;cursor:pointer;font-size:0.8rem;width:100%;transition:all 0.15s;}
+.manual-btn-add:hover{border-color:var(--accent);color:var(--accent);}
+.manual-btn-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;opacity:0.5;}
+.manual-btn-remove:hover{opacity:1;color:var(--accent2);}
+.btn-manual{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:var(--font-body);transition:all 0.2s;}
+.btn-manual:hover{background:var(--accent);color:var(--bg);}
+
+/* Swimming category dots */
+.dot-stroke{background:#00b4d8;}.dot-kick{background:#ffd166;}.dot-drill{background:#06d6a0;}
+.dot-pull{background:#118ab2;}.dot-sprint{background:#ef476f;}.dot-endurance{background:#073b4c;}
+.dot-rest{background:#6b7280;}
+/* Swimming modality badges */
+.badge-sprint{background:rgba(239,71,111,0.2);color:#ef476f;border:1px solid rgba(239,71,111,0.4);}
+.badge-endurance{background:rgba(7,59,76,0.3);color:#48dbfb;border:1px solid rgba(72,219,251,0.4);}
+.badge-technique{background:rgba(6,214,160,0.2);color:#06d6a0;border:1px solid rgba(6,214,160,0.4);}
+.badge-intervals{background:rgba(17,138,178,0.2);color:#118ab2;border:1px solid rgba(17,138,178,0.4);}
+.badge-easy{background:rgba(107,114,128,0.2);color:#9ca3af;border:1px solid rgba(156,163,175,0.3);}
+
+/* v3.2.0 additions */
+.btn-edit-section{background:none;border:none;color:var(--muted);border-radius:4px;padding:4px 6px;font-size:0.65rem;cursor:pointer;transition:all 0.15s;opacity:0.4;text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);margin-left:auto;}
+.btn-edit-section:hover{opacity:1;color:var(--accent);}
+.card-header{gap:8px;}
+.card-header .btn-edit-section{order:10;}
+.card-header .card-source-ai{order:9;}
+.history-item{display:flex;align-items:center;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all 0.15s;}
+.history-item:hover{border-color:var(--accent);background:rgba(245,197,24,0.04);}
+.hist-main{flex:1;display:grid;grid-template-columns:100px 1fr;align-items:center;gap:16px;padding:14px 18px;background:none;border:none;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;}
+.hist-delete{background:none;border:none;border-left:1px solid var(--border);color:var(--muted);padding:14px 16px;cursor:pointer;font-size:1rem;transition:all 0.15s;align-self:stretch;display:flex;align-items:center;}
+.hist-delete:hover{background:rgba(255,71,87,0.1);color:var(--accent2);}
