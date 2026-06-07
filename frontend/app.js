@@ -218,9 +218,12 @@ function modalityBadgeClass(m){
   if(m.includes('ROUNDS'))return'badge-rounds';if(m.includes('TABATA'))return'badge-tabata';
   if(m.includes('DESCENDING'))return'badge-descending';if(m.includes('ZONE'))return'badge-zones';
   if(m.includes('MINI'))return'badge-miniamrap';
-  if(m.includes('SPRINT'))return'badge-sprint';if(m.includes('ENDUR'))return'badge-endurance';
-  if(m.includes('TECH'))return'badge-technique';if(m.includes('INTERVAL'))return'badge-intervals';
-  if(m.includes('EASY'))return'badge-easy';return'badge-rounds';
+  if(m.includes('A3')||m.includes('SPRINT')||m.includes('MAX')||m.includes('QUEBRADO'))return'badge-sprint';
+  if(m.includes('A1')||m.includes('A2'))return'badge-intervals';
+  if(m.includes('ENDUR'))return'badge-endurance';
+  if(m.includes('TECH')||m.includes('DRILL'))return'badge-technique';
+  if(m.includes('PROG')||m.includes('DESC'))return'badge-intervals';
+  if(m.includes('EASY')||m.includes('RECOV'))return'badge-easy';return'badge-rounds';
 }
 function catDot(cat){return'<span class="ex-category-dot dot-'+(cat||'lower')+'"></span>';}
 
@@ -567,7 +570,7 @@ function loadUserSettings(){
 }
 function renderBlockModalities(count,mods){
   var labels=['A','B','C','D'].slice(0,count);
-  var opts=currentSport==='swimming'?['random','SPRINT','ENDURANCE','TECHNIQUE','INTERVALS']:['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
+  var opts=currentSport==='swimming'?['random','A1-A2','A2-A3','A3 SPRINT','A3 QUEBRADO','TECHNIQUE','ENDURANCE','PROGRESSIVE','DESCENDING']:['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
   document.getElementById('block-modalities').innerHTML=labels.map(function(label){
     return'<label class="field" style="margin-top:12px"><span>Block '+label+'</span><select class="block-mod-select" data-label="'+label+'">'+opts.map(function(o){return'<option value="'+o+'"'+((mods[label]||'random')===o?' selected':'')+'>'+(o==='random'?'Random':o)+'</option>';}).join('')+'</select></label>';
   }).join('');
@@ -696,6 +699,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
