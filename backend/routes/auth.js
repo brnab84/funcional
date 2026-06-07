@@ -35,6 +35,7 @@ router.put('/settings', authMW, async (req, res) => {
     if (blockModalities) user.settings.blockModalities = { ...user.settings.blockModalities, ...blockModalities };
     if (avoidRepeatDays !== undefined) user.settings.avoidRepeatDays = avoidRepeatDays;
     if (defaultSport) user.settings.defaultSport = defaultSport;
+    if (req.body.theme) user.settings.theme = req.body.theme;
     if (req.body.swimRestTimes) {
       var srt = req.body.swimRestTimes;
       if (srt.d50 !== undefined) user.settings.swimRestTimes.d50 = srt.d50;
@@ -74,5 +75,6 @@ router.post('/reset-password', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
