@@ -3,6 +3,7 @@ const router = express.Router();
 const Workout = require('../models/Workout');
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
+const TrainingStats = require('../models/TrainingStats');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
 router.use(auth);
@@ -55,12 +56,16 @@ router.post('/regenerate', async (req, res) => {
       });
     });
 
+    // Load training stats for smart generation
+    var stats = null;
+    try { stats = await TrainingStats.findOne({ user: uid, sport: sport }).lean(); } catch(e) {}
+
     // Generate 3 variants
     const gen = sport === 'swimming' ? generateSwimWorkout : generateWorkout;
     const seed = today + '-' + uid;
     const created = [];
     for (var v = 1; v <= 3; v++) {
-      const result = gen(valid, seed, v, recentEx, req.user.settings, approvedMods);
+      const result = gen(valid, seed, v, recentEx, req.user.settings, approvedMods, stats);
       created.push(await Workout.create({
         user: uid, sport: sport, date: today,
         warmup: result.warmup, blocks: result.blocks, pattern: result.pattern,
@@ -93,7 +98,7 @@ router.post('/manual', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// APPROVE
+// APPROVE + LEARN
 router.put('/:id/approve', async (req, res) => {
   try {
     const workout = await Workout.findOne({ _id: req.params.id, user: req.user._id });
@@ -101,6 +106,39 @@ router.put('/:id/approve', async (req, res) => {
     workout.status = 'approved';
     if (req.body && req.body.notes) workout.notes = req.body.notes;
     await workout.save();
+
+    // LEARN: update training stats from this approved workout
+    try {
+      var inc = { totalApproved: 1 };
+      inc[workout.source === 'ai' ? 'aiApproved' : 'localApproved'] = 1;
+      var setOps = { updatedAt: new Date() };
+      var incFreq = {};
+
+      // Extract exercises, modalities, categories, reps
+      (workout.blocks || []).forEach(function(block) {
+        if (block.modality) incFreq['modalityFreq.' + block.modality.replace(/[.$]/g, '_')] = (incFreq['modalityFreq.' + block.modality.replace(/[.$]/g, '_')] || 0) + 1;
+        (block.exercises || []).forEach(function(ex) {
+          if (ex.name) incFreq['exerciseFreq.' + ex.name.replace(/[.$]/g, '_')] = (incFreq['exerciseFreq.' + ex.name.replace(/[.$]/g, '_')] || 0) + 1;
+          if (ex.category) incFreq['categoryFreq.' + ex.category] = (incFreq['categoryFreq.' + ex.category] || 0) + 1;
+          if (ex.reps) incFreq['repsFreq.' + String(ex.reps).replace(/[.$]/g, '_')] = (incFreq['repsFreq.' + String(ex.reps).replace(/[.$]/g, '_')] || 0) + 1;
+        });
+      });
+      if (workout.pattern) incFreq['patternFreq.' + workout.pattern.replace(/[.$]/g, '_')] = 1;
+
+      // Warmup exercises too
+      if (workout.warmup && workout.warmup.exercises) {
+        workout.warmup.exercises.forEach(function(ex) {
+          if (ex.name) incFreq['exerciseFreq.' + ex.name.replace(/[.$]/g, '_')] = (incFreq['exerciseFreq.' + ex.name.replace(/[.$]/g, '_')] || 0) + 1;
+        });
+      }
+
+      await TrainingStats.findOneAndUpdate(
+        { user: req.user._id, sport: workout.sport },
+        { $inc: { ...inc, ...incFreq }, $set: setOps },
+        { upsert: true }
+      );
+    } catch(statsErr) { console.log('Stats update error:', statsErr.message); }
+
     res.json({ workout });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
@@ -188,5 +226,16 @@ router.get('/stats', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
+// GET /learning — show training intelligence data
+router.get('/learning', async (req, res) => {
+  try {
+    const sport = req.query.sport || 'functional';
+    const stats = await TrainingStats.findOne({ user: req.user._id, sport: sport }).lean();
+    if (!stats) return res.json({ message: 'No training data yet', stats: null });
+    res.json({ stats: stats });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
 module.exports = router;
+
 
