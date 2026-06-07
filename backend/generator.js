@@ -8,6 +8,32 @@ function shuffle(arr, rand) {
   for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rand() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
   return a;
 }
+
+// Smart pick: weight exercises by approval frequency
+function smartPick(pool, count, rand, stats) {
+  if (!stats || !stats.exerciseFreq) return pickBalanced(pool, count, rand);
+  var freq = stats.exerciseFreq;
+  // Score each exercise: base 1 + approval count
+  var scored = pool.map(function(ex) {
+    var key = ex.name.replace(/[.$]/g, '_');
+    var score = 1 + (freq[key] || 0);
+    return { ex: ex, score: score };
+  });
+  // Weighted shuffle
+  scored.sort(function(a, b) { return (b.score * rand()) - (a.score * rand()); });
+  // Still ensure category balance
+  var cats = ['lower','upper','core','conditioning','power'];
+  var sel = [], used = {};
+  // First: one per category
+  cats.forEach(function(cat) {
+    var match = scored.find(function(s) { return s.ex.category === cat && !used[s.ex.name]; });
+    if (match && sel.length < count) { sel.push(match.ex); used[match.ex.name] = true; }
+  });
+  // Fill remaining
+  scored.forEach(function(s) { if (sel.length < count && !used[s.ex.name]) { sel.push(s.ex); used[s.ex.name] = true; } });
+  return sel.slice(0, count);
+}
+
 function pickBalanced(pool, count, rand) {
   var cats = ['lower','upper','core','conditioning','power'];
   var sel = [], sh = shuffle(pool, rand);
@@ -61,20 +87,20 @@ function buildBlock(pool, rand, label, modality) {
   if (modality === 'EMOM') {
     var mins = [7,10,14][Math.floor(rand() * 3)];
     var count = mins <= 7 ? 2 : 3;
-    return { label: label, modality: 'EMOM', config: mins + "'", exercises: pickBalanced(pool, count, rand).map(function(ex) {
+    return { label: label, modality: 'EMOM', config: mins + "'", exercises: smartPick(pool, count, rand, stats).map(function(ex) {
       return { name: ex.name, reps: realisticReps(ex.category, 'EMOM', rand), category: ex.category };
     })};
   }
   if (modality === 'OTM') {
     var interval = [2, 2.5, 3, 4][Math.floor(rand() * 4)];
     var rnds = [5,6,7][Math.floor(rand() * 3)];
-    return { label: label, modality: 'OTM', config: 'OTM ' + interval + "' — " + rnds + ' rounds', exercises: pickBalanced(pool, [4,5,6][Math.floor(rand() * 3)], rand).map(function(ex) {
+    return { label: label, modality: 'OTM', config: 'OTM ' + interval + "' — " + rnds + ' rounds', exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
       return { name: ex.name, reps: realisticReps(ex.category, 'OTM', rand), category: ex.category };
     })};
   }
   if (modality === 'AMRAP') {
     var amMins = [5,8,10,12][Math.floor(rand() * 4)];
-    return { label: label, modality: 'AMRAP', config: amMins + "'", exercises: pickBalanced(pool, [4,5,6][Math.floor(rand() * 3)], rand).map(function(ex) {
+    return { label: label, modality: 'AMRAP', config: amMins + "'", exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
       return { name: ex.name, reps: realisticReps(ex.category, 'AMRAP', rand), category: ex.category };
     })};
   }
@@ -93,12 +119,12 @@ function buildBlock(pool, rand, label, modality) {
   }
   // Default: ROUNDS
   var rnds2 = [2,3,4,5][Math.floor(rand() * 4)];
-  return { label: label, modality: 'ROUNDS', config: rnds2 + ' Rounds', exercises: pickBalanced(pool, [4,5,6][Math.floor(rand() * 3)], rand).map(function(ex) {
+  return { label: label, modality: 'ROUNDS', config: rnds2 + ' Rounds', exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
     return { name: ex.name, reps: realisticReps(ex.category, 'ROUNDS', rand), category: ex.category };
   })};
 }
 
-function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSettings) {
+function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods, stats) {
   variantNum = variantNum || 1;
   recentExercises = recentExercises || [];
   userSettings = userSettings || {};
@@ -129,7 +155,18 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
       // Pick random, try not to repeat
       var available = allModalities.filter(function(m) { return !usedMods[m]; });
       if (available.length === 0) available = allModalities;
-      mod = available[Math.floor(rand() * available.length)];
+      // Weight by approval stats
+      if (stats && stats.modalityFreq) {
+        var weighted = [];
+        available.forEach(function(m) {
+          var key = m.replace(/[.$]/g, '_');
+          var score = 1 + (stats.modalityFreq[key] || 0);
+          for (var i = 0; i < score; i++) weighted.push(m);
+        });
+        mod = weighted[Math.floor(rand() * weighted.length)];
+      } else {
+        mod = available[Math.floor(rand() * available.length)];
+      }
     }
     usedMods[mod] = true;
 
@@ -146,3 +183,4 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
 }
 
 module.exports = { generateWorkout: generateWorkout };
+
