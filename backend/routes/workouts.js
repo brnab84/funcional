@@ -71,6 +71,28 @@ router.post('/regenerate', async (req, res) => {
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
+
+// POST /manual — create workout manually
+router.post('/manual', async (req, res) => {
+  try {
+    const { sport, warmup, blocks, pattern, notes } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    const workout = await Workout.create({
+      user: req.user._id,
+      sport: sport || 'functional',
+      date: today,
+      warmup: warmup || { rounds: 1, exercises: [] },
+      blocks: blocks || [],
+      pattern: pattern || 'MANUAL',
+      variant: 98,
+      status: 'suggestion',
+      source: 'manual',
+      notes: notes || ''
+    });
+    res.json({ workout });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
 // APPROVE
 router.put('/:id/approve', async (req, res) => {
   try {
@@ -167,3 +189,4 @@ router.get('/stats', async (req, res) => {
 });
 
 module.exports = router;
+
