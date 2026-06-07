@@ -11,8 +11,9 @@ const workoutSchema = new mongoose.Schema({
   status: { type: String, enum: ['suggestion','approved','rejected'], default: 'suggestion' },
   variant: { type: Number, default: 1 },
   notes: String,
-  source: { type: String, enum: ['ai','local'], default: 'local' },
+  source: { type: String, enum: ['ai','local','manual','imported'], default: 'local' },
   createdAt: { type: Date, default: Date.now }
 });
 module.exports = mongoose.model('Workout', workoutSchema);
+
 
