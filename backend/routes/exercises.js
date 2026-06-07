@@ -80,6 +80,12 @@ router.post('/seed', auth, async (req, res) => {
     const docs = src.map(e => ({ name: e.name, category: e.category, sport: sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
 
+    // Cleanup: remove any exercises with wrong categories for this sport
+    var swimCats = ['stroke','kick','drill','pull','sprint','endurance','rest'];
+    var funcCats = ['lower','upper','core','conditioning','power'];
+    var validCats = sport === 'swimming' ? swimCats : funcCats;
+    await ExerciseLibrary.deleteMany({ sport: sport, user: userId, category: { $nin: validCats } });
+
     const count = await ExerciseLibrary.countDocuments({ sport: sport, user: userId });
     res.json({ message: 'Seeded', count: count, sport: sport });
   } catch(err) {
@@ -106,3 +112,4 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
