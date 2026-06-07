@@ -188,7 +188,7 @@ var SESSION_TYPES = [
   { name: 'Técnica', builders: ['technique', 'technique'] },
 ];
 
-function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods) {
+function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods, stats) {
   var rand = seededRand(seed + '-swim-v' + (variantNum || 1));
   var blockCount = (userSettings && userSettings.blockCount) || 2;
   var pool = (userSettings && userSettings.poolLength) || 25;
@@ -196,7 +196,20 @@ function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, us
 
   // Pick session type — weight by approved history
   var typePool = SESSION_TYPES.slice();
-  if (approvedMods.length > 0) {
+  // Weight from stats (deeper learning)
+  if (stats && stats.patternFreq) {
+    Object.keys(stats.patternFreq).forEach(function(pat) {
+      var count = stats.patternFreq[pat] || 0;
+      var p = pat.toUpperCase();
+      for (var i = 0; i < count; i++) {
+        if (p.includes('A1') && p.includes('A2') && !p.includes('A3')) typePool.push(SESSION_TYPES[0]);
+        else if (p.includes('A1') && p.includes('A3')) typePool.push(SESSION_TYPES[1]);
+        else if (p.includes('A2') && p.includes('A3')) typePool.push(SESSION_TYPES[2]);
+        else if (p.includes('TEC')) typePool.push(SESSION_TYPES[3], SESSION_TYPES[6]);
+        else if (p.includes('ENDUR')) typePool.push(SESSION_TYPES[5]);
+      }
+    });
+  } else if (approvedMods.length > 0) {
     approvedMods.forEach(function(m) {
       m = (m || '').toUpperCase();
       if (m.includes('A1')) typePool.push(SESSION_TYPES[0], SESSION_TYPES[1]);
@@ -225,3 +238,4 @@ function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, us
 }
 
 module.exports = { generateSwimWorkout: generateSwimWorkout };
+
