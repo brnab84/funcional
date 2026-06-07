@@ -3,7 +3,7 @@ const router = express.Router();
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
 
-const DEFAULTS = [
+const FUNCTIONAL = [
   {name:'Air Squats',category:'lower'},{name:'Goblet Squats',category:'lower'},{name:'Jump Squats',category:'lower'},
   {name:'Reverse Lunges',category:'lower'},{name:'Walking Lunges',category:'lower'},{name:'Deficit Lunges',category:'lower'},
   {name:'Jump Lunges',category:'lower'},{name:'Bulgarian Squats',category:'lower'},{name:'Deadlift',category:'lower'},
@@ -19,90 +19,90 @@ const DEFAULTS = [
   {name:'Thruster',category:'power'},{name:'KB Snatch',category:'power'},{name:'KB Swing',category:'power'},{name:'Wall Ball',category:'power'},
 ];
 
-// List exercises for current user
-
-const SWIM_DEFAULTS = [
-  // Strokes
+const SWIMMING = [
   {name:'Freestyle',category:'stroke'},{name:'Backstroke',category:'stroke'},
   {name:'Breaststroke',category:'stroke'},{name:'Butterfly',category:'stroke'},
   {name:'IM (Individual Medley)',category:'stroke'},{name:'Easy Freestyle',category:'stroke'},
   {name:'Build Freestyle',category:'stroke'},{name:'Easy Backstroke',category:'stroke'},
   {name:'Easy Mixed Strokes',category:'stroke'},
-  // Kick
   {name:'Flutter Kick',category:'kick'},{name:'Dolphin Kick',category:'kick'},
-  {name:'Breaststroke Kick',category:'kick'},{name:'Kick with Board',category:'kick'},
-  {name:'Side Kick',category:'kick'},
-  // Drill
+  {name:'Breaststroke Kick',category:'kick'},{name:'Kick with Board',category:'kick'},{name:'Side Kick',category:'kick'},
   {name:'Catch-up Drill',category:'drill'},{name:'Fingertip Drag',category:'drill'},
   {name:'Superman Drill',category:'drill'},{name:'One-arm Drill',category:'drill'},
   {name:'Sculling',category:'drill'},{name:'Fist Drill',category:'drill'},
   {name:'K-D-S (Kick/Drill/Swim)',category:'drill'},{name:'IM Drill',category:'drill'},
-  // Pull
   {name:'Pull with Buoy',category:'pull'},{name:'Pull with Paddles',category:'pull'},
-  // Sprint
   {name:'Sprint Freestyle',category:'sprint'},{name:'Sprint Backstroke',category:'sprint'},
   {name:'Fast Freestyle',category:'sprint'},{name:'Freestyle Descending',category:'sprint'},
-  // Endurance
   {name:'Distance Freestyle',category:'endurance'},{name:'Continuous Swim',category:'endurance'},
   {name:'Pyramid Set',category:'endurance'},
 ];
 
+// GET exercises for current user + sport
 router.get('/', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const exercises = await ExerciseLibrary.find({ sport, user: req.user._id }).sort('category name');
+    const exercises = await ExerciseLibrary.find({ sport: sport, user: req.user._id }).sort('category name');
     res.json({ exercises });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
+// GET categories
 router.get('/categories', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const cats = await ExerciseLibrary.distinct('category', { sport, user: req.user._id });
-    const all = [...new Set(['lower','upper','core','conditioning','power', ...cats])];
+    const funcCats = ['lower','upper','core','conditioning','power'];
+    const swimCats = ['stroke','kick','drill','pull','sprint','endurance'];
+    const defaults = sport === 'swimming' ? swimCats : funcCats;
+    const custom = await ExerciseLibrary.distinct('category', { sport: sport, user: req.user._id });
+    const all = [...new Set([...defaults, ...custom])];
     res.json({ categories: all });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// Seed for current user - creates their own copy
+// SEED - nuclear: delete ALL for this user+sport, insert correct defaults
 router.post('/seed', auth, async (req, res) => {
   const sport = (req.body && req.body.sport) || 'functional';
   const userId = req.user._id;
   try {
-    // Drop old unique index if exists
+    // Drop any old unique indexes
     try { await ExerciseLibrary.collection.dropIndex('name_1'); } catch(e) {}
 
-    // Check if this user already has exercises
-    const existing = await ExerciseLibrary.countDocuments({ sport, user: userId });
-    if (existing > 0) {
-      return res.json({ message: 'Already seeded', count: existing });
-    }
+    // Delete ALL exercises for this user + sport
+    await ExerciseLibrary.deleteMany({ user: userId, sport: sport });
 
-    // Insert for this user
-    var src = (sport === 'swimming') ? SWIM_DEFAULTS : DEFAULTS;
-    const docs = src.map(e => ({ name: e.name, category: e.category, sport, user: userId }));
+    // Also delete any orphan exercises without user (old data)
+    await ExerciseLibrary.deleteMany({ user: null, sport: sport });
+    await ExerciseLibrary.deleteMany({ user: { $exists: false }, sport: sport });
+
+    // Insert correct defaults
+    const src = sport === 'swimming' ? SWIMMING : FUNCTIONAL;
+    const docs = src.map(e => ({ name: e.name, category: e.category, sport: sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
-    const count = await ExerciseLibrary.countDocuments({ sport, user: userId });
-    res.json({ message: 'Seeded', count });
+
+    const count = await ExerciseLibrary.countDocuments({ sport: sport, user: userId });
+    res.json({ message: 'Seeded', count: count, sport: sport });
   } catch(err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// ADD exercise
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, category, equipment, sport } = req.body;
-    const ex = await ExerciseLibrary.create({ name, category, equipment: equipment||'none', sport: sport||'functional', user: req.user._id });
+    const { name, category, sport } = req.body;
+    if (!name || !category) return res.status(400).json({ message: 'Name and category required' });
+    const ex = await ExerciseLibrary.create({ name, category, sport: sport || 'functional', user: req.user._id });
     res.status(201).json({ exercise: ex });
   } catch(err) { res.status(400).json({ message: err.message }); }
 });
 
+// DELETE exercise
 router.delete('/:id', auth, async (req, res) => {
-  try { await ExerciseLibrary.findOneAndDelete({ _id: req.params.id, user: req.user._id }); res.json({ ok: true }); }
-  catch(err) { res.status(500).json({ message: err.message }); }
+  try {
+    await ExerciseLibrary.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    res.json({ ok: true });
+  } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
 module.exports = router;
-
-
-
