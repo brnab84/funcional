@@ -250,6 +250,26 @@ function renderWorkout(workout,editable){
   if(workout.pattern)html+='<div class="section-label" style="color:var(--accent);border-top:none">Pattern: '+workout.pattern+'</div>';
   return html+'</div>';
 }
+async function loadToday(){
+  var display=document.getElementById('workout-display');
+  display.innerHTML='<div class="loading-state"><div class="spinner"></div><p>Loading...</p></div>';
+  try{
+    var r=await apiCall('/api/workouts/today?sport='+currentSport);
+    if(!r){display.innerHTML='<div class="empty-state"><h3>Connection error</h3></div>';document.querySelector('.action-bar').style.display='none';return;}
+    if(!r.ok){display.innerHTML='<div class="empty-state"><h3>Error</h3><p>'+(r.data?r.data.message:'Server error')+'</p></div>';document.querySelector('.action-bar').style.display='none';return;}
+    currentWorkouts=r.data.workouts||[];
+    if(!currentWorkouts.length){
+      display.innerHTML='<div class="empty-state"><h3>No workouts yet</h3><p>Click the refresh button to generate options or + Manual to create one</p></div>';
+      document.querySelector('.action-bar').style.display='none';return;
+    }
+    if(r.data.approvedToday>0){showToast(r.data.approvedToday+' approved today','info');}
+    resetTabs();showVariant(0);
+  }catch(e){
+    display.innerHTML='<div class="empty-state"><h3>Error loading</h3><p>'+e.message+'</p></div>';
+    document.querySelector('.action-bar').style.display='none';
+  }
+}
+
 function resetTabs(){
   document.querySelectorAll('.vtab').forEach(function(t,i){
     if(currentWorkouts[i]){t.style.display='';t.textContent='Option '+(i+1);t.classList.remove('active','approved');}
@@ -674,6 +694,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
