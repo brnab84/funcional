@@ -1,0 +1,175 @@
+/* ── RESPONSIVE ──────────────────────────────────────── */
+
+/* Tablet */
+@media(max-width:768px){
+  .main{padding:20px 16px 80px;}
+  .settings-grid{grid-template-columns:1fr;}
+  .today-title{font-size:2.5rem;}
+  .view-header h2{font-size:1.8rem;}
+  .modal-box{margin:10px;max-height:90vh;padding:20px 16px;}
+}
+
+/* Mobile */
+@media(max-width:600px){
+  /* Nav: compact */
+  .nav{height:auto;flex-wrap:wrap;padding:8px 12px;gap:8px;}
+  .nav-brand{order:1;}
+  .nav-title{font-size:1rem;}
+  .nav-version{display:none;}
+  .nav-logo{font-size:1.1rem;}
+  .nav-center{order:3;width:100%;justify-content:flex-start;}
+  .sport-select{width:100%;height:36px;font-size:0.85rem;}
+  .nav-right{order:2;margin-left:auto;flex-direction:column;align-items:flex-end;gap:6px;}
+  .nav-user{font-size:0.75rem;}
+  .nav-links{gap:0;}
+  .nav-btn{padding:6px 8px;font-size:0.78rem;}
+
+  /* Main */
+  .main{padding:16px 12px 90px;}
+
+  /* Today */
+  .today-header{flex-direction:column;gap:10px;}
+  .today-title{font-size:2rem;letter-spacing:2px;}
+  .today-actions{align-self:stretch;display:flex;gap:8px;}
+  .today-actions .btn-icon{flex:0 0 44px;height:44px;}
+  .today-actions .btn-ai{flex:1;height:44px;justify-content:center;}
+  .eyebrow{font-size:0.68rem;}
+
+  /* Variant tabs */
+  .variant-tabs{gap:6px;}
+  .vtab{padding:12px 6px;font-size:0.75rem;letter-spacing:0.5px;}
+
+  /* Workout card */
+  .card-header{padding:12px 14px;}
+  .card-badge{font-size:0.85rem;padding:3px 8px;}
+  .card-config{font-size:0.78rem;}
+  .ex-row{grid-template-columns:36px 1fr auto;padding:9px 14px;}
+  .ex-name{font-size:0.88rem;}
+  .ex-reps{font-size:0.8rem;}
+  .section-label{padding:6px 14px;font-size:0.65rem;}
+
+  /* Approve button */
+  .btn-approve{height:48px;font-size:0.95rem;max-width:100%;}
+  .action-hint{font-size:0.75rem;}
+
+  /* AI status */
+  .ai-status{font-size:0.78rem;padding:8px 12px;}
+
+  /* History */
+  .view-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .view-header h2{font-size:1.6rem;}
+  .history-stats{width:100%;}
+  .stat-chip{font-size:0.72rem;padding:3px 8px;}
+  .hist-main{grid-template-columns:1fr;gap:6px;padding:12px 14px;}
+  .hist-date{font-size:0.75rem;}
+  .hist-modalities{gap:4px;}
+  .hist-badge{font-size:0.68rem;padding:2px 6px;}
+  .hist-delete{padding:12px 14px;}
+
+  /* Library */
+  .library-add{flex-direction:column;gap:8px;}
+  .library-add input{height:44px;font-size:0.95rem;}
+  .library-add select{height:44px;width:100%;font-size:0.95rem;}
+  .btn-add{height:44px;font-size:0.95rem;}
+  .ex-cat-items{grid-template-columns:1fr;}
+  .ex-pill{padding:12px 14px;font-size:0.9rem;}
+  .ex-cat-header{font-size:0.72rem;}
+  .btn-seed,.btn-upload-photo{height:38px;font-size:0.78rem;}
+
+  /* Photo panel */
+  .photo-panel{padding:14px;}
+  .photo-drop{padding:16px;}
+  .photo-thumb{width:60px;}
+  .photo-thumb img{width:60px;height:45px;}
+  .btn-analyze{height:44px;}
+
+  /* Settings */
+  .settings-grid{grid-template-columns:1fr;gap:12px;}
+  .settings-card{padding:16px;}
+  .settings-card h3{font-size:1rem;}
+  .bc-btn{height:42px;font-size:0.72rem;}
+  .block-modalities select{height:42px;}
+  .range-input{height:28px;}
+  .sport-add{flex-direction:column;}
+  .sport-add input{height:42px;}
+  .btn-save-settings{height:44px;}
+
+  /* Auth */
+  .auth-box{padding:32px 20px;border-radius:12px;}
+  .auth-title{font-size:1.6rem;letter-spacing:2px;}
+  .auth-form input{height:48px;font-size:1rem;}
+  .btn-primary{height:48px;font-size:1rem;}
+  .auth-tabs{margin-bottom:16px;}
+  .auth-tab{height:40px;font-size:0.85rem;}
+
+  /* Modal fullscreen on mobile */
+  .modal{padding:0;align-items:flex-end;}
+  .modal-box{max-width:100%;border-radius:16px 16px 0 0;max-height:85vh;padding:20px 16px;}
+
+  /* General touch targets */
+  button,select,input{min-height:36px;}
+  .page-btn{min-width:40px;height:40px;}
+}
+
+/* Small phones */
+@media(max-width:380px){
+  .nav-brand>div{display:none;}
+  .nav-logo{font-size:1.3rem;}
+  .today-title{font-size:1.6rem;}
+  .vtab{font-size:0.7rem;padding:10px 4px;}
+  .card-badge{font-size:0.78rem;}
+  .auth-box{padding:24px 16px;}
+  .auth-title{font-size:1.4rem;}
+}
+
+
+/* PWA standalone mode */
+@media(display-mode:standalone){
+  body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
+  .nav{padding-top:env(safe-area-inset-top);padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+  .main{padding-bottom:calc(60px + env(safe-area-inset-bottom));}
+  .auth-screen{padding-top:env(safe-area-inset-top);}
+}
+
+/* iOS overscroll */
+html{overscroll-behavior:none;-webkit-overflow-scrolling:touch;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+input,textarea,select{user-select:text;-webkit-user-select:text;}
+
+/* Smooth scroll */
+.main,.modal-box,.history-list{-webkit-overflow-scrolling:touch;}
+
+/* Pull-to-refresh prevention in standalone */
+@media(display-mode:standalone){
+  body{overscroll-behavior-y:contain;}
+}
+
+
+
+
+/* Toast notification */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:999;display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.4);font-size:0.8rem;font-weight:500;transition:transform 0.25s ease,opacity 0.25s ease;opacity:0;pointer-events:none;max-width:85vw;}
+.toast.visible{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto;}
+.toast.hidden{display:flex;}
+.toast.toast-success{border-color:var(--green);background:rgba(46,213,115,0.15);color:var(--green);}
+.toast.toast-error{border-color:var(--accent2);background:rgba(255,71,87,0.15);color:var(--accent2);}
+.toast.toast-info{border-color:var(--blue);background:rgba(30,144,255,0.15);color:var(--blue);}
+.toast.toast-warning{border-color:var(--accent);background:rgba(245,197,24,0.15);color:var(--accent);}
+.toast-icon{font-size:0.9rem;flex-shrink:0;}
+.toast-msg{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media(max-width:600px){.toast{bottom:16px;padding:8px 14px;font-size:0.75rem;border-radius:16px;max-width:92vw;}}
+@media(display-mode:standalone){.toast{bottom:calc(16px + env(safe-area-inset-bottom));;}}
+
+
+
+
+/* Swimming rest settings */
+.swim-rest-grid{display:flex;flex-direction:column;gap:8px;}
+.swim-rest-row{display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text);}
+.swim-rest-row span:first-child{width:50px;font-family:var(--font-mono);font-weight:700;color:var(--accent);}
+.swim-rest-input{width:70px;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);text-align:center;font-family:var(--font-mono);font-size:0.85rem;outline:none;}
+.swim-rest-input:focus{border-color:var(--accent);}
+.rest-unit{color:var(--muted);font-size:0.78rem;}
+
+
+
