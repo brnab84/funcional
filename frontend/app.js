@@ -561,6 +561,7 @@ function loadUserSettings(){
     document.getElementById('rest-300').value=srt.d300||75;
     document.getElementById('rest-400').value=srt.d400||90;
     document.getElementById('rest-500').value=srt.d500||120;
+    document.getElementById('pool-length').value=s.poolLength||25;
   }
   document.getElementById('avoid-days').value=s.avoidRepeatDays||7;document.getElementById('days-label').textContent=s.avoidRepeatDays||7;
 }
@@ -586,7 +587,8 @@ async function saveSetting(){
       d500:parseInt(document.getElementById('rest-500').value)||120
     };
   }
-  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,theme:currentTheme,swimRestTimes:swimRestTimes})});
+  var poolLength=parseInt(document.getElementById('pool-length').value)||25;
+  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,theme:currentTheme,poolLength:poolLength,swimRestTimes:swimRestTimes})});
   if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));showToast('Settings saved','success');}
 }
 
@@ -694,6 +696,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
