@@ -177,6 +177,41 @@ body.sport-swimming .auth-sport-btn.active{border-color:#00b4d8;color:#00b4d8;ba
 .auth-sport-icon{font-size:1.8rem;display:block;}
 
 
+
+/* Theme variants */
+body.theme-dark{--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;--text:#e8eaf0;--muted:#6b7280;}
+body.theme-ambient{--bg:#1a1510;--bg2:#211c14;--bg3:#2a2318;--border:#3d3428;--text:#e8dfd0;--muted:#8a7e6b;}
+body.theme-dim{--bg:#1e2128;--bg2:#252930;--bg3:#2d323a;--border:#3a4050;--text:#d0d4dc;--muted:#7a8090;}
+body.theme-ambient.sport-swimming{--bg:#0e1a1f;--bg2:#142228;--bg3:#1a2c34;--border:#263a44;}
+body.theme-dim.sport-swimming{--bg:#182028;--bg2:#1e2830;--bg3:#253038;--border:#304050;}
+
+/* Theme selector */
+.theme-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.theme-btn{flex:1;min-width:70px;padding:10px 8px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:0.75rem;font-family:var(--font-mono);text-align:center;transition:all 0.2s;}
+.theme-btn:hover{border-color:var(--accent);color:var(--text);}
+.theme-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,0.08);}
+body.sport-swimming .theme-btn.active{background:rgba(0,180,216,0.08);}
+.theme-preview{width:100%;height:8px;border-radius:3px;margin-bottom:6px;}
+.tp-dark{background:linear-gradient(90deg,#0d0f12,#1a1e26);}
+.tp-ambient{background:linear-gradient(90deg,#1a1510,#2a2318);}
+.tp-dim{background:linear-gradient(90deg,#1e2128,#2d323a);}
+
+/* Manual workout builder */
+.manual-builder{display:flex;flex-direction:column;gap:16px;}
+.manual-section{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.manual-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.manual-section-title{font-family:var(--font-display);font-size:1.1rem;color:var(--accent);}
+.manual-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;}
+.manual-input{flex:1;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 8px;font-size:0.85rem;font-family:var(--font-body);}
+.manual-input-sm{width:70px;text-align:center;}
+.manual-select{height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 8px;font-size:0.82rem;}
+.manual-btn-add{background:none;border:1px dashed var(--border);color:var(--muted);border-radius:6px;padding:8px;cursor:pointer;font-size:0.8rem;width:100%;transition:all 0.15s;}
+.manual-btn-add:hover{border-color:var(--accent);color:var(--accent);}
+.manual-btn-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;opacity:0.5;}
+.manual-btn-remove:hover{opacity:1;color:var(--accent2);}
+.btn-manual{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:0.82rem;font-family:var(--font-body);transition:all 0.2s;}
+.btn-manual:hover{background:var(--accent);color:var(--bg);}
+
 /* Swimming category dots */
 .dot-stroke{background:#00b4d8;}.dot-kick{background:#ffd166;}.dot-drill{background:#06d6a0;}
 .dot-pull{background:#118ab2;}.dot-sprint{background:#ef476f;}.dot-endurance{background:#073b4c;}
@@ -371,4 +406,5 @@ input,textarea,select{user-select:text;-webkit-user-select:text;}
 .swim-rest-input{width:70px;height:34px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);text-align:center;font-family:var(--font-mono);font-size:0.85rem;outline:none;}
 .swim-rest-input:focus{border-color:var(--accent);}
 .rest-unit{color:var(--muted);font-size:0.78rem;}
+
 
