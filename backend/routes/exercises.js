@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
+const { categoriesFor } = require('../utils/constants');
 
 const FUNCTIONAL = [
   {name:'Air Squats',category:'lower'},{name:'Goblet Squats',category:'lower'},{name:'Jump Squats',category:'lower'},
@@ -51,9 +52,7 @@ router.get('/', auth, async (req, res) => {
 router.get('/categories', auth, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
-    const funcCats = ['lower','upper','core','conditioning','power'];
-    const swimCats = ['stroke','kick','drill','pull','sprint','endurance'];
-    const defaults = sport === 'swimming' ? swimCats : funcCats;
+    const defaults = categoriesFor(sport).filter(function(cat) { return cat !== 'rest'; });
     const custom = await ExerciseLibrary.distinct('category', { sport: sport, user: req.user._id });
     const all = [...new Set([...defaults, ...custom])];
     res.json({ categories: all });
@@ -81,9 +80,7 @@ router.post('/seed', auth, async (req, res) => {
     await ExerciseLibrary.insertMany(docs);
 
     // Cleanup: remove any exercises with wrong categories for this sport
-    var swimCats = ['stroke','kick','drill','pull','sprint','endurance','rest'];
-    var funcCats = ['lower','upper','core','conditioning','power'];
-    var validCats = sport === 'swimming' ? swimCats : funcCats;
+    var validCats = categoriesFor(sport);
     await ExerciseLibrary.deleteMany({ sport: sport, user: userId, category: { $nin: validCats } });
 
     const count = await ExerciseLibrary.countDocuments({ sport: sport, user: userId });
@@ -112,4 +109,5 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
 
