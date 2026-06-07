@@ -80,7 +80,9 @@ router.post('/regenerate', async (req, res) => {
 // POST /manual — create workout manually
 router.post('/manual', async (req, res) => {
   try {
-    const { sport, warmup, blocks, pattern, notes } = req.body;
+    const { sport, warmup, blocks, pattern, notes, source } = req.body;
+    var validSources = ['local','ai','manual','imported'];
+    var finalSource = validSources.includes(source) ? source : 'manual';
     const today = new Date().toISOString().split('T')[0];
     const workout = await Workout.create({
       user: req.user._id,
@@ -91,7 +93,7 @@ router.post('/manual', async (req, res) => {
       pattern: pattern || 'MANUAL',
       variant: 98,
       status: 'suggestion',
-      source: 'manual',
+      source: finalSource,
       notes: notes || ''
     });
     res.json({ workout });
@@ -237,5 +239,6 @@ router.get('/learning', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
