@@ -1,5 +1,4 @@
-// Swimming Workout Generator v5.1
-// Uses: user rest time settings, approved workout patterns as reference
+// Swimming Generator v6.1 — pool-size aware + learns from approved workouts
 
 function seededRand(seed) {
   var s = 0;
@@ -12,169 +11,187 @@ function shuffle(arr, rand) {
   return a;
 }
 
-// Get rest time from user settings for a given distance
-function getRestTime(dist, settings) {
-  var srt = (settings && settings.swimRestTimes) || {};
-  var d = parseInt(dist) || 50;
-  if (d <= 50) return (srt.d50 || 30) + 's';
-  if (d <= 100) return (srt.d100 || 45) + 's';
-  if (d <= 200) return (srt.d200 || 60) + 's';
-  if (d <= 300) return (srt.d300 || 75) + 's';
-  if (d <= 400) return (srt.d400 || 90) + 's';
-  return (srt.d500 || 120) + 's';
+// Round distance to nearest multiple of pool length
+function poolDist(meters, pool) {
+  pool = pool || 25;
+  return Math.max(pool, Math.round(meters / pool) * pool);
 }
 
-function formatRest(seconds) {
-  if (seconds < 60) return seconds + 's';
-  var m = Math.floor(seconds / 60);
-  var s = seconds % 60;
+// Format distance: "4x50m" or "200m"
+function fd(reps, dist, pool) {
+  var d = poolDist(dist, pool);
+  if (reps > 1) return reps + 'x' + d + 'm';
+  return d + 'm';
+}
+
+// Get rest time from settings
+function getRestSec(dist, settings) {
+  var srt = (settings && settings.swimRestTimes) || {};
+  var d = parseInt(dist) || 50;
+  if (d <= 50) return srt.d50 || 30;
+  if (d <= 100) return srt.d100 || 45;
+  if (d <= 200) return srt.d200 || 60;
+  if (d <= 300) return srt.d300 || 75;
+  if (d <= 400) return srt.d400 || 90;
+  return srt.d500 || 120;
+}
+function fmtRest(sec) {
+  if (sec < 60) return sec + 's';
+  var m = Math.floor(sec / 60), s = sec % 60;
   return s > 0 ? m + ':' + String(s).padStart(2, '0') : m + ':00';
 }
 
-function buildSwimWarmup(rand) {
-  var warmups = [
-    [
-      { name: 'Easy Freestyle', reps: '200m', category: 'stroke' },
-      { name: 'Flutter Kick', reps: '4x50m', category: 'kick' },
-      { name: 'Catch-up Drill', reps: '4x25m', category: 'drill' },
-    ],
-    [
-      { name: 'Easy Freestyle', reps: '300m', category: 'stroke' },
-      { name: 'Backstroke', reps: '100m', category: 'stroke' },
-      { name: 'Kick with Board', reps: '4x50m', category: 'kick' },
-    ],
-    [
-      { name: 'Easy Freestyle', reps: '200m', category: 'stroke' },
-      { name: 'K-D-S (Kick/Drill/Swim)', reps: '6x75m', category: 'drill' },
-      { name: 'Descending Freestyle', reps: '4x50m', category: 'stroke' },
-    ],
-    [
-      { name: 'Easy Freestyle', reps: '400m', category: 'stroke' },
-      { name: 'IM Drill (all strokes)', reps: '4x25m', category: 'drill' },
-      { name: 'Dolphin Kick', reps: '4x25m', category: 'kick' },
-    ],
-    [
-      { name: 'Easy Freestyle', reps: '200m', category: 'stroke' },
-      { name: 'Pull with Buoy', reps: '200m', category: 'pull' },
-      { name: 'Flutter Kick', reps: '200m', category: 'kick' },
-    ],
-  ];
-  return { rounds: 1, exercises: warmups[Math.floor(rand() * warmups.length)] };
+// Pick weighted item from array (items that appear more = higher chance)
+function weightedPick(arr, rand) {
+  return arr[Math.floor(rand() * arr.length)];
 }
 
-function buildSwimCooldown(rand) {
-  var cooldowns = [
-    [{ name: 'Easy Freestyle', reps: '200m', category: 'stroke' }, { name: 'Easy Backstroke', reps: '100m', category: 'stroke' }],
-    [{ name: 'Easy Mixed Strokes', reps: '300m', category: 'stroke' }],
-    [{ name: 'Easy Freestyle', reps: '200m', category: 'stroke' }, { name: 'Flutter Kick', reps: '100m', category: 'kick' }],
+// ── WARMUP ──────────────────────────────────────────
+function buildWarmup(rand, pool) {
+  var patterns = [
+    function() { return [
+      { name: 'Easy Freestyle', reps: fd(1, 200, pool), category: 'stroke' },
+      { name: 'Flutter Kick', reps: fd(4, 50, pool), category: 'kick' },
+      { name: 'Catch-up Drill', reps: fd(4, 25, pool), category: 'drill' },
+    ];},
+    function() { return [
+      { name: 'Easy Freestyle', reps: fd(1, 300, pool), category: 'stroke' },
+      { name: 'Backstroke', reps: fd(1, 100, pool), category: 'stroke' },
+      { name: 'Kick with Board', reps: fd(4, 50, pool), category: 'kick' },
+    ];},
+    function() { return [
+      { name: 'Easy Freestyle', reps: fd(1, 200, pool), category: 'stroke' },
+      { name: 'K-D-S (Kick/Drill/Swim)', reps: fd(3, 75, pool), category: 'drill' },
+      { name: 'Backstroke', reps: fd(4, 50, pool), category: 'stroke' },
+    ];},
+    function() { return [
+      { name: 'Easy Freestyle', reps: fd(1, 400, pool), category: 'stroke' },
+      { name: 'IM Drill', reps: fd(4, 25, pool), category: 'drill' },
+      { name: 'Dolphin Kick', reps: fd(4, 25, pool), category: 'kick' },
+    ];},
+    function() { return [
+      { name: 'Easy Freestyle', reps: fd(1, 200, pool), category: 'stroke' },
+      { name: 'Pull with Buoy', reps: fd(1, 200, pool), category: 'pull' },
+      { name: 'Flutter Kick', reps: fd(1, 200, pool), category: 'kick' },
+    ];},
   ];
-  return {
-    label: 'Cool-down',
-    modality: 'EASY',
-    config: 'Recovery',
-    exercises: cooldowns[Math.floor(rand() * cooldowns.length)]
-  };
+  return { rounds: 1, exercises: patterns[Math.floor(rand() * patterns.length)]() };
 }
 
-function buildSprintSet(rand, label, settings) {
-  var rest50 = getRestTime(50, settings);
-  var rest100 = getRestTime(100, settings);
+// ── COOLDOWN ────────────────────────────────────────
+function buildCooldown(rand, pool) {
+  var opts = [
+    [{ name: 'Easy Freestyle', reps: fd(1, 200, pool), category: 'stroke' }, { name: 'Easy Backstroke', reps: fd(1, 100, pool), category: 'stroke' }],
+    [{ name: 'Easy Mixed Strokes', reps: fd(1, 300, pool), category: 'stroke' }],
+    [{ name: 'Easy Freestyle', reps: fd(1, 200, pool), category: 'stroke' }, { name: 'Flutter Kick', reps: fd(1, 100, pool), category: 'kick' }],
+  ];
+  return { label: 'Cool-down', modality: 'EASY', config: 'Recovery', exercises: opts[Math.floor(rand() * opts.length)] };
+}
+
+// ── SETS ────────────────────────────────────────────
+function buildSprintSet(rand, label, pool, settings) {
+  var p = pool;
+  var rest25 = fmtRest(getRestSec(25, settings));
+  var rest50 = fmtRest(getRestSec(50, settings));
+  var rest100 = fmtRest(getRestSec(100, settings));
   var sets = [
-    { config: '8x25m Sprint | Rest ' + getRestTime(25, settings), exercises: [
-      { name: 'Sprint Freestyle', reps: '8x25m', category: 'sprint' },
-      { name: 'Rest between reps', reps: getRestTime(25, settings), category: 'rest' },
-    ]},
-    { config: '6x50m Fast | Rest ' + rest50, exercises: [
-      { name: 'Fast Freestyle', reps: '6x50m', category: 'sprint' },
-      { name: 'Rest between reps', reps: rest50, category: 'rest' },
-    ]},
-    { config: '4x25m + 4x50m Sprint', exercises: [
-      { name: 'Sprint Freestyle', reps: '4x25m', category: 'sprint' },
-      { name: 'Rest', reps: getRestTime(25, settings), category: 'rest' },
-      { name: 'Fast Freestyle', reps: '4x50m', category: 'sprint' },
+    function() { return { config: fd(8, 25, p) + ' Sprint | Rest ' + rest25, exercises: [
+      { name: 'Sprint Freestyle', reps: fd(8, 25, p), category: 'sprint' },
+      { name: 'Rest', reps: rest25, category: 'rest' },
+    ]};},
+    function() { return { config: fd(6, 50, p) + ' Fast | Rest ' + rest50, exercises: [
+      { name: 'Fast Freestyle', reps: fd(6, 50, p), category: 'sprint' },
       { name: 'Rest', reps: rest50, category: 'rest' },
-    ]},
-    { config: '5x100m All-out | Rest ' + rest100, exercises: [
-      { name: 'Sprint Freestyle', reps: '5x100m', category: 'sprint' },
-      { name: 'Easy Recovery', reps: '50m between each', category: 'stroke' },
+    ]};},
+    function() { return { config: fd(4, 25, p) + ' + ' + fd(4, 50, p) + ' Sprint', exercises: [
+      { name: 'Sprint Freestyle', reps: fd(4, 25, p), category: 'sprint' },
+      { name: 'Fast Freestyle', reps: fd(4, 50, p), category: 'sprint' },
+      { name: 'Rest', reps: rest50, category: 'rest' },
+    ]};},
+    function() { return { config: fd(5, 100, p) + ' All-out | Rest ' + rest100, exercises: [
+      { name: 'Sprint Freestyle', reps: fd(5, 100, p), category: 'sprint' },
+      { name: 'Recovery', reps: fd(1, 50, p) + ' easy between', category: 'stroke' },
       { name: 'Rest at wall', reps: rest100, category: 'rest' },
-    ]},
-    { config: '8x50m Descending | Rest ' + rest50, exercises: [
-      { name: 'Freestyle Descending', reps: '8x50m (each faster)', category: 'sprint' },
-      { name: 'Rest between reps', reps: rest50, category: 'rest' },
-    ]},
+    ]};},
+    function() { return { config: fd(8, 50, p) + ' Descending | Rest ' + rest50, exercises: [
+      { name: 'Freestyle Descending', reps: fd(8, 50, p) + ' (each faster)', category: 'sprint' },
+      { name: 'Rest', reps: rest50, category: 'rest' },
+    ]};},
   ];
-  var s = sets[Math.floor(rand() * sets.length)];
+  var s = sets[Math.floor(rand() * sets.length)]();
   return { label: label, modality: 'SPRINT', config: s.config, exercises: s.exercises };
 }
 
-function buildEnduranceSet(rand, label, settings) {
-  var rest200 = getRestTime(200, settings);
-  var rest100 = getRestTime(100, settings);
-  var rest400 = getRestTime(400, settings);
+function buildEnduranceSet(rand, label, pool, settings) {
+  var p = pool;
+  var r100 = fmtRest(getRestSec(100, settings));
+  var r200 = fmtRest(getRestSec(200, settings));
+  var r400 = fmtRest(getRestSec(400, settings));
   var sets = [
-    { config: '3x400m Steady | Rest ' + rest400, exercises: [
-      { name: 'Freestyle', reps: '3x400m', category: 'stroke' },
-      { name: 'Rest', reps: rest400, category: 'rest' },
-    ]},
-    { config: '4x200m Even splits | Rest ' + rest200, exercises: [
-      { name: 'Freestyle', reps: '4x200m', category: 'stroke' },
-      { name: 'Rest', reps: rest200, category: 'rest' },
-    ]},
-    { config: '8x100m Consistent | Rest ' + rest100, exercises: [
-      { name: 'Freestyle', reps: '8x100m', category: 'stroke' },
-      { name: 'Rest', reps: rest100, category: 'rest' },
-    ]},
-    { config: 'Pyramid 50-100-200-100-50 | Rest ' + rest100, exercises: [
-      { name: 'Freestyle Pyramid', reps: '50m > 100m > 200m > 100m > 50m', category: 'stroke' },
-      { name: 'Rest between each', reps: rest100, category: 'rest' },
-    ]},
-    { config: '4x100m Pull + 4x100m Kick | Rest ' + rest100, exercises: [
-      { name: 'Pull with Buoy', reps: '4x100m', category: 'pull' },
-      { name: 'Kick with Board', reps: '4x100m', category: 'kick' },
-      { name: 'Rest', reps: rest100, category: 'rest' },
-    ]},
+    function() { return { config: fd(3, 400, p) + ' Steady | Rest ' + r400, exercises: [
+      { name: 'Freestyle', reps: fd(3, 400, p), category: 'stroke' },
+      { name: 'Rest', reps: r400, category: 'rest' },
+    ]};},
+    function() { return { config: fd(4, 200, p) + ' Even splits | Rest ' + r200, exercises: [
+      { name: 'Freestyle', reps: fd(4, 200, p), category: 'stroke' },
+      { name: 'Rest', reps: r200, category: 'rest' },
+    ]};},
+    function() { return { config: fd(8, 100, p) + ' Consistent | Rest ' + r100, exercises: [
+      { name: 'Freestyle', reps: fd(8, 100, p), category: 'stroke' },
+      { name: 'Rest', reps: r100, category: 'rest' },
+    ]};},
+    function() { var d1=poolDist(50,p),d2=poolDist(100,p),d3=poolDist(200,p); return { config: 'Pyramid ' + d1 + '-' + d2 + '-' + d3 + '-' + d2 + '-' + d1 + 'm | Rest ' + r100, exercises: [
+      { name: 'Freestyle Pyramid', reps: d1+'m > '+d2+'m > '+d3+'m > '+d2+'m > '+d1+'m', category: 'stroke' },
+      { name: 'Rest between', reps: r100, category: 'rest' },
+    ]};},
+    function() { return { config: fd(4, 100, p) + ' Pull + ' + fd(4, 100, p) + ' Kick', exercises: [
+      { name: 'Pull with Buoy', reps: fd(4, 100, p), category: 'pull' },
+      { name: 'Kick with Board', reps: fd(4, 100, p), category: 'kick' },
+      { name: 'Rest', reps: r100, category: 'rest' },
+    ]};},
   ];
-  var s = sets[Math.floor(rand() * sets.length)];
+  var s = sets[Math.floor(rand() * sets.length)]();
   return { label: label, modality: 'ENDURANCE', config: s.config, exercises: s.exercises };
 }
 
-function buildTechniqueSet(rand, label) {
-  var drills = ['Catch-up Drill', 'Fingertip Drag', 'Superman Drill', 'One-arm Drill', 'Sculling', 'Fist Drill'];
-  var strokes = ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly'];
+function buildTechniqueSet(rand, label, pool) {
+  var p = pool;
+  var drills = ['Catch-up Drill','Fingertip Drag','Superman Drill','One-arm Drill','Sculling','Fist Drill'];
+  var strokes = ['Freestyle','Backstroke','Breaststroke','Butterfly'];
   var d1 = drills[Math.floor(rand() * drills.length)];
   var d2 = drills[Math.floor(rand() * drills.length)];
   var st = strokes[Math.floor(rand() * strokes.length)];
   var sets = [
-    { config: 'Drill Focus', exercises: [
-      { name: d1, reps: '4x50m', category: 'drill' },
-      { name: st + ' (focus form)', reps: '4x50m', category: 'stroke' },
-      { name: d2, reps: '4x50m', category: 'drill' },
-      { name: st + ' (apply drill)', reps: '4x50m', category: 'stroke' },
-    ]},
-    { config: 'Stroke Technique', exercises: [
-      { name: 'Freestyle Drill', reps: '4x25m', category: 'drill' },
-      { name: 'Backstroke Drill', reps: '4x25m', category: 'drill' },
-      { name: 'Breaststroke Drill', reps: '4x25m', category: 'drill' },
-      { name: 'IM Build', reps: '4x100m', category: 'stroke' },
-    ]},
-    { config: 'Kick + Drill', exercises: [
-      { name: 'Flutter Kick', reps: '6x50m', category: 'kick' },
-      { name: d1, reps: '6x50m', category: 'drill' },
-      { name: 'Build ' + st, reps: '4x100m', category: 'stroke' },
-    ]},
+    function() { return { config: 'Drill Focus', exercises: [
+      { name: d1, reps: fd(4, 50, p), category: 'drill' },
+      { name: st + ' (focus form)', reps: fd(4, 50, p), category: 'stroke' },
+      { name: d2, reps: fd(4, 50, p), category: 'drill' },
+      { name: st + ' (apply drill)', reps: fd(4, 50, p), category: 'stroke' },
+    ]};},
+    function() { return { config: 'Stroke Technique', exercises: [
+      { name: 'Freestyle Drill', reps: fd(4, 25, p), category: 'drill' },
+      { name: 'Backstroke Drill', reps: fd(4, 25, p), category: 'drill' },
+      { name: 'Breaststroke Drill', reps: fd(4, 25, p), category: 'drill' },
+      { name: 'IM Build', reps: fd(4, 100, p), category: 'stroke' },
+    ]};},
+    function() { return { config: 'Kick + Drill', exercises: [
+      { name: 'Flutter Kick', reps: fd(6, 50, p), category: 'kick' },
+      { name: d1, reps: fd(6, 50, p), category: 'drill' },
+      { name: 'Build ' + st, reps: fd(4, 100, p), category: 'stroke' },
+    ]};},
   ];
-  var s = sets[Math.floor(rand() * sets.length)];
+  var s = sets[Math.floor(rand() * sets.length)]();
   return { label: label, modality: 'TECHNIQUE', config: s.config, exercises: s.exercises };
 }
 
-function buildIntervalSet(rand, label, settings) {
-  var dists = [50, 100, 200];
-  var dist = dists[Math.floor(rand() * dists.length)];
-  var reps = dist === 50 ? [6,8,10] : dist === 100 ? [4,6,8] : [3,4,6];
-  var rep = reps[Math.floor(rand() * reps.length)];
-  var rest = getRestTime(dist, settings);
-  var strokes = ['Freestyle', 'Backstroke', 'IM'];
+function buildIntervalSet(rand, label, pool, settings) {
+  var p = pool;
+  var distOpts = [poolDist(50,p), poolDist(100,p), poolDist(200,p)];
+  var dist = distOpts[Math.floor(rand() * distOpts.length)];
+  var repsMap = {}; repsMap[poolDist(50,p)] = [6,8,10]; repsMap[poolDist(100,p)] = [4,6,8]; repsMap[poolDist(200,p)] = [3,4,6];
+  var reps = repsMap[dist] || [6,8]; var rep = reps[Math.floor(rand() * reps.length)];
+  var rest = fmtRest(getRestSec(dist, settings));
+  var strokes = ['Freestyle','Backstroke','IM'];
   var stroke = strokes[Math.floor(rand() * strokes.length)];
   return {
     label: label, modality: 'INTERVALS',
@@ -186,24 +203,26 @@ function buildIntervalSet(rand, label, settings) {
   };
 }
 
-function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedPatterns) {
+// ── MAIN GENERATOR ──────────────────────────────────
+function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods) {
   var rand = seededRand(seed + '-swim-v' + (variantNum || 1));
   var blockCount = (userSettings && userSettings.blockCount) || 2;
-  approvedPatterns = approvedPatterns || [];
+  var pool = (userSettings && userSettings.poolLength) || 25;
+  approvedMods = approvedMods || [];
 
-  var warmup = buildSwimWarmup(rand);
-  var cooldown = buildSwimCooldown(rand);
+  var warmup = buildWarmup(rand, pool);
+  var cooldown = buildCooldown(rand, pool);
 
-  // Weight session types based on approved history
-  var sessionTypes = ['sprint', 'endurance', 'technique', 'intervals'];
-  if (approvedPatterns.length > 0) {
-    // Add more weight to modalities that appear in approved workouts
-    approvedPatterns.forEach(function(p) {
-      var m = (p || '').toLowerCase();
-      if (m.includes('sprint')) sessionTypes.push('sprint');
-      if (m.includes('endur')) sessionTypes.push('endurance');
-      if (m.includes('tech')) sessionTypes.push('technique');
-      if (m.includes('interval')) sessionTypes.push('intervals');
+  // Build weighted session type list from approved history
+  var types = ['sprint', 'endurance', 'technique', 'intervals'];
+  var weighted = types.slice(); // start with one of each
+  if (approvedMods.length > 0) {
+    approvedMods.forEach(function(m) {
+      m = (m || '').toLowerCase();
+      if (m.includes('sprint')) weighted.push('sprint', 'sprint');
+      if (m.includes('endur')) weighted.push('endurance', 'endurance');
+      if (m.includes('tech')) weighted.push('technique', 'technique');
+      if (m.includes('interval')) weighted.push('intervals', 'intervals');
     });
   }
 
@@ -212,23 +231,21 @@ function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, us
   var usedTypes = {};
 
   labels.forEach(function(label) {
-    var type;
-    var attempts = 0;
+    var type, attempts = 0;
     do {
-      type = sessionTypes[Math.floor(rand() * sessionTypes.length)];
+      type = weighted[Math.floor(rand() * weighted.length)];
       attempts++;
-    } while (usedTypes[type] && attempts < 10);
+    } while (usedTypes[type] && attempts < 15);
     usedTypes[type] = true;
 
-    if (type === 'sprint') blocks.push(buildSprintSet(rand, label, userSettings));
-    else if (type === 'endurance') blocks.push(buildEnduranceSet(rand, label, userSettings));
-    else if (type === 'technique') blocks.push(buildTechniqueSet(rand, label));
-    else blocks.push(buildIntervalSet(rand, label, userSettings));
+    if (type === 'sprint') blocks.push(buildSprintSet(rand, label, pool, userSettings));
+    else if (type === 'endurance') blocks.push(buildEnduranceSet(rand, label, pool, userSettings));
+    else if (type === 'technique') blocks.push(buildTechniqueSet(rand, label, pool));
+    else blocks.push(buildIntervalSet(rand, label, pool, userSettings));
   });
 
   blocks.push(cooldown);
-  var pattern = 'WU+' + labels.join('') + '+CD';
-  return { warmup: warmup, blocks: blocks, pattern: pattern };
+  return { warmup: warmup, blocks: blocks, pattern: 'WU+' + labels.join('') + '+CD' };
 }
 
 module.exports = { generateSwimWorkout: generateSwimWorkout };
