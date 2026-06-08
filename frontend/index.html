@@ -88,6 +88,7 @@
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="library">Library</button>
         <button class="nav-btn" data-view="settings">&#9881;</button>
+        <button class="nav-btn" data-view="admin" id="nav-admin" style="display:none">&#128202; Admin</button>
         <button class="nav-btn nav-logout" id="btn-logout" title="Logout">&#8617;</button>
       </div>
     </div>
@@ -228,7 +229,17 @@
   </main>
 </div>
 
-<div id="modal" class="modal hidden">
+
+    <div id="view-admin" class="view">
+      <h1 class="page-title">Admin Dashboard</h1>
+      <div id="admin-stats" class="admin-stats-grid"></div>
+      <h2 class="admin-section-title">Recent Login Activity</h2>
+      <div id="admin-activity" class="admin-list"></div>
+      <h2 class="admin-section-title">All Accounts</h2>
+      <div id="admin-users" class="admin-list"></div>
+    </div>
+
+    <div id="modal" class="modal hidden">
   <div class="modal-overlay" id="modal-overlay"></div>
   <div class="modal-box">
     <button class="modal-close" id="modal-close">&#10005;</button>
@@ -258,6 +269,7 @@
 <script src="/js/main.js"></script>
 </body>
 </html>
+
 
 
 
