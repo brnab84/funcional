@@ -10,6 +10,8 @@ function showApp(){
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
   if(currentUser){
     document.getElementById('nav-username').textContent=currentUser.name;
+    var adminBtn=document.getElementById('nav-admin');
+    if(adminBtn)adminBtn.style.display=(currentUser.role==='admin')?'':'none';
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+currentUser.email+' \u00B7 '+currentSport+' \u00B7 v'+VERSION;
     loadUserSettings();
   }
@@ -87,4 +89,5 @@ async function resetPassword(){
   showAuthError('');
   showToast('Password updated! Login with your new password','success');
 }
+
 
