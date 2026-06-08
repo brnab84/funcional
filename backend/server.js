@@ -71,6 +71,7 @@ app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/workouts', apiLimiter, require('./routes/workouts'));
 app.use('/api/exercises', apiLimiter, require('./routes/exercises'));
 app.use('/api/upload', apiLimiter, require('./routes/upload'));
+app.use('/api/admin', apiLimiter, require('./routes/admin'));
 app.get('/api/health', (req, res) => res.json({
   status: 'ok',
   version: VERSION,
@@ -112,5 +113,6 @@ if (!MONGO_URI) {
     .then(() => { console.log('MongoDB connected'); startServer(); })
     .catch(err => { console.error('MongoDB error:', err.message); startServer(); });
 }
+
 
 
