@@ -4,7 +4,7 @@ function switchView(name){
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
   document.querySelector('[data-view="'+name+'"]').classList.add('active');
-  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}
+  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();
 }
 
 // VERSION CHECK + CACHE BUST
@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
+
 
 
 
