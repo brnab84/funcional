@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
       d500: { type: Number, default: 120 }
     }
   },
+  lastLogin: { type: Date },
+  loginCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 userSchema.pre('save', async function(next) {
@@ -30,6 +32,7 @@ userSchema.pre('save', async function(next) {
 });
 userSchema.methods.comparePassword = async function(c) { return bcrypt.compare(c, this.password); };
 module.exports = mongoose.model('User', userSchema);
+
 
 
 
