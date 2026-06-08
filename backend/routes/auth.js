@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMW = require('../middleware/auth');
+const LoginActivity = require('../models/LoginActivity');
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 const JWT_SECRET = process.env.JWT_SECRET || 'funcional_jwt_secret_2024';
 const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 
@@ -21,6 +23,28 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: 'Invalid email or password' });
+
+    // Auto-grant admin role to the configured root email
+    if (user.email.toLowerCase() === ADMIN_EMAIL && user.role !== 'admin') {
+      user.role = 'admin';
+    }
+
+    // Track login
+    user.lastLogin = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
+    await user.save();
+
+    // Record activity (non-blocking — don't fail login if this errors)
+    try {
+      await LoginActivity.create({
+        user: user._id,
+        email: user.email,
+        name: user.name,
+        ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '',
+        userAgent: req.headers['user-agent'] || ''
+      });
+    } catch (e) { console.log('Activity log error:', e.message); }
+
     res.json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, settings: user.settings, sports: user.sports } });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
@@ -76,6 +100,7 @@ router.post('/reset-password', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
