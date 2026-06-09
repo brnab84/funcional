@@ -4,7 +4,7 @@ function switchView(name){
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
   document.querySelector('[data-view="'+name+'"]').classList.add('active');
-  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();
+  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();
 }
 
 // VERSION CHECK + CACHE BUST
@@ -76,6 +76,15 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btn-login').addEventListener('click',login);
   document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')login();});
   document.getElementById('btn-register').addEventListener('click',register);
+  // Register role selector (Athlete / Coach)
+  document.querySelectorAll('.auth-role-btn').forEach(function(btn){btn.addEventListener('click',function(){
+    document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
+  });});
+  // Coach panel: add athlete
+  var btnAddStudent=document.getElementById('btn-add-student');
+  if(btnAddStudent)btnAddStudent.addEventListener('click',addStudent);
+  var coachEmail=document.getElementById('coach-student-email');
+  if(coachEmail)coachEmail.addEventListener('keydown',function(e){if(e.key==='Enter')addStudent();});
   document.getElementById('btn-show-reset').addEventListener('click',showResetForm);
   document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
   document.getElementById('btn-reset').addEventListener('click',resetPassword);

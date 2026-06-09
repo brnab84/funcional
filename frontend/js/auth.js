@@ -12,6 +12,8 @@ function showApp(){
     document.getElementById('nav-username').textContent=currentUser.name;
     var adminBtn=document.getElementById('nav-admin');
     if(adminBtn)adminBtn.style.display=(currentUser.role==='admin')?'':'none';
+    var coachBtn=document.getElementById('nav-coach');
+    if(coachBtn)coachBtn.style.display=(currentUser.role==='coach'||currentUser.role==='admin')?'':'none';
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+currentUser.email+' \u00B7 '+currentSport+' \u00B7 v'+VERSION;
     loadUserSettings();
   }
@@ -39,8 +41,10 @@ async function register(){
   var password=document.getElementById('reg-password').value;
   showAuthError('');
   if(password.length<6)return showAuthError('Password must be at least 6 characters');
+  var roleBtn=document.querySelector('.auth-role-btn.active');
+  var role=roleBtn?roleBtn.dataset.role:'athlete';
   var btn=document.getElementById('btn-register');btn.textContent='Creating...';btn.disabled=true;
-  var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,password:password})});
+  var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,password:password,role:role})});
   var data=await r.json();
   btn.textContent='Create account';btn.disabled=false;
   if(!r.ok)return showAuthError(data.message);

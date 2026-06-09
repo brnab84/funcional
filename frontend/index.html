@@ -56,6 +56,19 @@
       <input type="text" id="reg-name" placeholder="Your name">
       <input type="email" id="reg-email" placeholder="Email">
       <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
+      <div class="auth-role-selector">
+        <label class="auth-role-label">I am a...</label>
+        <div class="auth-role-options" id="auth-role-options">
+          <button type="button" class="auth-role-btn active" data-role="athlete">
+            <span class="auth-role-icon">&#127939;</span>
+            <span>Athlete</span>
+          </button>
+          <button type="button" class="auth-role-btn" data-role="coach">
+            <span class="auth-role-icon">&#128100;</span>
+            <span>Coach</span>
+          </button>
+        </div>
+      </div>
       <button class="btn-primary" id="btn-register">Create account</button>
     </div>
     <div id="tab-reset" class="auth-form hidden">
@@ -87,6 +100,7 @@
         <button class="nav-btn active" data-view="today">Today</button>
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="library">Library</button>
+        <button class="nav-btn" data-view="coach" id="nav-coach" style="display:none">&#128100; My Athletes</button>
         <button class="nav-btn" data-view="settings">&#9881;</button>
         <button class="nav-btn" data-view="admin" id="nav-admin" style="display:none">&#128202; Admin</button>
         <button class="nav-btn nav-logout" id="btn-logout" title="Logout">&#8617;</button>
@@ -230,6 +244,16 @@
 </div>
 
 
+    <div id="view-coach" class="view">
+      <div class="view-header"><h2>My Athletes</h2></div>
+      <div class="coach-add">
+        <input type="email" id="coach-student-email" placeholder="Athlete's email (must be registered)" autocomplete="off">
+        <button class="btn-add" id="btn-add-student">+ Add athlete</button>
+      </div>
+      <p class="card-hint">The athlete must already have an account. Add them by their email to start sending workouts.</p>
+      <div id="coach-students" class="coach-students"><div class="loading-state"><div class="spinner"></div></div></div>
+    </div>
+
     <div id="view-admin" class="view">
       <h1 class="page-title">Admin Dashboard</h1>
       <div id="admin-stats" class="admin-stats-grid"></div>
@@ -267,6 +291,7 @@
 <script src="/js/library.js"></script>
 <script src="/js/settings.js"></script>
 <script src="/js/admin.js"></script>
+<script src="/js/coach.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

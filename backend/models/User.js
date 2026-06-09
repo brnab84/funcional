@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['admin','coach','athlete'], default: 'athlete' },
+  // If set, this athlete is linked to a coach (added by that coach). Unset (null) = trains solo.
+  coachId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   sports: [{ type: { type: String, default: 'functional' }, active: { type: Boolean, default: true } }],
   settings: {
     blockCount: { type: Number, default: 2, min: 1, max: 4 },
