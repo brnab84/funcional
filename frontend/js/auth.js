@@ -16,12 +16,22 @@ function showApp(){
     if(coachBtn)coachBtn.style.display=(currentUser.role==='coach'||currentUser.role==='admin')?'':'none';
     var assignedBtn=document.getElementById('nav-assigned');
     if(assignedBtn)assignedBtn.style.display=(currentUser.coachId)?'':'none';
+    // Athletes linked to a coach only follow assigned workouts \u2014 hide self-generation views
+    var coached=isCoachedAthlete();
+    var todayNav=document.querySelector('.nav-btn[data-view="today"]');
+    var libNav=document.querySelector('.nav-btn[data-view="library"]');
+    if(todayNav)todayNav.style.display=coached?'none':'';
+    if(libNav)libNav.style.display=coached?'none':'';
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+currentUser.email+' \u00B7 '+currentSport+' \u00B7 v'+VERSION;
     loadUserSettings();
   }
   applySportTheme(currentSport);
   markActivity();
-  loadToday();
+  if(isCoachedAthlete()){switchView('assigned');}else{loadToday();}
+}
+// True for an athlete who has been linked to a coach (not coaches/admins)
+function isCoachedAthlete(){
+  return !!(currentUser&&currentUser.coachId&&currentUser.role!=='coach'&&currentUser.role!=='admin');
 }
 
 async function login(){

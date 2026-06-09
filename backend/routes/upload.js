@@ -36,6 +36,8 @@ router.post('/photo', auth, async (req, res) => {
 // POST /api/upload/import — parse photo or text into full workout structure
 router.post('/import', auth, async (req, res) => {
   try {
+    // Coached athletes only follow coach-assigned workouts (no self-import).
+    if (req.user && req.user.coachId) return res.status(403).json({ message: 'Your coach assigns your workouts. Check the Assigned tab.' });
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(503).json({ message: 'API key not configured' });
     const { images, text, sport } = req.body;
