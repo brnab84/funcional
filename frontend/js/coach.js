@@ -11,7 +11,7 @@ async function loadCoach(){
     return;
   }
   renderStudents(r.data.students||[]);
-  loadAvailable();
+  loadInviteLink();
 }
 
 function renderStudents(students){
@@ -102,54 +102,25 @@ async function confirmSendWod(){
   showToast('Workout sent to '+st.studentName,'success');
 }
 
-// ── Available athlete accounts (pick from existing, no free-text email) ──
-var availableCache=[];
-
-async function loadAvailable(){
-  var el=document.getElementById('coach-available');
-  if(!el)return;
-  el.innerHTML='<div class="loading-state"><div class="spinner"></div></div>';
-  var r=await apiCall('/api/coach/available-athletes');
-  if(!r||!r.ok){el.innerHTML='<p style="color:var(--accent2)">'+((r&&r.data)?r.data.message:'Error loading accounts')+'</p>';return;}
-  availableCache=r.data.athletes||[];
-  renderAvailable(availableCache);
+// ── Invite link (athletes join by signing up through it) ──
+async function loadInviteLink(){
+  var input=document.getElementById('coach-invite-link');
+  if(!input)return;
+  var r=await apiCall('/api/coach/invite');
+  if(!r||!r.ok||!r.data.code){input.value='';input.placeholder='Could not load invite link';return;}
+  input.value=window.location.origin+'/?invite='+r.data.code;
+  var btn=document.getElementById('btn-copy-invite');
+  if(btn)btn.onclick=function(){copyInviteLink(input);};
 }
 
-function renderAvailable(list){
-  var el=document.getElementById('coach-available');
-  if(!el)return;
-  if(list.length===0){el.innerHTML='<p style="color:var(--muted)">No available athlete accounts (they must register as Athlete and not already have a coach).</p>';return;}
-  el.innerHTML=list.map(function(a){
-    var sportsList=(a.sports||[]).map(function(sp){return sp.type;}).join(', ')||'none';
-    return '<div class="coach-row">'
-      +'<div><strong>'+escapeHtml(a.name)+'</strong>'
-      +'<span class="coach-row-sub">'+escapeHtml(a.email)+' · '+sportsList+'</span></div>'
-      +'<div class="coach-row-right">'
-      +'<button class="btn-add btn-add-available" data-email="'+escapeHtml(a.email)+'">+ Add</button>'
-      +'</div></div>';
-  }).join('');
-  el.querySelectorAll('.btn-add-available').forEach(function(btn){
-    btn.addEventListener('click',function(){addStudentByEmail(btn.dataset.email,btn);});
-  });
-}
-
-function filterAvailable(q){
-  q=(q||'').trim().toLowerCase();
-  if(!q){renderAvailable(availableCache);return;}
-  renderAvailable(availableCache.filter(function(a){
-    return (a.name||'').toLowerCase().indexOf(q)>=0||(a.email||'').toLowerCase().indexOf(q)>=0;
-  }));
-}
-
-async function addStudentByEmail(email,btn){
-  if(btn){btn.disabled=true;btn.textContent='Adding...';}
-  var r=await apiCall('/api/coach/students/add',{method:'POST',body:JSON.stringify({email:email})});
-  if(!r||!r.ok){
-    if(btn){btn.disabled=false;btn.textContent='+ Add';}
-    showToast((r&&r.data)?r.data.message:'Could not add athlete','error');return;
+function copyInviteLink(input){
+  input.select();
+  var done=function(){showToast('Invite link copied','success');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(input.value).then(done,function(){try{document.execCommand('copy');done();}catch(e){showToast('Copy failed — select and copy manually','warning');}});
+  }else{
+    try{document.execCommand('copy');done();}catch(e){showToast('Copy failed — select and copy manually','warning');}
   }
-  showToast('Athlete added','success');
-  loadCoach();
 }
 
 async function removeStudent(id,name){

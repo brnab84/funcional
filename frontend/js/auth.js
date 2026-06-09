@@ -58,8 +58,10 @@ async function register(){
   if(password.length<6)return showAuthError('Password must be at least 6 characters');
   var roleBtn=document.querySelector('.auth-role-btn.active');
   var role=roleBtn?roleBtn.dataset.role:'athlete';
+  var body={name:name,email:email,password:password};
+  if(window.__inviteCode){body.inviteCode=window.__inviteCode;}else{body.role=role;}
   var btn=document.getElementById('btn-register');btn.textContent='Creating...';btn.disabled=true;
-  var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,password:password,role:role})});
+  var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   var data=await r.json();
   btn.textContent='Create account';btn.disabled=false;
   if(!r.ok)return showAuthError(data.message);
@@ -74,6 +76,22 @@ function logout(){
   showAuth();
 }
 function showAuthError(msg){var el=document.getElementById('auth-error');el.textContent=msg;el.classList.toggle('hidden',!msg);}
+
+// Invite link: validate the coach code, then switch to a locked athlete registration
+async function handleInvite(code){
+  try{
+    var r=await fetch(API+'/api/auth/invite/'+encodeURIComponent(code));
+    var data=await r.json();
+    if(!r.ok){showToast('Invite link invalid or expired','error');return;}
+    window.__inviteCode=code;
+    document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='register');});
+    document.getElementById('tab-login').classList.add('hidden');
+    document.getElementById('tab-register').classList.remove('hidden');
+    var rs=document.getElementById('auth-role-selector');if(rs)rs.style.display='none';
+    var banner=document.getElementById('invite-banner');
+    if(banner){banner.textContent='Invited by '+data.coachName+' — create your athlete account';banner.classList.remove('hidden');}
+  }catch(e){}
+}
 
 function showResetForm(){
   document.getElementById('tab-login').classList.add('hidden');

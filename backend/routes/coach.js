@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const auth = require('../middleware/auth');
 const coachOnly = require('../middleware/coach');
 const User = require('../models/User');
@@ -28,34 +29,17 @@ router.get('/students', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// GET /api/coach/available-athletes — registered athletes not yet linked to any coach
-router.get('/available-athletes', async (req, res) => {
+// GET /api/coach/invite — return this coach's reusable invite code (generate on first use)
+router.get('/invite', async (req, res) => {
   try {
-    const athletes = await User.find({ role: 'athlete', coachId: null, _id: { $ne: req.user._id } })
-      .select('name email sports')
-      .sort({ name: 1 })
-      .limit(200)
-      .lean();
-    res.json({ athletes });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// POST /api/coach/students/add — link an already-registered athlete by email
-router.post('/students/add', async (req, res) => {
-  try {
-    const email = (req.body.email || '').trim().toLowerCase();
-    if (!email) return res.status(400).json({ message: 'Email required' });
-
-    const student = await User.findOne({ email });
-    if (!student) return res.status(404).json({ message: 'No account found with that email. The athlete must register first.' });
-    if (student._id.equals(req.user._id)) return res.status(400).json({ message: 'You cannot add yourself as a student' });
-    if (student.role === 'coach' || student.role === 'admin') return res.status(400).json({ message: 'That account is a coach, not an athlete' });
-    if (student.coachId && student.coachId.equals(req.user._id)) return res.status(400).json({ message: 'This athlete is already your student' });
-    if (student.coachId) return res.status(409).json({ message: 'This athlete is already linked to another coach' });
-
-    student.coachId = req.user._id;
-    await student.save();
-    res.json({ student: { _id: student._id, name: student.name, email: student.email, role: student.role, sports: student.sports, lastLogin: student.lastLogin, createdAt: student.createdAt } });
+    const coach = await User.findById(req.user._id);
+    if (!coach.inviteCode) {
+      let code, exists = true, tries = 0;
+      while (exists && tries < 6) { code = crypto.randomBytes(5).toString('hex').toUpperCase(); exists = await User.exists({ inviteCode: code }); tries++; }
+      coach.inviteCode = code;
+      await coach.save();
+    }
+    res.json({ code: coach.inviteCode });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

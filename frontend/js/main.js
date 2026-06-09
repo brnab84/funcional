@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded',function(){
   var saved=localStorage.getItem('wod_user');
   if(token&&saved){currentUser=JSON.parse(saved);showApp();}else{showAuth();}
 
+  // Invite link: if present and not logged in, open locked athlete registration
+  try{var _inv=new URLSearchParams(window.location.search).get('invite');if(_inv&&!(token&&saved))handleInvite(_inv);}catch(e){}
+
   // Auth tabs
   document.querySelectorAll('.auth-tab').forEach(function(tab){tab.addEventListener('click',function(){
     document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('active');});tab.classList.add('active');
@@ -80,9 +83,6 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.auth-role-btn').forEach(function(btn){btn.addEventListener('click',function(){
     document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
   });});
-  // Coach panel: filter available athlete accounts
-  var coachSearch=document.getElementById('coach-search');
-  if(coachSearch)coachSearch.addEventListener('input',function(e){filterAvailable(e.target.value);});
   document.getElementById('btn-show-reset').addEventListener('click',showResetForm);
   document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
   document.getElementById('btn-reset').addEventListener('click',resetPassword);

@@ -53,15 +53,16 @@
       <button class="auth-link" id="btn-show-reset" type="button">Forgot password?</button>
     </div>
     <div id="tab-register" class="auth-form hidden">
+      <div id="invite-banner" class="invite-banner hidden"></div>
       <input type="text" id="reg-name" placeholder="Your name">
       <input type="email" id="reg-email" placeholder="Email">
       <input type="password" id="reg-password" placeholder="Password (min 6 chars)">
-      <div class="auth-role-selector">
+      <div class="auth-role-selector" id="auth-role-selector">
         <label class="auth-role-label">I am a...</label>
         <div class="auth-role-options" id="auth-role-options">
           <button type="button" class="auth-role-btn active" data-role="athlete">
             <span class="auth-role-icon">&#127939;</span>
-            <span>Athlete</span>
+            <span>Solo athlete</span>
           </button>
           <button type="button" class="auth-role-btn" data-role="coach">
             <span class="auth-role-icon">&#128100;</span>
@@ -255,12 +256,12 @@
       <div class="view-header"><h2>My Athletes</h2></div>
       <div id="coach-students" class="coach-students"><div class="loading-state"><div class="spinner"></div></div></div>
 
-      <h3 class="coach-subhead">Add an athlete</h3>
-      <p class="card-hint">Pick an existing account. Only registered athletes without a coach are listed.</p>
-      <div class="coach-add">
-        <input type="text" id="coach-search" placeholder="Search by name or email" autocomplete="off">
+      <h3 class="coach-subhead">Invite link</h3>
+      <p class="card-hint">Share this link with your athletes. Anyone who signs up through it joins as your student.</p>
+      <div class="coach-invite">
+        <input type="text" id="coach-invite-link" readonly placeholder="Generating link...">
+        <button class="btn-add" id="btn-copy-invite">Copy</button>
       </div>
-      <div id="coach-available" class="coach-students"><div class="loading-state"><div class="spinner"></div></div></div>
     </div>
 
     <div id="view-admin" class="view">

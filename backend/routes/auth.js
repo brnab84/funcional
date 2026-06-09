@@ -10,12 +10,19 @@ const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, inviteCode } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: 'All fields required' });
     if (await User.findOne({ email })) return res.status(400).json({ message: 'Email already registered' });
-    // Only allow self-registration as athlete or coach; admin is granted server-side only.
-    const safeRole = role === 'coach' ? 'coach' : 'athlete';
-    const user = await User.create({ name, email, password, role: safeRole, sports: [{ type: 'functional', active: true }] });
+    // Public signup = coach or solo-athlete. Coached athletes ONLY via a coach's invite link.
+    let safeRole = role === 'coach' ? 'coach' : 'athlete';
+    let coachId = null;
+    if (inviteCode) {
+      const coach = await User.findOne({ inviteCode: inviteCode });
+      if (!coach) return res.status(400).json({ message: 'Invalid or expired invite link' });
+      safeRole = 'athlete';
+      coachId = coach._id;
+    }
+    const user = await User.create({ name, email, password, role: safeRole, coachId: coachId, sports: [{ type: 'functional', active: true }] });
     res.status(201).json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, coachId: user.coachId, settings: user.settings, sports: user.sports } });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
@@ -52,6 +59,15 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/me', authMW, (req, res) => res.json({ user: req.user }));
+
+// GET /api/auth/invite/:code — public: validate a coach invite link, return coach name
+router.get('/invite/:code', async (req, res) => {
+  try {
+    const coach = await User.findOne({ inviteCode: req.params.code }).select('name').lean();
+    if (!coach) return res.status(404).json({ message: 'Invalid invite link' });
+    res.json({ coachName: coach.name });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
 
 router.put('/settings', authMW, async (req, res) => {
   try {
