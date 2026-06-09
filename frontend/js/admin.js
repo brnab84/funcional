@@ -59,9 +59,13 @@ async function loadAdmin(){
   if(ru&&ru.ok&&ru.data.users){
     usersEl.innerHTML=ru.data.users.map(function(u){
       var sportsList=(u.sports||[]).map(function(sp){return sp.type;}).join(', ')||'none';
-      var roleBadge=u.role==='admin'?'<span class="admin-badge-role">ADMIN</span>':'';
+      var roleBadge,extra;
+      if(u.role==='admin'){roleBadge='<span class="admin-badge-role">ADMIN</span>';extra='';}
+      else if(u.role==='coach'){roleBadge='<span class="admin-badge-role badge-coach">COACH</span>';extra=' · '+(u.studentCount||0)+' alumno'+(u.studentCount===1?'':'s');}
+      else if(u.coachId){roleBadge='<span class="admin-badge-role badge-coached">ALUMNO</span>';extra=' · Coach: '+(u.coachName||'?');}
+      else{roleBadge='<span class="admin-badge-role badge-solo">SOLO</span>';extra=' · entrena solo';}
       return '<div class="admin-row"><div><strong>'+u.name+'</strong>'+roleBadge
-        +'<span class="admin-row-sub">'+u.email+' · '+sportsList+'</span></div>'
+        +'<span class="admin-row-sub">'+u.email+' · '+sportsList+extra+'</span></div>'
         +'<div class="admin-row-right">'+(u.loginCount||0)+' logins'
         +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div></div>';
     }).join('');
