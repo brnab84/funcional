@@ -59,7 +59,10 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .coach-add input:focus{border-color:var(--accent);}
 .coach-students{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
 .coach-subhead{font-family:var(--font-display);font-size:1.2rem;letter-spacing:1px;color:var(--accent);margin:28px 0 4px;padding-top:18px;border-top:1px solid var(--border);}
-.btn-add-available{height:32px;padding:0 14px;font-size:0.8rem;}
+.coach-invite{display:flex;gap:10px;margin-bottom:10px;}
+.coach-invite input{flex:1;height:42px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 14px;font-family:var(--font-mono);font-size:0.82rem;outline:none;}
+.coach-invite input:focus{border-color:var(--accent);}
+.invite-banner{padding:10px 14px;border-radius:8px;background:rgba(155,89,255,0.12);border:1px solid rgba(155,89,255,0.4);color:#9b59ff;font-size:0.85rem;text-align:center;margin-bottom:4px;}
 .coach-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
 .coach-row strong{color:var(--text);font-size:0.9rem;}
 .coach-row-sub{display:block;font-size:0.72rem;color:var(--muted);margin-top:2px;}
