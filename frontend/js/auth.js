@@ -5,6 +5,9 @@ function showAuth(){
   applySportTheme(currentSport);
 }
 function showApp(){
+  // Drop a consumed ?invite= param so reloading while logged in doesn't re-open registration
+  try{var _u=new URL(window.location.href);if(_u.searchParams.has('invite')){_u.searchParams.delete('invite');window.history.replaceState({},document.title,_u.pathname+_u.search+_u.hash);}}catch(e){}
+  window.__inviteCode=null;
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
