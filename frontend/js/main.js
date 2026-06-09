@@ -80,11 +80,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.auth-role-btn').forEach(function(btn){btn.addEventListener('click',function(){
     document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
   });});
-  // Coach panel: add athlete
-  var btnAddStudent=document.getElementById('btn-add-student');
-  if(btnAddStudent)btnAddStudent.addEventListener('click',addStudent);
-  var coachEmail=document.getElementById('coach-student-email');
-  if(coachEmail)coachEmail.addEventListener('keydown',function(e){if(e.key==='Enter')addStudent();});
+  // Coach panel: filter available athlete accounts
+  var coachSearch=document.getElementById('coach-search');
+  if(coachSearch)coachSearch.addEventListener('input',function(e){filterAvailable(e.target.value);});
   document.getElementById('btn-show-reset').addEventListener('click',showResetForm);
   document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
   document.getElementById('btn-reset').addEventListener('click',resetPassword);

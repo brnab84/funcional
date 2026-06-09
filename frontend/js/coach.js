@@ -11,12 +11,13 @@ async function loadCoach(){
     return;
   }
   renderStudents(r.data.students||[]);
+  loadAvailable();
 }
 
 function renderStudents(students){
   var listEl=document.getElementById('coach-students');
   if(students.length===0){
-    listEl.innerHTML='<p style="color:var(--muted)">No athletes yet. Add one by their email above.</p>';
+    listEl.innerHTML='<p style="color:var(--muted)">No athletes yet. Add one from the list below.</p>';
     return;
   }
   listEl.innerHTML=students.map(function(s){
@@ -101,16 +102,52 @@ async function confirmSendWod(){
   showToast('Workout sent to '+st.studentName,'success');
 }
 
-async function addStudent(){
-  var input=document.getElementById('coach-student-email');
-  var email=(input.value||'').trim();
-  if(!email){showToast('Enter the athlete\'s email','warning');return;}
-  var btn=document.getElementById('btn-add-student');
-  btn.disabled=true;btn.textContent='Adding...';
+// ── Available athlete accounts (pick from existing, no free-text email) ──
+var availableCache=[];
+
+async function loadAvailable(){
+  var el=document.getElementById('coach-available');
+  if(!el)return;
+  el.innerHTML='<div class="loading-state"><div class="spinner"></div></div>';
+  var r=await apiCall('/api/coach/available-athletes');
+  if(!r||!r.ok){el.innerHTML='<p style="color:var(--accent2)">'+((r&&r.data)?r.data.message:'Error loading accounts')+'</p>';return;}
+  availableCache=r.data.athletes||[];
+  renderAvailable(availableCache);
+}
+
+function renderAvailable(list){
+  var el=document.getElementById('coach-available');
+  if(!el)return;
+  if(list.length===0){el.innerHTML='<p style="color:var(--muted)">No available athlete accounts (they must register as Athlete and not already have a coach).</p>';return;}
+  el.innerHTML=list.map(function(a){
+    var sportsList=(a.sports||[]).map(function(sp){return sp.type;}).join(', ')||'none';
+    return '<div class="coach-row">'
+      +'<div><strong>'+escapeHtml(a.name)+'</strong>'
+      +'<span class="coach-row-sub">'+escapeHtml(a.email)+' · '+sportsList+'</span></div>'
+      +'<div class="coach-row-right">'
+      +'<button class="btn-add btn-add-available" data-email="'+escapeHtml(a.email)+'">+ Add</button>'
+      +'</div></div>';
+  }).join('');
+  el.querySelectorAll('.btn-add-available').forEach(function(btn){
+    btn.addEventListener('click',function(){addStudentByEmail(btn.dataset.email,btn);});
+  });
+}
+
+function filterAvailable(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q){renderAvailable(availableCache);return;}
+  renderAvailable(availableCache.filter(function(a){
+    return (a.name||'').toLowerCase().indexOf(q)>=0||(a.email||'').toLowerCase().indexOf(q)>=0;
+  }));
+}
+
+async function addStudentByEmail(email,btn){
+  if(btn){btn.disabled=true;btn.textContent='Adding...';}
   var r=await apiCall('/api/coach/students/add',{method:'POST',body:JSON.stringify({email:email})});
-  btn.disabled=false;btn.textContent='+ Add athlete';
-  if(!r||!r.ok){showToast((r&&r.data)?r.data.message:'Could not add athlete','error');return;}
-  input.value='';
+  if(!r||!r.ok){
+    if(btn){btn.disabled=false;btn.textContent='+ Add';}
+    showToast((r&&r.data)?r.data.message:'Could not add athlete','error');return;
+  }
   showToast('Athlete added','success');
   loadCoach();
 }
