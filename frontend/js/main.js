@@ -63,12 +63,21 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 
-  // Restore session
+  // Restore session — but an invite link always opens a fresh registration,
+  // even if this browser already has a session (e.g. the coach who shared it).
+  var _inv=null;
+  try{_inv=new URLSearchParams(window.location.search).get('invite');}catch(e){}
   var saved=localStorage.getItem('wod_user');
-  if(token&&saved){currentUser=JSON.parse(saved);showApp();}else{showAuth();}
-
-  // Invite link: if present and not logged in, open locked athlete registration
-  try{var _inv=new URLSearchParams(window.location.search).get('invite');if(_inv&&!(token&&saved))handleInvite(_inv);}catch(e){}
+  if(_inv){
+    token=null;currentUser=null;
+    localStorage.removeItem('wod_token');localStorage.removeItem('wod_user');localStorage.removeItem('wod_last_activity');
+    showAuth();
+    handleInvite(_inv);
+  }else if(token&&saved){
+    currentUser=JSON.parse(saved);showApp();
+  }else{
+    showAuth();
+  }
 
   // Auth tabs
   document.querySelectorAll('.auth-tab').forEach(function(tab){tab.addEventListener('click',function(){
