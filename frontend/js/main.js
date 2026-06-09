@@ -100,6 +100,9 @@ document.addEventListener('DOMContentLoaded',function(){
   var brc=document.getElementById('btn-resend-code');if(brc)brc.addEventListener('click',resendCode);
   var bvb=document.getElementById('btn-verify-back');if(bvb)bvb.addEventListener('click',showLoginForm);
   var vc=document.getElementById('verify-code');if(vc)vc.addEventListener('keydown',function(e){if(e.key==='Enter')verifyCode();});
+  var rpw=document.getElementById('reg-password');if(rpw)rpw.addEventListener('input',function(){renderPwHints(rpw.value,'reg-pw-hints');});
+  var rspw=document.getElementById('reset-password');if(rspw)rspw.addEventListener('input',function(){renderPwHints(rspw.value,'reset-pw-hints');});
+  renderPwHints('','reg-pw-hints');renderPwHints('','reset-pw-hints');
   document.getElementById('btn-logout').addEventListener('click',logout);
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){btn.addEventListener('click',function(){switchView(btn.dataset.view);});});
   document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});

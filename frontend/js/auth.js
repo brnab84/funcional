@@ -61,7 +61,8 @@ async function register(){
   var email=document.getElementById('reg-email').value.trim();
   var password=document.getElementById('reg-password').value;
   showAuthError('');
-  if(password.length<6)return showAuthError('Password must be at least 6 characters');
+  var pwErr=passwordError(password);
+  if(pwErr)return showAuthError(pwErr);
   var roleBtn=document.querySelector('.auth-role-btn.active');
   var role=roleBtn?roleBtn.dataset.role:'athlete';
   var body={name:name,email:email,password:password};
@@ -83,6 +84,25 @@ function logout(){
   showAuth();
 }
 function showAuthError(msg){var el=document.getElementById('auth-error');el.textContent=msg;el.classList.toggle('hidden',!msg);}
+
+// Password policy (mirrors backend utils/password.js): 8+ chars, lower+upper+number
+function passwordError(pw){
+  if(!pw||pw.length<8)return'Password must be at least 8 characters';
+  if(!/[a-z]/.test(pw))return'Add a lowercase letter';
+  if(!/[A-Z]/.test(pw))return'Add an uppercase letter';
+  if(!/[0-9]/.test(pw))return'Add a number';
+  return null;
+}
+function renderPwHints(pw,id){
+  var el=document.getElementById(id);if(!el)return;
+  pw=pw||'';
+  var rules=[
+    {ok:pw.length>=8,t:'8+ characters'},
+    {ok:/[a-z]/.test(pw)&&/[A-Z]/.test(pw),t:'Upper & lowercase'},
+    {ok:/[0-9]/.test(pw),t:'A number'}
+  ];
+  el.innerHTML=rules.map(function(r){return'<span class="pw-rule '+(r.ok?'ok':'')+'">'+(r.ok?'✓':'○')+' '+r.t+'</span>';}).join('');
+}
 
 // Invite link: validate the coach code, then switch to a locked athlete registration
 async function handleInvite(code){
@@ -163,7 +183,8 @@ async function resetPassword(){
   var confirm=document.getElementById('reset-confirm').value;
   showAuthError('');
   if(!email)return showAuthError('Enter your email');
-  if(pw.length<6)return showAuthError('Password must be at least 6 characters');
+  var pwErr=passwordError(pw);
+  if(pwErr)return showAuthError(pwErr);
   if(pw!==confirm)return showAuthError('Passwords do not match');
   var btn=document.getElementById('btn-reset');btn.textContent='Resetting...';btn.disabled=true;
   var r=await fetch(API+'/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,newPassword:pw})});
