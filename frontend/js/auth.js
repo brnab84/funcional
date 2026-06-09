@@ -22,7 +22,8 @@ function showApp(){
     var libNav=document.querySelector('.nav-btn[data-view="library"]');
     if(todayNav)todayNav.style.display=coached?'none':'';
     if(libNav)libNav.style.display=coached?'none':'';
-    document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+currentUser.email+' \u00B7 '+currentSport+' \u00B7 v'+VERSION;
+    var roleLabel=currentUser.role==='admin'?'Admin':currentUser.role==='coach'?'Profesor':(currentUser.coachId?'Alumno (con profesor)':'Atleta (entrena solo)');
+    document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+roleLabel+' \u00B7 '+currentUser.email+' \u00B7 v'+VERSION;
     loadUserSettings();
   }
   applySportTheme(currentSport);
