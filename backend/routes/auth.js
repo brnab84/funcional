@@ -5,6 +5,7 @@ const User = require('../models/User');
 const authMW = require('../middleware/auth');
 const LoginActivity = require('../models/LoginActivity');
 const { sendMail } = require('../utils/mailer');
+const { validatePassword } = require('../utils/password');
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 const JWT_SECRET = process.env.JWT_SECRET || 'funcional_jwt_secret_2024';
 const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
@@ -30,6 +31,8 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, inviteCode } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: 'All fields required' });
+    const pwErr = validatePassword(password);
+    if (pwErr) return res.status(400).json({ message: pwErr });
     const lowEmail = String(email).toLowerCase();
 
     // Public signup = coach or solo-athlete. Coached athletes ONLY via a coach's invite link.
@@ -193,7 +196,8 @@ router.post('/reset-password', async (req, res) => {
   try {
     const { email, newPassword } = req.body;
     if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password required' });
-    if (newPassword.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    const pwErr = validatePassword(newPassword);
+    if (pwErr) return res.status(400).json({ message: pwErr });
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ message: 'No account found with that email' });
     user.password = newPassword;

@@ -64,6 +64,9 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .coach-invite input:focus{border-color:var(--accent);}
 .invite-banner{padding:10px 14px;border-radius:8px;background:rgba(155,89,255,0.12);border:1px solid rgba(155,89,255,0.4);color:#9b59ff;font-size:0.85rem;text-align:center;margin-bottom:4px;}
 .verify-msg{padding:10px 14px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:0.85rem;text-align:center;}
+.pw-hints{display:flex;flex-wrap:wrap;gap:10px;margin:-4px 2px 2px;}
+.pw-rule{font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);transition:color .15s;}
+.pw-rule.ok{color:var(--green);}
 #verify-code{text-align:center;letter-spacing:8px;font-family:var(--font-mono);font-size:1.3rem;}
 .coach-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
 .coach-row strong{color:var(--text);font-size:0.9rem;}
