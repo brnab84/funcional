@@ -28,6 +28,18 @@ router.get('/students', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// GET /api/coach/available-athletes — registered athletes not yet linked to any coach
+router.get('/available-athletes', async (req, res) => {
+  try {
+    const athletes = await User.find({ role: 'athlete', coachId: null, _id: { $ne: req.user._id } })
+      .select('name email sports')
+      .sort({ name: 1 })
+      .limit(200)
+      .lean();
+    res.json({ athletes });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // POST /api/coach/students/add — link an already-registered athlete by email
 router.post('/students/add', async (req, res) => {
   try {

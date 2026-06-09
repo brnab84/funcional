@@ -253,12 +253,14 @@
 
     <div id="view-coach" class="view">
       <div class="view-header"><h2>My Athletes</h2></div>
-      <div class="coach-add">
-        <input type="email" id="coach-student-email" placeholder="Athlete's email (must be registered)" autocomplete="off">
-        <button class="btn-add" id="btn-add-student">+ Add athlete</button>
-      </div>
-      <p class="card-hint">The athlete must already have an account. Add them by their email to start sending workouts.</p>
       <div id="coach-students" class="coach-students"><div class="loading-state"><div class="spinner"></div></div></div>
+
+      <h3 class="coach-subhead">Add an athlete</h3>
+      <p class="card-hint">Pick an existing account. Only registered athletes without a coach are listed.</p>
+      <div class="coach-add">
+        <input type="text" id="coach-search" placeholder="Search by name or email" autocomplete="off">
+      </div>
+      <div id="coach-available" class="coach-students"><div class="loading-state"><div class="spinner"></div></div></div>
     </div>
 
     <div id="view-admin" class="view">
