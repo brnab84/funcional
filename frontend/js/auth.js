@@ -20,8 +20,10 @@ function showApp(){
     var coached=isCoachedAthlete();
     var todayNav=document.querySelector('.nav-btn[data-view="today"]');
     var libNav=document.querySelector('.nav-btn[data-view="library"]');
+    var setNav=document.querySelector('.nav-btn[data-view="settings"]');
     if(todayNav)todayNav.style.display=coached?'none':'';
     if(libNav)libNav.style.display=coached?'none':'';
+    if(setNav)setNav.style.display=coached?'none':'';
     var roleLabel=currentUser.role==='admin'?'Admin':currentUser.role==='coach'?'Profesor':(currentUser.coachId?'Alumno (con profesor)':'Atleta (entrena solo)');
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+roleLabel+' \u00B7 '+currentUser.email+' \u00B7 v'+VERSION;
     loadUserSettings();
