@@ -10,11 +10,13 @@ const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: 'All fields required' });
     if (await User.findOne({ email })) return res.status(400).json({ message: 'Email already registered' });
-    const user = await User.create({ name, email, password, sports: [{ type: 'functional', active: true }] });
-    res.status(201).json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, settings: user.settings, sports: user.sports } });
+    // Only allow self-registration as athlete or coach; admin is granted server-side only.
+    const safeRole = role === 'coach' ? 'coach' : 'athlete';
+    const user = await User.create({ name, email, password, role: safeRole, sports: [{ type: 'functional', active: true }] });
+    res.status(201).json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, coachId: user.coachId, settings: user.settings, sports: user.sports } });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
@@ -45,7 +47,7 @@ router.post('/login', async (req, res) => {
       });
     } catch (e) { console.log('Activity log error:', e.message); }
 
-    res.json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, settings: user.settings, sports: user.sports } });
+    res.json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, coachId: user.coachId, settings: user.settings, sports: user.sports } });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
