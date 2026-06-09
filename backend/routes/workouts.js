@@ -9,6 +9,14 @@ const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
 router.use(auth);
 
+// Athletes linked to a coach don't generate their own workouts — they only
+// follow what the coach assigns. Blocks self-generation routes for them.
+const COACHED_MSG = 'Your coach assigns your workouts. Check the Assigned tab.';
+function blockIfCoached(req, res, next) {
+  if (req.user && req.user.coachId) return res.status(403).json({ message: COACHED_MSG });
+  next();
+}
+
 // GET /today — READ ONLY
 router.get('/today', async (req, res) => {
   try {
@@ -21,7 +29,7 @@ router.get('/today', async (req, res) => {
 });
 
 // POST /regenerate — generate 3 new options
-router.post('/regenerate', async (req, res) => {
+router.post('/regenerate', blockIfCoached, async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const sport = (req.body && req.body.sport) || 'functional';
@@ -77,7 +85,7 @@ router.post('/regenerate', async (req, res) => {
 
 
 // POST /manual — create workout manually
-router.post('/manual', async (req, res) => {
+router.post('/manual', blockIfCoached, async (req, res) => {
   try {
     const { sport, warmup, blocks, pattern, notes, source } = req.body;
     var validSources = ['local','ai','manual','imported'];
@@ -202,7 +210,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // AI
-router.post('/ai', async (req, res) => {
+router.post('/ai', blockIfCoached, async (req, res) => {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(503).json({ message: 'ANTHROPIC_API_KEY not configured' });
