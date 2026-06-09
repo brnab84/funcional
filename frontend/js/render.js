@@ -53,6 +53,7 @@ function renderWorkout(workout,editable){
   if(workout.source==='ai')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(245,197,24,0.2);color:#f5c518;border:1px solid rgba(245,197,24,0.4);font-size:0.7rem">AI Generated</span></div>';
   if(workout.source==='imported')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(46,213,115,0.2);color:#2ed573;border:1px solid rgba(46,213,115,0.4);font-size:0.7rem">Imported</span></div>';
   if(workout.source==='manual')html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(30,144,255,0.2);color:#1e90ff;border:1px solid rgba(30,144,255,0.4);font-size:0.7rem">Manual</span></div>';
+  if(workout.source==='assigned'){var coachName=(workout.assignedBy&&workout.assignedBy.name)?(' · '+workout.assignedBy.name):'';html+='<div style="padding:8px 14px;text-align:right"><span class="card-badge" style="background:rgba(155,89,255,0.2);color:#9b59ff;border:1px solid rgba(155,89,255,0.4);font-size:0.7rem">&#128100; From Coach'+coachName+'</span></div>';}
   if(workout.warmup&&workout.warmup.exercises&&workout.warmup.exercises.length){
     html+='<div class="card-header">';
     html+='<div class="card-header-left"><span class="card-badge badge-warmup">E.C.</span><span class="card-config">'+(workout.warmup.rounds||3)+' Rounds</span></div>';

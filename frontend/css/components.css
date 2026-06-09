@@ -64,6 +64,26 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .coach-row-right{display:flex;align-items:center;gap:8px;}
 .btn-remove-student{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s;font-size:0.85rem;}
 .btn-remove-student:hover{border-color:var(--accent2,#ff5470);color:var(--accent2,#ff5470);}
+.btn-send-wod{height:30px;padding:0 12px;border-radius:6px;border:1px solid #9b59ff;background:rgba(155,89,255,0.08);color:#9b59ff;cursor:pointer;transition:all 0.15s;font-size:0.78rem;font-weight:600;white-space:nowrap;}
+.btn-send-wod:hover{background:rgba(155,89,255,0.18);}
+
+/* Send WOD modal */
+.modal-title{font-family:var(--font-display,var(--font-body));font-size:1.3rem;margin:0 0 16px;color:var(--text);letter-spacing:0.5px;}
+.sendwod-sports{display:flex;gap:10px;margin-bottom:14px;}
+.sendwod-sport{flex:1;padding:12px;border-radius:10px;border:2px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:0.85rem;transition:all 0.2s;}
+.sendwod-sport:hover{border-color:var(--accent);color:var(--text);}
+.sendwod-sport.active{border-color:var(--accent);color:var(--accent);background:rgba(245,197,24,0.08);}
+.sendwod-preview{margin:14px 0;max-height:42vh;overflow-y:auto;}
+.sendwod-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+
+/* Assigned inbox (athlete) */
+.assigned-list{display:flex;flex-direction:column;gap:18px;margin-top:16px;}
+.assigned-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.assigned-item.is-done{opacity:0.7;}
+.assigned-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.assigned-date{font-family:var(--font-mono);font-size:0.8rem;color:var(--muted);}
+.assigned-done{color:var(--green,#2ed573);font-weight:700;font-size:0.85rem;}
+.assigned-approve{padding:8px 16px;font-size:0.82rem;}
 
 
 

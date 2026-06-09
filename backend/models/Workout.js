@@ -11,7 +11,9 @@ const workoutSchema = new mongoose.Schema({
   status: { type: String, enum: ['suggestion','approved','rejected'], default: 'suggestion' },
   variant: { type: Number, default: 1 },
   notes: String,
-  source: { type: String, enum: ['ai','local','manual','imported'], default: 'local' },
+  source: { type: String, enum: ['ai','local','manual','imported','assigned'], default: 'local' },
+  // Set when a coach assigns this workout to an athlete (user = the athlete).
+  assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   createdAt: { type: Date, default: Date.now }
 });
 module.exports = mongoose.model('Workout', workoutSchema);

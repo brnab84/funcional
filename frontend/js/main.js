@@ -4,7 +4,7 @@ function switchView(name){
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
   document.querySelector('[data-view="'+name+'"]').classList.add('active');
-  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();
+  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();if(name==='assigned')loadAssigned();
 }
 
 // VERSION CHECK + CACHE BUST

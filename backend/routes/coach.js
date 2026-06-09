@@ -3,9 +3,19 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const coachOnly = require('../middleware/coach');
 const User = require('../models/User');
+const Workout = require('../models/Workout');
+const ExerciseLibrary = require('../models/ExerciseLibrary');
+const { categoriesFor } = require('../utils/constants');
+const { generateWorkout } = require('../generator');
+const { generateSwimWorkout } = require('../swim-generator');
 
 // All coach routes require auth + coach (or admin) role
 router.use(auth, coachOnly);
+
+// Helper: confirm an athlete belongs to this coach
+async function findOwnStudent(coach, studentId) {
+  return User.findOne({ _id: studentId, coachId: coach._id });
+}
 
 // GET /api/coach/students — list athletes linked to this coach
 router.get('/students', async (req, res) => {
@@ -34,6 +44,56 @@ router.post('/students/add', async (req, res) => {
     student.coachId = req.user._id;
     await student.save();
     res.json({ student: { _id: student._id, name: student.name, email: student.email, role: student.role, sports: student.sports, lastLogin: student.lastLogin, createdAt: student.createdAt } });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// POST /api/coach/students/:id/generate — preview a WOD built from the COACH's
+// own exercise library (not saved). Coach reviews/regenerates before sending.
+router.post('/students/:id/generate', async (req, res) => {
+  try {
+    const student = await findOwnStudent(req.user, req.params.id);
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const sport = req.body.sport || 'functional';
+    const exercises = await ExerciseLibrary.find({ sport: sport, user: req.user._id }).lean();
+    const validCats = categoriesFor(sport);
+    const valid = exercises.filter(e => validCats.includes(e.category));
+    if (valid.length < 8) {
+      return res.status(400).json({ message: 'You need at least 8 ' + sport + ' exercises in your own Library to generate. Go to Library > Seed defaults.' });
+    }
+
+    const gen = sport === 'swimming' ? generateSwimWorkout : generateWorkout;
+    const seed = Date.now() + '-' + req.user._id + '-' + Math.floor(Math.random() * 1e6);
+    const result = gen(valid, seed, 1, [], req.user.settings, [], null);
+    res.json({ workout: { sport: sport, warmup: result.warmup, blocks: result.blocks, pattern: result.pattern } });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// POST /api/coach/students/:id/assign — create the workout in the athlete's account
+router.post('/students/:id/assign', async (req, res) => {
+  try {
+    const student = await findOwnStudent(req.user, req.params.id);
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    const { sport, warmup, blocks, pattern, notes } = req.body;
+    if (!Array.isArray(blocks) || blocks.length === 0) {
+      return res.status(400).json({ message: 'Workout has no blocks to send' });
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const workout = await Workout.create({
+      user: student._id,
+      sport: sport || 'functional',
+      date: today,
+      warmup: warmup || { rounds: 1, exercises: [] },
+      blocks: blocks,
+      pattern: pattern || 'COACH',
+      variant: 97,
+      status: 'suggestion',
+      source: 'assigned',
+      assignedBy: req.user._id,
+      notes: notes || ''
+    });
+    res.json({ workout: workout });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
