@@ -45,7 +45,10 @@ async function login(){
   var r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:password})});
   var data=await r.json();
   btn.textContent='Login';btn.disabled=false;
-  if(!r.ok)return showAuthError(data.message);
+  if(!r.ok){
+    if(r.status===403&&data.needsVerification){showVerifyForm(data.email);return;}
+    return showAuthError(data.message);
+  }
   token=data.token;currentUser=data.user;
   localStorage.setItem('wod_token',token);localStorage.setItem('wod_user',JSON.stringify(currentUser));
   showApp();
@@ -65,6 +68,7 @@ async function register(){
   var data=await r.json();
   btn.textContent='Create account';btn.disabled=false;
   if(!r.ok)return showAuthError(data.message);
+  if(data.needsVerification){showVerifyForm(data.email,data.mailSent);return;}
   token=data.token;currentUser=data.user;
   localStorage.setItem('wod_token',token);localStorage.setItem('wod_user',JSON.stringify(currentUser));
   showApp();
@@ -104,9 +108,51 @@ function showLoginForm(){
   document.getElementById('tab-login').classList.remove('hidden');
   document.getElementById('tab-register').classList.add('hidden');
   document.getElementById('tab-reset').classList.add('hidden');
+  var tv=document.getElementById('tab-verify');if(tv)tv.classList.add('hidden');
   document.querySelector('.auth-tabs').style.display='';
   document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='login');});
   showAuthError('');
+}
+
+// ── Email verification flow ──
+function showVerifyForm(email,mailSent){
+  window.__verifyEmail=email;
+  document.getElementById('tab-login').classList.add('hidden');
+  document.getElementById('tab-register').classList.add('hidden');
+  document.getElementById('tab-reset').classList.add('hidden');
+  document.getElementById('tab-verify').classList.remove('hidden');
+  var tabs=document.querySelector('.auth-tabs');if(tabs)tabs.style.display='none';
+  var msg=document.getElementById('verify-msg');
+  if(msg)msg.textContent=(mailSent===false)
+    ? 'We could not send the email. Tap "Resend code" to try again.'
+    : 'We emailed a 6-digit code to '+email+'. Enter it to activate your account.';
+  showAuthError('');
+  var ci=document.getElementById('verify-code');if(ci){ci.value='';ci.focus();}
+}
+
+async function verifyCode(){
+  var code=(document.getElementById('verify-code').value||'').trim();
+  if(code.length<6)return showAuthError('Enter the 6-digit code');
+  showAuthError('');
+  var btn=document.getElementById('btn-verify');btn.textContent='Verifying...';btn.disabled=true;
+  var r=await fetch(API+'/api/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:window.__verifyEmail,code:code})});
+  var data=await r.json();
+  btn.textContent='Verify & enter';btn.disabled=false;
+  if(!r.ok)return showAuthError(data.message);
+  token=data.token;currentUser=data.user;
+  localStorage.setItem('wod_token',token);localStorage.setItem('wod_user',JSON.stringify(currentUser));
+  var tabs=document.querySelector('.auth-tabs');if(tabs)tabs.style.display='';
+  showApp();
+}
+
+async function resendCode(){
+  if(!window.__verifyEmail)return;
+  var btn=document.getElementById('btn-resend-code');btn.disabled=true;btn.textContent='Sending...';
+  var r=await fetch(API+'/api/auth/resend-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:window.__verifyEmail})});
+  var data=await r.json();
+  btn.disabled=false;btn.textContent='Resend code';
+  if(!r.ok)return showAuthError(data.message);
+  showToast('Code sent — check your email','success');
 }
 async function resetPassword(){
   var email=document.getElementById('reset-email').value.trim();

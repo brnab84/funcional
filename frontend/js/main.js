@@ -87,6 +87,10 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
   document.getElementById('btn-reset').addEventListener('click',resetPassword);
   document.getElementById('reset-confirm').addEventListener('keydown',function(e){if(e.key==='Enter')resetPassword();});
+  var bv=document.getElementById('btn-verify');if(bv)bv.addEventListener('click',verifyCode);
+  var brc=document.getElementById('btn-resend-code');if(brc)brc.addEventListener('click',resendCode);
+  var bvb=document.getElementById('btn-verify-back');if(bvb)bvb.addEventListener('click',showLoginForm);
+  var vc=document.getElementById('verify-code');if(vc)vc.addEventListener('keydown',function(e){if(e.key==='Enter')verifyCode();});
   document.getElementById('btn-logout').addEventListener('click',logout);
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){btn.addEventListener('click',function(){switchView(btn.dataset.view);});});
   document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});

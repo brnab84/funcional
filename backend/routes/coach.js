@@ -9,6 +9,45 @@ const ExerciseLibrary = require('../models/ExerciseLibrary');
 const { categoriesFor } = require('../utils/constants');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
+const { sendMail } = require('../utils/mailer');
+const APP_URL = process.env.APP_URL || '';
+
+// Build a plain-text + HTML summary of an assigned workout for the email
+function workoutSummary(workout, coachName) {
+  const lines = [];
+  const htmlParts = [];
+  if (workout.warmup && workout.warmup.exercises && workout.warmup.exercises.length) {
+    lines.push('Entrada en calor (' + (workout.warmup.rounds || 1) + ' rounds):');
+    htmlParts.push('<h3 style="margin:14px 0 6px">Entrada en calor <span style="color:#6b7280;font-weight:normal">(' + (workout.warmup.rounds || 1) + ' rounds)</span></h3><ul style="margin:0;padding-left:18px">');
+    workout.warmup.exercises.forEach(e => {
+      lines.push('  - ' + e.name + (e.reps ? ' — ' + e.reps : ''));
+      htmlParts.push('<li>' + e.name + (e.reps ? ' <strong>' + e.reps + '</strong>' : '') + '</li>');
+    });
+    htmlParts.push('</ul>');
+  }
+  (workout.blocks || []).forEach(b => {
+    lines.push('');
+    lines.push('Bloque ' + (b.label || '') + ' (' + (b.modality || '') + ')' + (b.config ? ' — ' + b.config : '') + ':');
+    htmlParts.push('<h3 style="margin:14px 0 6px">Bloque ' + (b.label || '') + ' <span style="color:#6b7280;font-weight:normal">' + (b.modality || '') + (b.config ? ' · ' + b.config : '') + '</span></h3><ul style="margin:0;padding-left:18px">');
+    (b.exercises || []).forEach(e => {
+      lines.push('  - ' + e.name + (e.reps ? ' — ' + e.reps : ''));
+      htmlParts.push('<li>' + e.name + (e.reps ? ' <strong>' + e.reps + '</strong>' : '') + '</li>');
+    });
+    htmlParts.push('</ul>');
+  });
+  if (workout.pattern) lines.push('\nPatrón: ' + workout.pattern);
+
+  const text = coachName + ' te envió un entrenamiento:\n\n' + lines.join('\n')
+    + (APP_URL ? '\n\nAbrilo en la app: ' + APP_URL : '');
+  const html = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1c2026">'
+    + '<h2 style="color:#0d0f12;margin:0 0 4px">Functional WOD</h2>'
+    + '<p><strong>' + coachName + '</strong> te envió un entrenamiento 💪</p>'
+    + htmlParts.join('')
+    + (workout.pattern ? '<p style="margin-top:12px;color:#6b7280">Patrón: ' + workout.pattern + '</p>' : '')
+    + (APP_URL ? '<p style="margin-top:18px"><a href="' + APP_URL + '" style="background:#f5c518;color:#0d0f12;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:bold">Abrir en la app</a></p>' : '')
+    + '</div>';
+  return { text, html };
+}
 
 // All coach routes require auth + coach (or admin) role
 router.use(auth, coachOnly);
@@ -89,6 +128,11 @@ router.post('/students/:id/assign', async (req, res) => {
       assignedBy: req.user._id,
       notes: notes || ''
     });
+    // Notify the athlete by email with a summary (non-blocking — never fail the assign)
+    try {
+      const sum = workoutSummary(workout, req.user.name);
+      sendMail({ to: student.email, subject: req.user.name + ' te envió un entrenamiento — Functional WOD', text: sum.text, html: sum.html });
+    } catch (e) { console.log('Assign email error:', e.message); }
     res.json({ workout: workout });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
