@@ -79,6 +79,14 @@ app.get('/api/health', (req, res) => res.json({
   mongo: mongoose.connection.readyState
 }));
 
+// ── Landing page (marketing) — separate link from the app ───
+// App stays at "/". Landing lives at "/inicio". Self-contained HTML.
+app.get('/inicio', (req, res) => {
+  const landingPath = path.join(__dirname, '../frontend/landing.html');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(landingPath, (err) => { if (err) res.status(500).send('Error loading landing'); });
+});
+
 // ── Serve index.html with version-busted URLs ───────
 app.get('*', (req, res) => {
   const htmlPath = path.join(__dirname, '../frontend/index.html');
