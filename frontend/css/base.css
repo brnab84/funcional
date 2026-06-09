@@ -1,8 +1,8 @@
-:root{--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;--text:#e8eaf0;--muted:#6b7280;--accent:#f5c518;--accent2:#ff4757;--green:#2ed573;--blue:#1e90ff;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:10px;}
+:root{--bg:#0d0f12;--bg2:#15181d;--bg3:#1c2026;--border:#262b33;--text:#f2f4f7;--muted:#8b93a1;--accent:#f5c518;--accent2:#ff4757;--green:#2ed573;--blue:#1e90ff;--purple:#9b59ff;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:12px;--radius-lg:16px;--shadow-sm:0 2px 10px rgba(0,0,0,0.25);--shadow:0 10px 34px rgba(0,0,0,0.38);--accent-rgb:245,197,24;}
 
 /* Sport themes */
-body.sport-functional{--accent:#f5c518;--bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e26;--border:#252a35;}
-body.sport-swimming{--accent:#00b4d8;--bg:#071a2e;--bg2:#0c2240;--bg3:#122d50;--border:#1a3a5c;--accent2:#ff6b6b;--green:#48dbfb;}
+body.sport-functional{--accent:#f5c518;--accent-rgb:245,197,24;--bg:#0d0f12;--bg2:#15181d;--bg3:#1c2026;--border:#262b33;}
+body.sport-swimming{--accent:#00b4d8;--accent-rgb:0,180,216;--bg:#08182a;--bg2:#0e2238;--bg3:#163048;--border:#1f3d5b;--accent2:#ff6b6b;--green:#48dbfb;}
 *{box-sizing:border-box;margin:0;padding:0;}body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;font-size:15px;line-height:1.5;}
 .auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;}
 .auth-box{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;}
