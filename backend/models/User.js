@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
   coachId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   // Reusable invite code for coaches — athletes who register via /?invite=CODE join this coach.
   inviteCode: { type: String, default: null, index: true },
+  // Email verification. Default true so PRE-EXISTING accounts are never locked out;
+  // new registrations explicitly set false until they confirm the emailed code.
+  emailVerified: { type: Boolean, default: true },
+  verificationCode: { type: String, default: null },
+  verificationExpires: { type: Date, default: null },
   sports: [{ type: { type: String, default: 'functional' }, active: { type: Boolean, default: true } }],
   settings: {
     blockCount: { type: Number, default: 2, min: 1, max: 4 },

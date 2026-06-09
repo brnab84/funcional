@@ -79,6 +79,13 @@
       <button class="btn-primary" id="btn-reset">Reset Password</button>
       <button class="auth-link" id="btn-back-login" type="button">Back to login</button>
     </div>
+    <div id="tab-verify" class="auth-form hidden">
+      <div class="verify-msg" id="verify-msg">We emailed you a 6-digit code. Enter it to activate your account.</div>
+      <input type="text" id="verify-code" placeholder="6-digit code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <button class="btn-primary" id="btn-verify">Verify &amp; enter</button>
+      <button class="auth-link" id="btn-resend-code" type="button">Resend code</button>
+      <button class="auth-link" id="btn-verify-back" type="button">Back to login</button>
+    </div>
   </div>
 </div>
 
