@@ -55,6 +55,8 @@ router.get('/me', authMW, (req, res) => res.json({ user: req.user }));
 
 router.put('/settings', authMW, async (req, res) => {
   try {
+    // Coached athletes don't manage settings (their coach drives their training)
+    if (req.user.coachId) return res.status(403).json({ message: 'Settings are managed by your coach.' });
     const user = await User.findById(req.user._id);
     const { blockCount, blockModalities, avoidRepeatDays, defaultSport } = req.body;
     if (blockCount !== undefined) user.settings.blockCount = blockCount;
