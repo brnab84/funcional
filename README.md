@@ -33,7 +33,10 @@ backend/
     ApiError.js          Structured HTTP errors
     constants.js         Sport categories/modalities
 frontend/
-  index.html, app.js, styles.css, sw.js, manifest.json
+  index.html, landing.html, sw.js, manifest.json
+  css/   base.css, components.css, responsive.css
+  js/    state, session, ui, theme, api, auth, render, today, manual,
+         import, edit, history, library, settings, admin, coach, assigned, main
 ```
 
 ## Key Concepts
