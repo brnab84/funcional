@@ -14,6 +14,8 @@ function showApp(){
     if(adminBtn)adminBtn.style.display=(currentUser.role==='admin')?'':'none';
     var coachBtn=document.getElementById('nav-coach');
     if(coachBtn)coachBtn.style.display=(currentUser.role==='coach'||currentUser.role==='admin')?'':'none';
+    var assignedBtn=document.getElementById('nav-assigned');
+    if(assignedBtn)assignedBtn.style.display=(currentUser.coachId)?'':'none';
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+currentUser.email+' \u00B7 '+currentSport+' \u00B7 v'+VERSION;
     loadUserSettings();
   }

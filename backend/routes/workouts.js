@@ -14,7 +14,7 @@ router.get('/today', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const sport = req.query.sport || 'functional';
-    const suggestions = await Workout.find({ user: req.user._id, date: today, sport: sport, status: 'suggestion' }).sort('variant').lean();
+    const suggestions = await Workout.find({ user: req.user._id, date: today, sport: sport, status: 'suggestion', source: { $ne: 'assigned' } }).sort('variant').lean();
     const approvedToday = await Workout.countDocuments({ user: req.user._id, date: today, sport: sport, status: 'approved' });
     res.json({ workouts: suggestions, approvedToday: approvedToday });
   } catch(err) { res.status(500).json({ message: err.message }); }
@@ -27,8 +27,8 @@ router.post('/regenerate', async (req, res) => {
     const sport = (req.body && req.body.sport) || 'functional';
     const uid = req.user._id;
 
-    // Delete old suggestions
-    await Workout.deleteMany({ user: uid, date: today, sport: sport, status: 'suggestion' });
+    // Delete old suggestions (never touch coach-assigned workouts)
+    await Workout.deleteMany({ user: uid, date: today, sport: sport, status: 'suggestion', source: { $ne: 'assigned' } });
 
     // Get exercises for this user + sport
     const exercises = await ExerciseLibrary.find({ sport: sport, user: uid }).lean();
@@ -162,6 +162,19 @@ router.put('/:id/edit', async (req, res) => {
     if (req.body.notes !== undefined) workout.notes = req.body.notes;
     await workout.save();
     res.json({ workout });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
+// ASSIGNED — workouts a coach sent to this athlete (read-only inbox)
+router.get('/assigned', async (req, res) => {
+  try {
+    const sport = req.query.sport || 'functional';
+    const workouts = await Workout.find({ user: req.user._id, sport: sport, source: 'assigned' })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate('assignedBy', 'name email')
+      .lean();
+    res.json({ workouts });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 

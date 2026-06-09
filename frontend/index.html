@@ -100,6 +100,7 @@
         <button class="nav-btn active" data-view="today">Today</button>
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="library">Library</button>
+        <button class="nav-btn" data-view="assigned" id="nav-assigned" style="display:none">&#128235; Assigned</button>
         <button class="nav-btn" data-view="coach" id="nav-coach" style="display:none">&#128100; My Athletes</button>
         <button class="nav-btn" data-view="settings">&#9881;</button>
         <button class="nav-btn" data-view="admin" id="nav-admin" style="display:none">&#128202; Admin</button>
@@ -244,6 +245,12 @@
 </div>
 
 
+    <div id="view-assigned" class="view">
+      <div class="view-header"><h2>Assigned by your coach</h2></div>
+      <p class="card-hint">Workouts your coach sent you. Open one and approve it when you finish.</p>
+      <div id="assigned-list" class="assigned-list"><div class="loading-state"><div class="spinner"></div></div></div>
+    </div>
+
     <div id="view-coach" class="view">
       <div class="view-header"><h2>My Athletes</h2></div>
       <div class="coach-add">
@@ -292,6 +299,7 @@
 <script src="/js/settings.js"></script>
 <script src="/js/admin.js"></script>
 <script src="/js/coach.js"></script>
+<script src="/js/assigned.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>
