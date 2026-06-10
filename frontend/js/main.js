@@ -1,9 +1,12 @@
 // main.js — part of Functional WOD frontend
 function switchView(name){
+  // Role guards — never show privileged views to the wrong user
+  if(name==='admin'&&!(currentUser&&currentUser.role==='admin'))return;
+  if(name==='coach'&&!(currentUser&&(currentUser.role==='coach'||currentUser.role==='admin')))return;
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
-  document.querySelector('[data-view="'+name+'"]').classList.add('active');
+  var navBtn=document.querySelector('.nav-btn[data-view="'+name+'"]');if(navBtn)navBtn.classList.add('active');
   if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();if(name==='assigned')loadAssigned();
 }
 
