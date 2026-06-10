@@ -48,7 +48,7 @@
     <div id="auth-error" class="auth-error hidden"></div>
     <div id="tab-login" class="auth-form">
       <input type="email" id="login-email" placeholder="Email" autocomplete="email">
-      <input type="password" id="login-password" placeholder="Password">
+      <div class="pw-field"><input type="password" id="login-password" placeholder="Password"><button type="button" class="pw-toggle" data-target="login-password">Show</button></div>
       <button class="btn-primary" id="btn-login">Login</button>
       <button class="auth-link" id="btn-show-reset" type="button">Forgot password?</button>
     </div>
@@ -56,7 +56,7 @@
       <div id="invite-banner" class="invite-banner hidden"></div>
       <input type="text" id="reg-name" placeholder="Your name">
       <input type="email" id="reg-email" placeholder="Email">
-      <input type="password" id="reg-password" placeholder="Password">
+      <div class="pw-field"><input type="password" id="reg-password" placeholder="Password"><button type="button" class="pw-toggle" data-target="reg-password">Show</button></div>
       <div class="pw-hints" id="reg-pw-hints"></div>
       <div class="auth-role-selector" id="auth-role-selector">
         <label class="auth-role-label">I am a...</label>
@@ -75,9 +75,9 @@
     </div>
     <div id="tab-reset" class="auth-form hidden">
       <input type="email" id="reset-email" placeholder="Your email" autocomplete="email">
-      <input type="password" id="reset-password" placeholder="New password">
+      <div class="pw-field"><input type="password" id="reset-password" placeholder="New password"><button type="button" class="pw-toggle" data-target="reset-password">Show</button></div>
       <div class="pw-hints" id="reset-pw-hints"></div>
-      <input type="password" id="reset-confirm" placeholder="Confirm new password">
+      <div class="pw-field"><input type="password" id="reset-confirm" placeholder="Confirm new password"><button type="button" class="pw-toggle" data-target="reset-confirm">Show</button></div>
       <button class="btn-primary" id="btn-reset">Reset Password</button>
       <button class="auth-link" id="btn-back-login" type="button">Back to login</button>
     </div>
