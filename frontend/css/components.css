@@ -175,6 +175,9 @@ body.sport-swimming .theme-btn.active{background:rgba(0,180,216,0.08);}
 .admin-badge-role.badge-coach{background:rgba(155,89,255,0.2);color:#9b59ff;border-color:rgba(155,89,255,0.4);}
 .admin-badge-role.badge-coached{background:rgba(30,144,255,0.18);color:#1e90ff;border-color:rgba(30,144,255,0.4);}
 .admin-badge-role.badge-solo{background:rgba(107,114,128,0.18);color:#9ca3af;border-color:rgba(107,114,128,0.4);}
+.admin-row-meta{display:inline-block;vertical-align:middle;text-align:right;}
+.admin-del{display:inline-block;vertical-align:middle;margin-left:12px;width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all .15s;}
+.admin-del:hover{border-color:#ff5470;color:#ff5470;}
 
 
 /* ───────────────────────────────────────────────────────────

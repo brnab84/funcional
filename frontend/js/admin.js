@@ -29,6 +29,9 @@ async function loadAdmin(){
   var s=rs.data;
   var cards=[
     {label:'Total Accounts',value:s.totalUsers,sub:'+'+s.newToday+' today'},
+    {label:'Coaches',value:(s.coaches||0),sub:'profesores'},
+    {label:'Athletes (coached)',value:(s.coachedAthletes||0),sub:'con profe'},
+    {label:'Solo athletes',value:(s.soloAthletes||0),sub:'entrenan solos'},
     {label:'Active (24h)',value:s.activeToday,sub:s.active7d+' in 7d'},
     {label:'New (7 days)',value:s.new7d,sub:'accounts'},
     {label:'Total Logins',value:s.totalLogins,sub:'all time'},
@@ -64,10 +67,22 @@ async function loadAdmin(){
       else if(u.role==='coach'){roleBadge='<span class="admin-badge-role badge-coach">COACH</span>';extra=' · '+(u.studentCount||0)+' alumno'+(u.studentCount===1?'':'s');}
       else if(u.coachId){roleBadge='<span class="admin-badge-role badge-coached">ALUMNO</span>';extra=' · Coach: '+(u.coachName||'?');}
       else{roleBadge='<span class="admin-badge-role badge-solo">SOLO</span>';extra=' · entrena solo';}
-      return '<div class="admin-row"><div><strong>'+u.name+'</strong>'+roleBadge
-        +'<span class="admin-row-sub">'+u.email+' · '+sportsList+extra+'</span></div>'
-        +'<div class="admin-row-right">'+(u.loginCount||0)+' logins'
-        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div></div>';
+      var delBtn=(u.role==='admin')?'':'<button class="admin-del" data-id="'+u._id+'" data-name="'+escapeHtml(u.name)+'" title="Delete account">&#10005;</button>';
+      return '<div class="admin-row"><div><strong>'+escapeHtml(u.name)+'</strong>'+roleBadge
+        +'<span class="admin-row-sub">'+escapeHtml(u.email)+' · '+sportsList+extra+'</span></div>'
+        +'<div class="admin-row-right"><div class="admin-row-meta">'+(u.loginCount||0)+' logins'
+        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div>'+delBtn+'</div></div>';
     }).join('');
+    usersEl.querySelectorAll('.admin-del').forEach(function(btn){
+      btn.addEventListener('click',function(){deleteAccount(btn.dataset.id,btn.dataset.name);});
+    });
   }
+}
+
+async function deleteAccount(id,name){
+  if(!confirm('Delete account "'+name+'"? This removes the user and all their data. This cannot be undone.'))return;
+  var r=await apiCall('/api/admin/users/'+id,{method:'DELETE'});
+  if(!r||!r.ok){showToast((r&&r.data)?r.data.message:'Could not delete','error');return;}
+  showToast('Account deleted','info');
+  loadAdmin();
 }
