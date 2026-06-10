@@ -60,7 +60,7 @@ function renderWorkout(workout,editable){
     if(editable)html+='<button class="btn-edit-section" onclick="editWarmup()">edit</button>';
     html+='</div>';
     html+='<div class="exercise-table">'+workout.warmup.exercises.map(function(ex,i){
-      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
+      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+exerciseIconHtml(ex.name,ex.category,currentSport)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
   }
   (workout.blocks||[]).forEach(function(block,bi){
@@ -71,7 +71,7 @@ function renderWorkout(workout,editable){
     if(editable)html+='<button class="btn-edit-section" onclick="editBlock('+bi+')">edit</button>';
     html+='</div>';
     html+='<div class="exercise-table">'+block.exercises.map(function(ex,i){
-      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+catDot(ex.category)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
+      return'<div class="ex-row"><span class="ex-num">'+String(i+1).padStart(2,'0')+'</span><span class="ex-name">'+exerciseIconHtml(ex.name,ex.category,currentSport)+ex.name+'</span><span class="ex-reps">'+(ex.reps||'')+'</span></div>';
     }).join('')+'</div>';
   });
   if(workout.pattern)html+='<div class="section-label" style="color:var(--accent);border-top:none">Pattern: '+workout.pattern+'</div>';
