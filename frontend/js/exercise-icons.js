@@ -18,6 +18,11 @@ var EX_ICONS = {
   abs:'<rect x="8.5" y="4" width="7" height="16" rx="3"/><path d="M8.5 10h7"/><path d="M8.5 14h7"/><path d="M12 4v16"/>',
   arm:'<path d="M6 20v-4a3 3 0 0 1 3-3h2a2 2 0 0 0 2-2V6"/><path d="M13 6.5a3.5 3.5 0 0 1 3.5 3.5c0 1.8-1.3 2.7-3.5 2.7"/><path d="M6 16.5c1.6 1.1 3.2 1.1 4.8 0"/>',
   leg:'<path d="M9 4v5l-2 11"/><path d="M9 9h6l2 11"/><path d="M15 4v5"/>',
+  squat:'<circle cx="12" cy="4.3" r="1.5"/><path d="M12 6v3.5"/><path d="M12 9.5l-3 4 1 5.5"/><path d="M12 9.5l3 4-1 5.5"/><path d="M12 7.5l4-1"/>',
+  lunge:'<circle cx="11" cy="4.3" r="1.5"/><path d="M11 6v4"/><path d="M11 10l4 3.5V20"/><path d="M11 10l-3.5 4L5 19"/>',
+  deadlift:'<circle cx="9" cy="4.8" r="1.5"/><path d="M9 6.3c0 1.8 1.2 2.7 3 2.7"/><path d="M8.6 7l-1 6.5-1 5.5"/><path d="M7.6 13.5h4.4l1 5.5"/><path d="M5 16.5h14"/>',
+  press:'<path d="M5 7h14"/><path d="M9.2 7l.8 3.5"/><path d="M14.8 7l-.8 3.5"/><circle cx="12" cy="12.3" r="1.6"/><path d="M12 14v6"/>',
+  butterfly:'<path d="M12 8c-2-1.5-4-1.5-6 .3"/><path d="M12 8c2-1.5 4-1.5 6 .3"/><circle cx="12" cy="10" r="1.6"/><path d="M3 16.5c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0"/>',
   // ── Swimming ──
   swimmer:'<circle cx="7" cy="9" r="1.7"/><path d="M9 11c2.2-1.2 4.4-1 6.3 1L18 10"/><path d="M3 16.5c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0"/>',
   kickboard:'<rect x="6.5" y="3.5" width="11" height="13" rx="5"/><path d="M8.5 20c2 1 5 1 7 0"/>',
@@ -46,21 +51,26 @@ function iconKeyForExercise(name, category, sport){
   if(/\bbuoy|boya|pull buoy\b/.test(n)) return 'buoy';
   if(/\bpaddle|manopla\b/.test(n)) return 'paddles';
   if(/\b(drill|scull|catch up|fingertip|superman|fist|one arm|k d s|kds|im drill)\b/.test(n)) return 'goggles';
-  if(/\b(freestyle|backstroke|breaststroke|butterfly|medley|im|crol|espalda|pecho|mariposa|stroke)\b/.test(n)) return 'swimmer';
+  if(/\b(butterfly|mariposa|fly)\b/.test(n)) return 'butterfly';
+  if(/\b(freestyle|backstroke|breaststroke|medley|im|crol|espalda|pecho|stroke)\b/.test(n)) return 'swimmer';
   if(/\b(distance|continuous|endurance|distancia)\b/.test(n)) return 'waves';
   // Functional keywords
   if(/\b(kettlebell|kb|goblet)\b/.test(n)) return 'kettlebell';
-  if(/\b(thruster|snatch|clean|deadlift|barbell|press)\b/.test(n)) return 'barbell';
+  if(/\b(deadlift|rdl|hinge|good morning)\b/.test(n)) return 'deadlift';
+  if(/\b(thruster|snatch|clean|barbell)\b/.test(n)) return 'barbell';
+  if(/squat/.test(n)) return 'squat';
+  if(/lunge/.test(n)) return 'lunge';
+  if(/\b(press|jerk|overhead|ohp|handstand)\b/.test(n)) return 'press';
   if(/\b(box|cajon)\b/.test(n)) return 'box';
   if(/\b(wall ball|wallball|med ball|slam ball|ball)\b/.test(n)) return 'ball';
-  if(/\b(pull up|pullup|chin|ring row|muscle up)\b/.test(n)) return 'pullbar';
+  if(/\b(pull up|pullup|chin|ring row|muscle up|t2b|toes to bar)\b/.test(n)) return 'pullbar';
   if(/\b(row)\b/.test(n)) return 'dumbbell';
   if(/\b(jump rope|jumprope|skip|double under|du)\b/.test(n)) return 'jumprope';
-  if(/\b(run|sprint|carrera)\b/.test(n) && category!=='sprint') return 'run';
+  if(/\b(run|carrera)\b/.test(n) && category!=='sprint') return 'run';
   if(/\b(burpee|mountain climber|sprawl|jumping jack|jack|wc wk)\b/.test(n)) return 'pulse';
   if(/\b(sit up|situp|crunch|abs|hollow|v up|vup|k2e|twist|roll up|plank)\b/.test(n)) return 'abs';
-  if(/\b(push up|pushup|dip|tricep|shoulder)\b/.test(n)) return 'arm';
-  if(/\b(squat|lunge|hip thrust|wall sit|glute|box jump)\b/.test(n)) return 'leg';
+  if(/\b(push up|pushup|dip|tricep)\b/.test(n)) return 'arm';
+  if(/\b(hip thrust|wall sit|glute|step up|calf)\b/.test(n)) return 'leg';
   // Category fallback
   if(EX_CAT_ICON[category]) return EX_CAT_ICON[category];
   return sport==='swimming' ? 'swimmer' : 'dumbbell';
