@@ -37,6 +37,8 @@ const userSchema = new mongoose.Schema({
 });
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
+  // Skip if the value is already a bcrypt hash (e.g. created from a pending registration)
+  if (/^\$2[aby]\$/.test(this.password)) return next();
   this.password = await bcrypt.hash(this.password, 12); next();
 });
 userSchema.methods.comparePassword = async function(c) { return bcrypt.compare(c, this.password); };

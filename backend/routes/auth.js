@@ -4,8 +4,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMW = require('../middleware/auth');
 const LoginActivity = require('../models/LoginActivity');
+const bcrypt = require('bcryptjs');
 const { sendMail } = require('../utils/mailer');
 const { validatePassword } = require('../utils/password');
+const Pending = require('../models/PendingRegistration');
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 const JWT_SECRET = process.env.JWT_SECRET || 'funcional_jwt_secret_2024';
 const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
@@ -47,39 +49,61 @@ router.post('/register', async (req, res) => {
 
     const code = genCode();
     const expires = new Date(Date.now() + CODE_TTL_MS);
+
+    // A verified account already owns this email
     const existing = await User.findOne({ email: lowEmail });
+    if (existing && existing.emailVerified) return res.status(400).json({ message: 'Email already registered' });
+    // Clean up any legacy unverified User (old flow) so it doesn't block the new pending one
+    if (existing && !existing.emailVerified) await User.deleteOne({ _id: existing._id });
 
-    if (existing) {
-      if (existing.emailVerified) return res.status(400).json({ message: 'Email already registered' });
-      // Unverified account already exists — refresh code and resend so they can finish
-      existing.verificationCode = code;
-      existing.verificationExpires = expires;
-      await existing.save();
-      const m = verificationEmail(existing.name, code);
-      const sent = await sendMail({ to: existing.email, subject: m.subject, text: m.text, html: m.html });
-      return res.status(200).json({ needsVerification: true, email: existing.email, mailSent: !!sent.ok });
-    }
-
-    const user = await User.create({
-      name, email: lowEmail, password, role: safeRole, coachId: coachId,
-      emailVerified: false, verificationCode: code, verificationExpires: expires,
-      sports: [{ type: 'functional', active: true }]
-    });
-    const m = verificationEmail(user.name, code);
-    const sent = await sendMail({ to: user.email, subject: m.subject, text: m.text, html: m.html });
-    res.status(201).json({ needsVerification: true, email: user.email, mailSent: !!sent.ok });
+    // Do NOT create the account yet — store a pending signup; the User is created
+    // only after the code is confirmed (POST /verify).
+    const passwordHash = await bcrypt.hash(password, 12);
+    await Pending.findOneAndUpdate(
+      { email: lowEmail },
+      { name, email: lowEmail, passwordHash, role: safeRole, coachId: coachId, code, expiresAt: expires, createdAt: new Date() },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+    const m = verificationEmail(name, code);
+    const sent = await sendMail({ to: lowEmail, subject: m.subject, text: m.text, html: m.html });
+    res.status(201).json({ needsVerification: true, email: lowEmail, mailSent: !!sent.ok });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 
-// POST /api/auth/verify — confirm the 6-digit code, then log in
+// POST /api/auth/verify — confirm the 6-digit code; creates the account, then logs in
 router.post('/verify', async (req, res) => {
   try {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ message: 'Email and code required' });
-    const user = await User.findOne({ email: String(email).toLowerCase() });
+    const lowEmail = String(email).toLowerCase();
+    const inputCode = String(code).trim();
+
+    // New flow: a pending signup
+    const pending = await Pending.findOne({ email: lowEmail });
+    if (pending) {
+      if (pending.code !== inputCode) return res.status(400).json({ message: 'Incorrect code' });
+      if (pending.expiresAt && pending.expiresAt < new Date()) { await Pending.deleteOne({ _id: pending._id }); return res.status(400).json({ message: 'Code expired — request a new one' }); }
+      // Guard against a race where the account already exists
+      let user = await User.findOne({ email: lowEmail });
+      if (!user) {
+        user = await User.create({
+          name: pending.name, email: lowEmail, password: pending.passwordHash,
+          role: pending.role, coachId: pending.coachId, emailVerified: true,
+          sports: [{ type: 'functional', active: true }]
+        });
+      }
+      await Pending.deleteOne({ _id: pending._id });
+      user.lastLogin = new Date();
+      user.loginCount = (user.loginCount || 0) + 1;
+      await user.save();
+      return res.json({ token: sign(user._id), user: userPayload(user) });
+    }
+
+    // Legacy flow: an unverified User created before pending registrations existed
+    const user = await User.findOne({ email: lowEmail });
     if (!user) return res.status(404).json({ message: 'Account not found' });
     if (user.emailVerified) return res.json({ token: sign(user._id), user: userPayload(user) });
-    if (!user.verificationCode || user.verificationCode !== String(code).trim()) return res.status(400).json({ message: 'Incorrect code' });
+    if (!user.verificationCode || user.verificationCode !== inputCode) return res.status(400).json({ message: 'Incorrect code' });
     if (user.verificationExpires && user.verificationExpires < new Date()) return res.status(400).json({ message: 'Code expired — request a new one' });
     user.emailVerified = true;
     user.verificationCode = null;
@@ -94,13 +118,25 @@ router.post('/verify', async (req, res) => {
 // POST /api/auth/resend-code — send a fresh verification code
 router.post('/resend-code', async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email: String(email || '').toLowerCase() });
+    const lowEmail = String(req.body.email || '').toLowerCase();
+    const code = genCode();
+    const expires = new Date(Date.now() + CODE_TTL_MS);
+
+    const pending = await Pending.findOne({ email: lowEmail });
+    if (pending) {
+      pending.code = code;
+      pending.expiresAt = expires;
+      await pending.save();
+      const m = verificationEmail(pending.name, code);
+      const sent = await sendMail({ to: pending.email, subject: m.subject, text: m.text, html: m.html });
+      return res.json({ message: 'Code sent', mailSent: !!sent.ok });
+    }
+
+    const user = await User.findOne({ email: lowEmail });
     if (!user) return res.status(404).json({ message: 'Account not found' });
     if (user.emailVerified) return res.status(400).json({ message: 'Already verified — please log in' });
-    const code = genCode();
     user.verificationCode = code;
-    user.verificationExpires = new Date(Date.now() + CODE_TTL_MS);
+    user.verificationExpires = expires;
     await user.save();
     const m = verificationEmail(user.name, code);
     const sent = await sendMail({ to: user.email, subject: m.subject, text: m.text, html: m.html });
@@ -112,7 +148,13 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!user) {
+      // They may have started signing up but never confirmed the code
+      const pend = await Pending.findOne({ email: String(email || '').toLowerCase() });
+      if (pend) return res.status(403).json({ message: 'Confirmá tu email para activar la cuenta.', needsVerification: true, email: pend.email });
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    if (!(await user.comparePassword(password))) return res.status(401).json({ message: 'Invalid email or password' });
 
     // Block login until the email is verified (legacy accounts default to verified)
     if (user.emailVerified === false) {
