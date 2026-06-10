@@ -136,6 +136,16 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.bc-btn').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.bc-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderBlockModalities(parseInt(btn.dataset.count),(currentUser&&currentUser.settings?currentUser.settings.blockModalities:{})||{});});});
   document.getElementById('avoid-days').addEventListener('input',function(e){document.getElementById('days-label').textContent=e.target.value;});
   document.getElementById('btn-save-settings').addEventListener('click',saveSetting);
+  // Tap an exercise icon to enlarge it
+  document.addEventListener('click',function(e){
+    var ic=e.target.closest&&e.target.closest('.ex-icon');
+    if(ic&&ic.dataset&&ic.dataset.exName){e.stopPropagation();showExerciseZoom(ic.dataset.exName,ic.dataset.exCat,ic.dataset.exSport);}
+  });
+  document.addEventListener('keydown',function(e){
+    if((e.key==='Enter'||e.key===' ')&&document.activeElement&&document.activeElement.classList&&document.activeElement.classList.contains('ex-icon')){
+      var ic=document.activeElement;if(ic.dataset&&ic.dataset.exName){e.preventDefault();showExerciseZoom(ic.dataset.exName,ic.dataset.exCat,ic.dataset.exSport);}
+    }
+  });
   document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
   document.getElementById('modal-overlay').addEventListener('click',function(){document.getElementById('modal').classList.add('hidden');});
 });
