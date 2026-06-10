@@ -74,6 +74,23 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 #verify-code{text-align:center;letter-spacing:8px;font-family:var(--font-mono);font-size:1.3rem;}
 #reset-step2{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
 #reset-code{text-align:center;letter-spacing:8px;font-family:var(--font-mono);font-size:1.3rem;}
+
+/* Exercise icons (consistent line-icon set, coloured by category) */
+.ex-name{display:flex;align-items:center;}
+.ex-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:9px;flex-shrink:0;color:var(--muted);}
+.ex-icon svg{width:20px;height:20px;display:block;}
+.ex-icon.cat-lower{color:#2ed573;}
+.ex-icon.cat-upper{color:#1e90ff;}
+.ex-icon.cat-core{color:#ffa500;}
+.ex-icon.cat-conditioning{color:#ff4757;}
+.ex-icon.cat-power{color:#f5c518;}
+.ex-icon.cat-stroke{color:#00b4d8;}
+.ex-icon.cat-kick{color:#ffd166;}
+.ex-icon.cat-drill{color:#06d6a0;}
+.ex-icon.cat-pull{color:#38bdf8;}
+.ex-icon.cat-sprint{color:#ef476f;}
+.ex-icon.cat-endurance{color:#48dbfb;}
+.ex-icon.cat-rest{color:#9ca3af;}
 .coach-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
 .coach-row strong{color:var(--text);font-size:0.9rem;}
 .coach-row-sub{display:block;font-size:0.72rem;color:var(--muted);margin-top:2px;}
