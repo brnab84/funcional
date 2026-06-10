@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
   emailVerified: { type: Boolean, default: true },
   verificationCode: { type: String, default: null },
   verificationExpires: { type: Date, default: null },
+  // Password reset (code emailed to the user)
+  resetCode: { type: String, default: null },
+  resetExpires: { type: Date, default: null },
   sports: [{ type: { type: String, default: 'functional' }, active: { type: Boolean, default: true } }],
   settings: {
     blockCount: { type: Number, default: 2, min: 1, max: 4 },

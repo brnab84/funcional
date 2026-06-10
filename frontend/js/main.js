@@ -102,6 +102,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('btn-back-login').addEventListener('click',showLoginForm);
   document.getElementById('btn-reset').addEventListener('click',resetPassword);
   document.getElementById('reset-confirm').addEventListener('keydown',function(e){if(e.key==='Enter')resetPassword();});
+  var bsrc=document.getElementById('btn-send-reset-code');if(bsrc)bsrc.addEventListener('click',sendResetCode);
+  var remail=document.getElementById('reset-email');if(remail)remail.addEventListener('keydown',function(e){if(e.key==='Enter')sendResetCode();});
   var bv=document.getElementById('btn-verify');if(bv)bv.addEventListener('click',verifyCode);
   var brc=document.getElementById('btn-resend-code');if(brc)brc.addEventListener('click',resendCode);
   var bvb=document.getElementById('btn-verify-back');if(bvb)bvb.addEventListener('click',showLoginForm);

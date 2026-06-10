@@ -29,6 +29,20 @@ function verificationEmail(name, code) {
   };
 }
 
+function resetEmail(name, code) {
+  return {
+    subject: 'Código para restablecer tu contraseña — Functional WOD',
+    text: 'Hola ' + name + ',\n\nTu código para restablecer la contraseña es: ' + code + '\n\nVence en 15 minutos. Si no lo pediste, ignorá este correo (tu contraseña no cambia).',
+    html: '<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1c2026">'
+      + '<h2 style="color:#0d0f12">Functional WOD</h2>'
+      + '<p>Hola <strong>' + name + '</strong>, pediste restablecer tu contraseña.</p>'
+      + '<p>Tu código es:</p>'
+      + '<div style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#f4f5f7;border-radius:10px;padding:16px;text-align:center;margin:16px 0">' + code + '</div>'
+      + '<p style="color:#6b7280;font-size:13px">Vence en 15 minutos. Si no lo pediste, ignorá este correo (tu contraseña no cambia).</p>'
+      + '</div>'
+  };
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, inviteCode } = req.body;
@@ -233,16 +247,38 @@ router.post('/add-sport', authMW, async (req, res) => {
 });
 
 
-// POST /api/auth/reset-password (simple - email + new password)
+// POST /api/auth/forgot-password — email a reset code (generic response, no email enumeration)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const lowEmail = String(req.body.email || '').toLowerCase();
+    if (!lowEmail) return res.status(400).json({ message: 'Email required' });
+    const user = await User.findOne({ email: lowEmail });
+    if (user && user.emailVerified !== false) {
+      const code = genCode();
+      user.resetCode = code;
+      user.resetExpires = new Date(Date.now() + CODE_TTL_MS);
+      await user.save();
+      const m = resetEmail(user.name, code);
+      await sendMail({ to: user.email, subject: m.subject, text: m.text, html: m.html });
+    }
+    // Always succeed so we don't reveal whether the email exists
+    res.json({ message: 'If that email has an account, a reset code was sent.' });
+  } catch(err) { res.status(500).json({ message: err.message }); }
+});
+
+// POST /api/auth/reset-password — verify the emailed code, then set the new password
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
-    if (!email || !newPassword) return res.status(400).json({ message: 'Email and new password required' });
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) return res.status(400).json({ message: 'Email, code and new password required' });
     const pwErr = validatePassword(newPassword);
     if (pwErr) return res.status(400).json({ message: pwErr });
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ message: 'No account found with that email' });
+    const user = await User.findOne({ email: String(email).toLowerCase() });
+    if (!user || !user.resetCode || user.resetCode !== String(code).trim()) return res.status(400).json({ message: 'Incorrect or expired code' });
+    if (user.resetExpires && user.resetExpires < new Date()) return res.status(400).json({ message: 'Code expired — request a new one' });
     user.password = newPassword;
+    user.resetCode = null;
+    user.resetExpires = null;
     await user.save();
     res.json({ message: 'Password updated successfully' });
   } catch(err) { res.status(500).json({ message: err.message }); }
