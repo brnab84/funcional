@@ -5,6 +5,9 @@ const adminOnly = require('../middleware/admin');
 const User = require('../models/User');
 const LoginActivity = require('../models/LoginActivity');
 const Workout = require('../models/Workout');
+const ExerciseLibrary = require('../models/ExerciseLibrary');
+const TrainingStats = require('../models/TrainingStats');
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 
 // All admin routes require auth + admin role
 router.use(auth, adminOnly);
@@ -14,20 +17,24 @@ router.get('/stats', async (req, res) => {
   try {
     const now = Date.now();
     const day = 86400000;
-    const [totalUsers, newToday, new7d, activeToday, active7d, totalWorkouts, totalLogins] = await Promise.all([
+    const [totalUsers, newToday, new7d, activeToday, active7d, totalWorkouts, totalLogins, coaches, coachedAthletes, soloAthletes] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ createdAt: { $gte: new Date(now - day) } }),
       User.countDocuments({ createdAt: { $gte: new Date(now - 7 * day) } }),
       User.countDocuments({ lastLogin: { $gte: new Date(now - day) } }),
       User.countDocuments({ lastLogin: { $gte: new Date(now - 7 * day) } }),
       Workout.countDocuments({ status: 'approved' }),
-      LoginActivity.countDocuments()
+      LoginActivity.countDocuments(),
+      User.countDocuments({ role: 'coach' }),
+      User.countDocuments({ role: 'athlete', coachId: { $ne: null } }),
+      User.countDocuments({ role: 'athlete', coachId: null })
     ]);
     res.json({
       totalUsers, newToday, new7d,
       activeToday, active7d,
       totalApprovedWorkouts: totalWorkouts,
-      totalLogins
+      totalLogins,
+      coaches, coachedAthletes, soloAthletes
     });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -53,6 +60,27 @@ router.get('/users', async (req, res) => {
     });
     users.forEach(u => { u.studentCount = studentCount[String(u._id)] || 0; });
     res.json({ users });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// DELETE /api/admin/users/:id — delete an account + its data (cascade)
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ message: 'User not found' });
+    if (target._id.equals(req.user._id)) return res.status(400).json({ message: 'You cannot delete your own account' });
+    if (target.role === 'admin' || target.email.toLowerCase() === ADMIN_EMAIL) return res.status(400).json({ message: 'Cannot delete an admin account' });
+
+    await Promise.all([
+      Workout.deleteMany({ user: target._id }),
+      ExerciseLibrary.deleteMany({ user: target._id }),
+      TrainingStats.deleteMany({ user: target._id }),
+      LoginActivity.deleteMany({ user: target._id }),
+      // If this was a coach, unlink their athletes (they become solo athletes)
+      User.updateMany({ coachId: target._id }, { $set: { coachId: null } })
+    ]);
+    await User.deleteOne({ _id: target._id });
+    res.json({ message: 'Account deleted', name: target.name });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
