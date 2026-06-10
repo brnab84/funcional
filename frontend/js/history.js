@@ -18,7 +18,7 @@ var _hCache={};
 async function openHistoryModal(id){
   if(!_hCache[id]){var r=await apiCall('/api/workouts/history?sport='+currentSport+'&limit=100');if(r&&r.data&&r.data.workouts)r.data.workouts.forEach(function(w){_hCache[w._id]=w;});}
   var w=_hCache[id];if(!w)return;
-  document.getElementById('modal-content').innerHTML='<p class="eyebrow" style="margin-bottom:12px">'+w.date+'</p>'+renderWorkout(w,false);
+  document.getElementById('modal-content').innerHTML='<p class="eyebrow" style="margin-bottom:12px">'+w.date+'</p>'+renderWorkout(w,false)+'<button class="btn-manual" onclick="shareHistoryWorkout(\''+w._id+'\')" style="margin-top:14px;width:100%">&#128228; Share as image</button>';
   document.getElementById('modal').classList.remove('hidden');
 }
 async function deleteHistoryItem(id){
