@@ -15,6 +15,7 @@ function resetAuthForms(){
   document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='login');});
   var rs=document.getElementById('auth-role-selector');if(rs)rs.style.display='';
   document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.toggle('active',b.dataset.role==='athlete');});
+  var regBtn=document.getElementById('btn-register');if(regBtn)regBtn.disabled=false;
   var banner=document.getElementById('invite-banner');if(banner){banner.textContent='';banner.classList.add('hidden');}
   window.__verifyEmail=null;window.__inviteCode=null;
   renderPwHints('','reg-pw-hints');renderPwHints('','reset-pw-hints');
@@ -121,19 +122,37 @@ function renderPwHints(pw,id){
 }
 
 // Invite link: validate the coach code, then switch to a locked athlete registration
-async function handleInvite(code){
-  try{
-    var r=await fetch(API+'/api/auth/invite/'+encodeURIComponent(code));
-    var data=await r.json();
-    if(!r.ok){showToast('Invite link invalid or expired','error');return;}
-    window.__inviteCode=code;
-    document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='register');});
-    document.getElementById('tab-login').classList.add('hidden');
-    document.getElementById('tab-register').classList.remove('hidden');
-    var rs=document.getElementById('auth-role-selector');if(rs)rs.style.display='none';
-    var banner=document.getElementById('invite-banner');
-    if(banner){banner.textContent='Invited by '+data.coachName+' — create your athlete account';banner.classList.remove('hidden');}
-  }catch(e){}
+function handleInvite(code){
+  window.__inviteCode=code;
+  // Lock the UI to ATHLETE registration immediately (before validation) so a
+  // coach/solo account can never be created from an invite link.
+  document.getElementById('tab-login').classList.add('hidden');
+  document.getElementById('tab-reset').classList.add('hidden');
+  document.getElementById('tab-verify').classList.add('hidden');
+  document.getElementById('tab-register').classList.remove('hidden');
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='register');});
+  var tabs=document.querySelector('.auth-tabs');if(tabs)tabs.style.display='none';
+  var rs=document.getElementById('auth-role-selector');if(rs)rs.style.display='none';
+  document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.toggle('active',b.dataset.role==='athlete');});
+  var banner=document.getElementById('invite-banner');
+  if(banner){banner.textContent='Checking invite…';banner.classList.remove('hidden');}
+  var createBtn=document.getElementById('btn-register');if(createBtn)createBtn.disabled=true;
+  // Validate the code in the background; show coach name or block if invalid
+  fetch(API+'/api/auth/invite/'+encodeURIComponent(code)).then(function(r){
+    return r.json().then(function(d){return {ok:r.ok,d:d};});
+  }).then(function(res){
+    var bn=document.getElementById('invite-banner');var cb=document.getElementById('btn-register');
+    if(!res.ok){
+      window.__inviteCode=null;
+      if(bn)bn.textContent='This invite link is invalid or expired.';
+      if(cb)cb.disabled=true;
+    }else{
+      if(bn)bn.textContent='Invited by '+(res.d.coachName||'your coach')+' — create your athlete account';
+      if(cb)cb.disabled=false;
+    }
+  }).catch(function(){
+    var cb=document.getElementById('btn-register');if(cb)cb.disabled=false; // backend still validates inviteCode on submit
+  });
 }
 
 function showResetForm(){
