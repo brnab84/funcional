@@ -75,10 +75,15 @@
     </div>
     <div id="tab-reset" class="auth-form hidden">
       <input type="email" id="reset-email" placeholder="Your email" autocomplete="email">
-      <div class="pw-field"><input type="password" id="reset-password" placeholder="New password"><button type="button" class="pw-toggle" data-target="reset-password">Show</button></div>
-      <div class="pw-hints" id="reset-pw-hints"></div>
-      <div class="pw-field"><input type="password" id="reset-confirm" placeholder="Confirm new password"><button type="button" class="pw-toggle" data-target="reset-confirm">Show</button></div>
-      <button class="btn-primary" id="btn-reset">Reset Password</button>
+      <button class="btn-primary" id="btn-send-reset-code">Send reset code</button>
+      <div id="reset-step2" class="hidden">
+        <div class="verify-msg">Enter the code we emailed you and your new password.</div>
+        <input type="text" id="reset-code" placeholder="6-digit code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+        <div class="pw-field"><input type="password" id="reset-password" placeholder="New password"><button type="button" class="pw-toggle" data-target="reset-password">Show</button></div>
+        <div class="pw-hints" id="reset-pw-hints"></div>
+        <div class="pw-field"><input type="password" id="reset-confirm" placeholder="Confirm new password"><button type="button" class="pw-toggle" data-target="reset-confirm">Show</button></div>
+        <button class="btn-primary" id="btn-reset">Reset Password</button>
+      </div>
       <button class="auth-link" id="btn-back-login" type="button">Back to login</button>
     </div>
     <div id="tab-verify" class="auth-form hidden">

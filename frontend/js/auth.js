@@ -8,7 +8,8 @@ function showAuth(){
 
 // Clear all auth sub-forms back to a fresh Login state (no stale data on logout/return)
 function resetAuthForms(){
-  ['login-email','login-password','reg-name','reg-email','reg-password','reset-email','reset-password','reset-confirm','verify-code'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['login-email','login-password','reg-name','reg-email','reg-password','reset-email','reset-code','reset-password','reset-confirm','verify-code'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var rstep2=document.getElementById('reset-step2');if(rstep2)rstep2.classList.add('hidden');
   document.getElementById('tab-login').classList.remove('hidden');
   ['tab-register','tab-reset','tab-verify'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('hidden');});
   var tabs=document.querySelector('.auth-tabs');if(tabs)tabs.style.display='';
@@ -164,6 +165,8 @@ function showResetForm(){
   document.getElementById('tab-register').classList.add('hidden');
   document.getElementById('tab-reset').classList.remove('hidden');
   document.querySelector('.auth-tabs').style.display='none';
+  var s2=document.getElementById('reset-step2');if(s2)s2.classList.add('hidden');
+  var rc=document.getElementById('reset-code');if(rc)rc.value='';
   showAuthError('');
 }
 function showLoginForm(){
@@ -216,23 +219,38 @@ async function resendCode(){
   if(!r.ok)return showAuthError(data.message);
   showToast('Code sent — check your email','success');
 }
+async function sendResetCode(){
+  var email=document.getElementById('reset-email').value.trim();
+  showAuthError('');
+  if(!email)return showAuthError('Enter your email');
+  var btn=document.getElementById('btn-send-reset-code');btn.textContent='Sending...';btn.disabled=true;
+  var r=await fetch(API+'/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+  var data=await r.json();
+  btn.textContent='Send reset code';btn.disabled=false;
+  if(!r.ok)return showAuthError(data.message);
+  document.getElementById('reset-step2').classList.remove('hidden');
+  var rc=document.getElementById('reset-code');if(rc)rc.focus();
+  showToast('If that email has an account, a code was sent','info');
+}
+
 async function resetPassword(){
   var email=document.getElementById('reset-email').value.trim();
+  var code=(document.getElementById('reset-code').value||'').trim();
   var pw=document.getElementById('reset-password').value;
   var confirm=document.getElementById('reset-confirm').value;
   showAuthError('');
   if(!email)return showAuthError('Enter your email');
+  if(code.length<6)return showAuthError('Enter the 6-digit code from your email');
   var pwErr=passwordError(pw);
   if(pwErr)return showAuthError(pwErr);
   if(pw!==confirm)return showAuthError('Passwords do not match');
   var btn=document.getElementById('btn-reset');btn.textContent='Resetting...';btn.disabled=true;
-  var r=await fetch(API+'/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,newPassword:pw})});
+  var r=await fetch(API+'/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,code:code,newPassword:pw})});
   var data=await r.json();
   btn.textContent='Reset Password';btn.disabled=false;
   if(!r.ok)return showAuthError(data.message);
   showLoginForm();
   document.getElementById('login-email').value=email;
-  showAuthError('');
   showToast('Password updated! Login with your new password','success');
 }
 
