@@ -83,7 +83,10 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.auth-tab').forEach(function(tab){tab.addEventListener('click',function(){
     document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('active');});tab.classList.add('active');
     document.getElementById('tab-login').classList.toggle('hidden',tab.dataset.tab!=='login');
-    document.getElementById('tab-register').classList.toggle('hidden',tab.dataset.tab!=='register');showAuthError('');
+    document.getElementById('tab-register').classList.toggle('hidden',tab.dataset.tab!=='register');
+    var tv=document.getElementById('tab-verify');if(tv)tv.classList.add('hidden');
+    var tr=document.getElementById('tab-reset');if(tr)tr.classList.add('hidden');
+    showAuthError('');
   });});
   document.getElementById('btn-login').addEventListener('click',login);
   document.getElementById('login-password').addEventListener('keydown',function(e){if(e.key==='Enter')login();});

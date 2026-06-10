@@ -2,7 +2,23 @@
 function showAuth(){
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('app').classList.add('hidden');
+  resetAuthForms();
   applySportTheme(currentSport);
+}
+
+// Clear all auth sub-forms back to a fresh Login state (no stale data on logout/return)
+function resetAuthForms(){
+  ['login-email','login-password','reg-name','reg-email','reg-password','reset-email','reset-password','reset-confirm','verify-code'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('tab-login').classList.remove('hidden');
+  ['tab-register','tab-reset','tab-verify'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  var tabs=document.querySelector('.auth-tabs');if(tabs)tabs.style.display='';
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='login');});
+  var rs=document.getElementById('auth-role-selector');if(rs)rs.style.display='';
+  document.querySelectorAll('.auth-role-btn').forEach(function(b){b.classList.toggle('active',b.dataset.role==='athlete');});
+  var banner=document.getElementById('invite-banner');if(banner){banner.textContent='';banner.classList.add('hidden');}
+  window.__verifyEmail=null;window.__inviteCode=null;
+  renderPwHints('','reg-pw-hints');renderPwHints('','reset-pw-hints');
+  showAuthError('');
 }
 function showApp(){
   // Drop a consumed ?invite= param so reloading while logged in doesn't re-open registration
