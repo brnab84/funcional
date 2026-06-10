@@ -44,13 +44,17 @@ function showApp(){
     if(todayNav)todayNav.style.display=coached?'none':'';
     if(libNav)libNav.style.display=coached?'none':'';
     if(setNav)setNav.style.display=coached?'none':'';
+    // Wipe any previous session's privileged content from the DOM (defense in depth)
+    if(currentUser.role!=='admin'){['admin-stats','admin-users','admin-activity'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='';});}
+    if(currentUser.role!=='coach'&&currentUser.role!=='admin'){var cs=document.getElementById('coach-students');if(cs)cs.innerHTML='';var ci=document.getElementById('coach-invite-link');if(ci)ci.value='';}
     var roleLabel=currentUser.role==='admin'?'Admin':currentUser.role==='coach'?'Profesor':(currentUser.coachId?'Alumno (con profesor)':'Atleta (entrena solo)');
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+roleLabel+' \u00B7 '+currentUser.email+' \u00B7 v'+VERSION;
     loadUserSettings();
   }
   applySportTheme(currentSport);
   markActivity();
-  if(isCoachedAthlete()){switchView('assigned');}else{loadToday();}
+  // Always land on a safe default view — never inherit the previous session's view (e.g. Admin)
+  if(isCoachedAthlete()){switchView('assigned');}else{switchView('today');loadToday();}
 }
 // True for an athlete who has been linked to a coach (not coaches/admins)
 function isCoachedAthlete(){
