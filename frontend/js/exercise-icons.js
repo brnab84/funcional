@@ -76,11 +76,29 @@ function iconKeyForExercise(name, category, sport){
   return sport==='swimming' ? 'swimmer' : 'dumbbell';
 }
 
-// Return an <span> with the icon SVG, coloured by category
+function _exAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Return an <span> with the icon SVG, coloured by category. Tappable to enlarge.
 function exerciseIconHtml(name, category, sport){
   var key = iconKeyForExercise(name, category, sport);
   var inner = EX_ICONS[key] || EX_ICONS.dumbbell;
-  return '<span class="ex-icon cat-'+(category||'lower')+'">'
+  return '<span class="ex-icon cat-'+(category||'lower')+'" role="button" tabindex="0" title="Tap to enlarge"'
+    + ' data-ex-name="'+_exAttr(name)+'" data-ex-cat="'+_exAttr(category||'')+'" data-ex-sport="'+_exAttr(sport||'')+'">'
     + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     + inner + '</svg></span>';
+}
+
+// Lightbox: show a large version of an exercise's icon + name
+function showExerciseZoom(name, category, sport){
+  var old = document.getElementById('ex-zoom'); if(old) old.remove();
+  var key = iconKeyForExercise(name, category, sport);
+  var inner = EX_ICONS[key] || EX_ICONS.dumbbell;
+  var ov = document.createElement('div');
+  ov.id = 'ex-zoom'; ov.className = 'ex-zoom';
+  ov.innerHTML = '<div class="ex-zoom-card"><span class="ex-icon cat-'+(category||'lower')+' ex-zoom-icon">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    + inner + '</svg></span><div class="ex-zoom-name"></div></div>';
+  ov.querySelector('.ex-zoom-name').textContent = name || '';
+  ov.addEventListener('click', function(){ ov.remove(); });
+  document.body.appendChild(ov);
 }
