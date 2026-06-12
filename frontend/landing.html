@@ -103,6 +103,20 @@
     .tags{display:flex;flex-wrap:wrap;gap:8px;}
     .tag{font-family:var(--font-mono);font-size:0.72rem;padding:5px 10px;border-radius:7px;border:1px solid var(--border);color:var(--muted);}
 
+    /* Pricing */
+    .pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;}
+    .price-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:32px 28px;display:flex;flex-direction:column;position:relative;}
+    .price-card.featured{border-color:var(--accent);box-shadow:0 8px 40px rgba(245,197,24,0.12);}
+    .price-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0d0f12;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:100px;white-space:nowrap;}
+    .price-name{font-family:var(--font-display);font-size:1.5rem;letter-spacing:1px;}
+    .price-amount{font-family:var(--font-display);font-size:2.6rem;margin:8px 0 0;color:var(--accent);}
+    .price-amount span{font-size:0.95rem;color:var(--muted);font-family:var(--font-body);letter-spacing:0;}
+    .price-sub{color:var(--muted);font-size:0.88rem;margin-bottom:20px;}
+    .price-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:26px;flex:1;}
+    .price-feats li{display:flex;gap:10px;color:var(--muted);font-size:0.92rem;font-weight:300;}
+    .price-feats li .chk{color:var(--green);font-weight:700;flex-shrink:0;}
+    .pricing-note{text-align:center;color:var(--muted);font-size:0.85rem;margin-top:22px;font-weight:300;}
+
     /* CTA */
     .cta-final{text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:24px;padding:64px 32px;position:relative;overflow:hidden;}
     .cta-final::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at top,rgba(245,197,24,0.10),transparent 60%);pointer-events:none;}
@@ -116,7 +130,7 @@
     footer .muted{color:var(--muted);font-size:0.85rem;}
 
     @media (max-width:860px){
-      .stats,.features,.steps,.disc{grid-template-columns:1fr;}
+      .stats,.features,.steps,.disc,.pricing{grid-template-columns:1fr;}
       .band{grid-template-columns:1fr;padding:32px;}
       .nav-links a.menu{display:none;}
       section{padding:60px 0;}
@@ -133,6 +147,7 @@
         <a class="menu" href="#features">Funciones</a>
         <a class="menu" href="#coaches">Profesores</a>
         <a class="menu" href="#how">Cómo funciona</a>
+        <a class="menu" href="#precios">Precios</a>
         <a class="btn btn-primary" href="/">Entrar a la app</a>
       </nav>
     </div>
@@ -238,6 +253,56 @@
         <div class="step"><div class="num">02</div><h3>Generá tu sesión</h3><p>Recibí tres opciones de entrenamiento. Regenerá, editá o creá una manual. Aprobá la que vas a hacer.</p></div>
         <div class="step"><div class="num">03</div><h3>Mejorá con cada WOD</h3><p>El algoritmo aprende de lo que aprobás y cada sesión se vuelve más tuya. Los profes envían a sus alumnos.</p></div>
       </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="precios">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Precios</span>
+        <h2>Para vos es gratis. Para tu negocio, escala</h2>
+        <p>Los alumnos no pagan nunca. Los profesores eligen el plan según cuántos alumnos manejan.</p>
+      </div>
+      <div class="pricing">
+        <div class="price-card">
+          <div class="price-name">FREE</div>
+          <div class="price-amount">$0</div>
+          <p class="price-sub">Para empezar a entrenar y probar todo</p>
+          <ul class="price-feats">
+            <li><span class="chk">&#10003;</span> Hasta 3 alumnos</li>
+            <li><span class="chk">&#10003;</span> Generador inteligente que aprende</li>
+            <li><span class="chk">&#10003;</span> Functional y natación</li>
+            <li><span class="chk">&#10003;</span> Envío de entrenamientos a tus alumnos</li>
+          </ul>
+          <a class="btn btn-ghost" href="/">Empezar gratis</a>
+        </div>
+        <div class="price-card featured">
+          <span class="price-badge">Más elegido</span>
+          <div class="price-name">PRO</div>
+          <div class="price-amount">USD 12<span> /mes</span></div>
+          <p class="price-sub">Para profesores con alumnos activos</p>
+          <ul class="price-feats">
+            <li><span class="chk">&#10003;</span> Hasta 25 alumnos</li>
+            <li><span class="chk">&#10003;</span> Todo lo del plan Free</li>
+            <li><span class="chk">&#10003;</span> Email autom&aacute;tico con cada entrenamiento</li>
+            <li><span class="chk">&#10003;</span> Soporte prioritario</li>
+          </ul>
+          <a class="btn btn-primary" href="/">Empezar con Pro</a>
+        </div>
+        <div class="price-card">
+          <div class="price-name">STUDIO</div>
+          <div class="price-amount">USD 29<span> /mes</span></div>
+          <p class="price-sub">Para academias, boxes y equipos</p>
+          <ul class="price-feats">
+            <li><span class="chk">&#10003;</span> Alumnos ilimitados</li>
+            <li><span class="chk">&#10003;</span> Todo lo del plan Pro</li>
+            <li><span class="chk">&#10003;</span> Ideal para varios grupos</li>
+          </ul>
+          <a class="btn btn-ghost" href="/">Empezar con Studio</a>
+        </div>
+      </div>
+      <p class="pricing-note">Precios de referencia en USD. Pago online en moneda local muy pronto — mientras tanto, el upgrade se solicita desde la app y se activa en el día.</p>
     </div>
   </section>
 

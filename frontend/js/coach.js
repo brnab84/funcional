@@ -23,7 +23,47 @@ function renderCoachUsage(d){
   var atLimit=(limit!=null&&count>=limit);
   el.innerHTML='<span class="coach-usage-plan">Plan '+planLabel+'</span>'
     +'<span class="coach-usage-count'+(atLimit?' full':'')+'">'+count+' / '+limitTxt+' alumnos</span>'
+    +'<button class="btn-manual coach-usage-btn" id="btn-view-plans">Ver planes</button>'
     +(atLimit?'<span class="coach-usage-warn">Límite alcanzado — actualizá tu plan para sumar más</span>':'');
+  var vb=document.getElementById('btn-view-plans');
+  if(vb)vb.addEventListener('click',openPlansModal);
+}
+
+// ── Plans modal (upgrade path; checkout plugs in here later) ──
+var COACH_PLANS=[
+  {id:'free',name:'Free',price:'$0',limit:'3 alumnos'},
+  {id:'pro',name:'Pro',price:'USD 12/mes',limit:'25 alumnos',featured:true},
+  {id:'studio',name:'Studio',price:'USD 29/mes',limit:'Alumnos ilimitados'}
+];
+
+function openPlansModal(){
+  var cur=(currentUser&&currentUser.plan)||'free';
+  document.getElementById('modal-content').innerHTML='<h2 class="modal-title">Planes</h2>'
+    +'<p class="card-hint">Tus alumnos no pagan nunca. El plan define cuántos alumnos podés manejar.</p>'
+    +'<div class="plans-grid">'+COACH_PLANS.map(function(p){
+      var isCur=p.id===cur;
+      return '<div class="plan-card'+(isCur?' current':(p.featured?' featured':''))+'">'
+        +'<div class="plan-name">'+p.name+'</div>'
+        +'<div class="plan-price">'+p.price+'</div>'
+        +'<div class="plan-limit">'+p.limit+'</div>'
+        +(isCur?'<span class="plan-current-tag">Tu plan actual</span>'
+          :(p.id==='free'?'':'<button class="btn-add plan-cta" data-plan="'+p.id+'">Solicitar upgrade</button>'))
+        +'</div>';
+    }).join('')+'</div>'
+    +'<p class="card-hint" style="margin-top:14px">Pago online muy pronto. Por ahora el upgrade se solicita por email y se activa en el día.</p>';
+  document.getElementById('modal-content').querySelectorAll('.plan-cta').forEach(function(b){
+    b.addEventListener('click',function(){requestUpgrade(b.dataset.plan);});
+  });
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function requestUpgrade(plan){
+  var email=(currentUser&&currentUser.email)||'';
+  var name=(currentUser&&currentUser.name)||'';
+  var subject=encodeURIComponent('Upgrade a plan '+plan.toUpperCase()+' — Functional WOD');
+  var body=encodeURIComponent('Hola! Quiero pasar al plan '+plan.toUpperCase()+'.\n\nMi cuenta: '+email+'\nNombre: '+name);
+  window.location.href='mailto:brnab84@gmail.com?subject='+subject+'&body='+body;
+  showToast('Se abrió tu email para enviar la solicitud','info');
 }
 
 function renderStudents(students){
