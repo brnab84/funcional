@@ -112,6 +112,17 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .coach-usage-count.full{color:var(--accent2,#ff5470);font-weight:700;}
 .coach-usage-warn{width:100%;font-size:0.78rem;color:var(--accent2,#ff5470);}
 .admin-plan{height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.72rem;padding:0 6px;font-family:var(--font-mono);cursor:pointer;text-transform:capitalize;}
+.coach-usage-btn{padding:5px 12px;font-size:0.75rem;margin-left:auto;}
+/* Plans modal (upgrade path) */
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;}
+.plan-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 14px;text-align:center;display:flex;flex-direction:column;gap:7px;align-items:center;}
+.plan-card.current{border-color:var(--green);}
+.plan-card.featured{border-color:var(--accent);}
+.plan-name{font-family:var(--font-display);font-size:1.2rem;letter-spacing:1.5px;color:var(--text);}
+.plan-price{font-family:var(--font-mono);color:var(--accent);font-size:0.88rem;}
+.plan-limit{color:var(--muted);font-size:0.78rem;}
+.plan-cta{margin-top:6px;height:34px;padding:0 14px;font-size:0.8rem;}
+.plan-current-tag{font-size:0.66rem;color:var(--green);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
 
 /* Send WOD modal */
 .modal-title{font-family:var(--font-display,var(--font-body));font-size:1.3rem;margin:0 0 16px;color:var(--text);letter-spacing:0.5px;}
