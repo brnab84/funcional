@@ -106,6 +106,12 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .btn-remove-student:hover{border-color:var(--accent2,#ff5470);color:var(--accent2,#ff5470);}
 .btn-send-wod{height:30px;padding:0 12px;border-radius:6px;border:1px solid #9b59ff;background:rgba(155,89,255,0.08);color:#9b59ff;cursor:pointer;transition:all 0.15s;font-size:0.78rem;font-weight:600;white-space:nowrap;}
 .btn-send-wod:hover{background:rgba(155,89,255,0.18);}
+.coach-usage{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px;}
+.coach-usage-plan{font-family:var(--font-mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;color:var(--accent);}
+.coach-usage-count{color:var(--muted);font-family:var(--font-mono);font-size:0.82rem;}
+.coach-usage-count.full{color:var(--accent2,#ff5470);font-weight:700;}
+.coach-usage-warn{width:100%;font-size:0.78rem;color:var(--accent2,#ff5470);}
+.admin-plan{height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.72rem;padding:0 6px;font-family:var(--font-mono);cursor:pointer;text-transform:capitalize;}
 
 /* Send WOD modal */
 .modal-title{font-family:var(--font-display,var(--font-body));font-size:1.3rem;margin:0 0 16px;color:var(--text);letter-spacing:0.5px;}

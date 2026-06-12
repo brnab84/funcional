@@ -10,6 +10,7 @@ const { categoriesFor } = require('../utils/constants');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
 const { sendMail } = require('../utils/mailer');
+const { planLimitJson } = require('../utils/plans');
 const APP_URL = process.env.APP_URL || '';
 
 // Build a plain-text + HTML summary of an assigned workout for the email
@@ -64,7 +65,7 @@ router.get('/students', async (req, res) => {
       .select('name email role sports lastLogin createdAt')
       .sort({ name: 1 })
       .lean();
-    res.json({ students });
+    res.json({ students, plan: req.user.plan, limit: planLimitJson(req.user.plan), count: students.length });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

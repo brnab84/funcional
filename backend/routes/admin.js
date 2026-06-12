@@ -43,7 +43,7 @@ router.get('/stats', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await User.find()
-      .select('name email role createdAt lastLogin loginCount sports coachId')
+      .select('name email role createdAt lastLogin loginCount sports coachId plan')
       .sort({ createdAt: -1 })
       .limit(500)
       .lean();
@@ -60,6 +60,17 @@ router.get('/users', async (req, res) => {
     });
     users.forEach(u => { u.studentCount = studentCount[String(u._id)] || 0; });
     res.json({ users });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// PUT /api/admin/users/:id/plan — manually set a coach's plan (comps / pre-payments)
+router.put('/users/:id/plan', async (req, res) => {
+  try {
+    const plan = req.body.plan;
+    if (!['free', 'pro', 'studio'].includes(plan)) return res.status(400).json({ message: 'Invalid plan' });
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: { plan: plan, planStatus: 'active' } }, { new: true }).select('name plan');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: 'Plan updated', name: user.name, plan: user.plan });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

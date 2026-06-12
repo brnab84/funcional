@@ -10,8 +10,20 @@ async function loadCoach(){
     listEl.innerHTML='<p style="color:var(--accent2)">'+((r&&r.data)?r.data.message:'Error loading athletes')+'</p>';
     return;
   }
+  renderCoachUsage(r.data);
   renderStudents(r.data.students||[]);
   loadInviteLink();
+}
+
+function renderCoachUsage(d){
+  var el=document.getElementById('coach-usage');if(!el)return;
+  var planLabel={free:'Free',pro:'Pro',studio:'Studio'}[d.plan]||'Free';
+  var limit=d.limit;var count=d.count||0;
+  var limitTxt=(limit==null)?'∞':limit;
+  var atLimit=(limit!=null&&count>=limit);
+  el.innerHTML='<span class="coach-usage-plan">Plan '+planLabel+'</span>'
+    +'<span class="coach-usage-count'+(atLimit?' full':'')+'">'+count+' / '+limitTxt+' alumnos</span>'
+    +(atLimit?'<span class="coach-usage-warn">Límite alcanzado — actualizá tu plan para sumar más</span>':'');
 }
 
 function renderStudents(students){
