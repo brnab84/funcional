@@ -9,6 +9,13 @@ const userSchema = new mongoose.Schema({
   coachId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   // Reusable invite code for coaches — athletes who register via /?invite=CODE join this coach.
   inviteCode: { type: String, default: null, index: true },
+  // Subscription plan (drives coach athlete limits). Payment fields filled later by the processor.
+  plan: { type: String, enum: ['free','pro','studio'], default: 'free' },
+  planStatus: { type: String, enum: ['active','past_due','canceled'], default: 'active' },
+  planRenewsAt: { type: Date, default: null },
+  billingProvider: { type: String, default: null },
+  billingCustomerId: { type: String, default: null },
+  billingSubscriptionId: { type: String, default: null },
   // Email verification. Default true so PRE-EXISTING accounts are never locked out;
   // new registrations explicitly set false until they confirm the emailed code.
   emailVerified: { type: Boolean, default: true },

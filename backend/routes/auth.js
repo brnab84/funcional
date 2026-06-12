@@ -8,12 +8,14 @@ const bcrypt = require('bcryptjs');
 const { sendMail } = require('../utils/mailer');
 const { validatePassword } = require('../utils/password');
 const Pending = require('../models/PendingRegistration');
+const { athleteLimitFor } = require('../utils/plans');
+const COACH_FULL_MSG = 'Tu profesor alcanzó el límite de alumnos de su plan. Pedile que actualice su plan.';
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 const JWT_SECRET = process.env.JWT_SECRET || 'funcional_jwt_secret_2024';
 const sign = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
 const CODE_TTL_MS = 15 * 60 * 1000;
 const genCode = () => String(Math.floor(100000 + Math.random() * 900000));
-const userPayload = (u) => ({ id: u._id, name: u.name, email: u.email, role: u.role, coachId: u.coachId, settings: u.settings, sports: u.sports });
+const userPayload = (u) => ({ id: u._id, name: u.name, email: u.email, role: u.role, coachId: u.coachId, plan: u.plan, planStatus: u.planStatus, settings: u.settings, sports: u.sports });
 
 function verificationEmail(name, code) {
   return {
@@ -59,6 +61,10 @@ router.post('/register', async (req, res) => {
       if (!coach) return res.status(400).json({ message: 'Invalid or expired invite link' });
       safeRole = 'athlete';
       coachId = coach._id;
+      const limit = athleteLimitFor(coach.plan);
+      if (limit !== Infinity && (await User.countDocuments({ coachId: coach._id })) >= limit) {
+        return res.status(403).json({ message: COACH_FULL_MSG });
+      }
     }
 
     const code = genCode();
@@ -100,6 +106,13 @@ router.post('/verify', async (req, res) => {
       // Guard against a race where the account already exists
       let user = await User.findOne({ email: lowEmail });
       if (!user) {
+        if (pending.coachId) {
+          const coach = await User.findById(pending.coachId);
+          const limit = athleteLimitFor(coach ? coach.plan : 'free');
+          if (limit !== Infinity && (await User.countDocuments({ coachId: pending.coachId })) >= limit) {
+            return res.status(403).json({ message: COACH_FULL_MSG });
+          }
+        }
         user = await User.create({
           name: pending.name, email: lowEmail, password: pending.passwordHash,
           role: pending.role, coachId: pending.coachId, emailVerified: true,
@@ -196,7 +209,7 @@ router.post('/login', async (req, res) => {
       });
     } catch (e) { console.log('Activity log error:', e.message); }
 
-    res.json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, coachId: user.coachId, settings: user.settings, sports: user.sports } });
+    res.json({ token: sign(user._id), user: { id: user._id, name: user.name, email: user.email, role: user.role, coachId: user.coachId, plan: user.plan, planStatus: user.planStatus, settings: user.settings, sports: user.sports } });
   } catch(err) { res.status(500).json({ message: err.message }); }
 });
 

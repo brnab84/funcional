@@ -68,15 +68,25 @@ async function loadAdmin(){
       else if(u.coachId){roleBadge='<span class="admin-badge-role badge-coached">ALUMNO</span>';extra=' · Coach: '+(u.coachName||'?');}
       else{roleBadge='<span class="admin-badge-role badge-solo">SOLO</span>';extra=' · entrena solo';}
       var delBtn=(u.role==='admin')?'':'<button class="admin-del" data-id="'+u._id+'" data-name="'+escapeHtml(u.name)+'" title="Delete account">&#10005;</button>';
+      var planSel=(u.role==='coach')?'<select class="admin-plan" data-id="'+u._id+'" title="Plan">'+['free','pro','studio'].map(function(p){return '<option value="'+p+'"'+(((u.plan||'free')===p)?' selected':'')+'>'+p+'</option>';}).join('')+'</select>':'';
       return '<div class="admin-row"><div><strong>'+escapeHtml(u.name)+'</strong>'+roleBadge
         +'<span class="admin-row-sub">'+escapeHtml(u.email)+' · '+sportsList+extra+'</span></div>'
         +'<div class="admin-row-right"><div class="admin-row-meta">'+(u.loginCount||0)+' logins'
-        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div>'+delBtn+'</div></div>';
+        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div>'+planSel+delBtn+'</div></div>';
     }).join('');
     usersEl.querySelectorAll('.admin-del').forEach(function(btn){
       btn.addEventListener('click',function(){deleteAccount(btn.dataset.id,btn.dataset.name);});
     });
+    usersEl.querySelectorAll('.admin-plan').forEach(function(sel){
+      sel.addEventListener('change',function(){changeUserPlan(sel.dataset.id,sel.value);});
+    });
   }
+}
+
+async function changeUserPlan(id,plan){
+  var r=await apiCall('/api/admin/users/'+id+'/plan',{method:'PUT',body:JSON.stringify({plan:plan})});
+  if(!r||!r.ok){showToast((r&&r.data)?r.data.message:'Could not update plan','error');return;}
+  showToast('Plan → '+plan,'success');
 }
 
 async function deleteAccount(id,name){
