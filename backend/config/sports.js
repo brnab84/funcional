@@ -22,7 +22,7 @@ const SPORTS = {
     title: 'STRONG', todayTitle: "TODAY'S LIFT", themeColor: '#120d0e',
     categories: ['squat', 'hinge', 'push', 'pull', 'olympic', 'accessory', 'core'],
     modalities: ['STRENGTH', '5x5', '3x8', 'PYRAMID', 'DROP SET', 'SUPERSET', 'EMOM', 'TEMPO'],
-    generator: 'functional',
+    generator: 'strong',
     adminOnly: true
   }
 };
