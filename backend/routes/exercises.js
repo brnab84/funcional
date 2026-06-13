@@ -74,8 +74,9 @@ router.post('/seed', auth, async (req, res) => {
     await ExerciseLibrary.deleteMany({ user: null, sport: sport });
     await ExerciseLibrary.deleteMany({ user: { $exists: false }, sport: sport });
 
-    // Insert correct defaults
-    const src = sport === 'swimming' ? SWIMMING : FUNCTIONAL;
+    // Insert correct defaults (seed registry — add new sports here)
+    const SEEDS = { functional: FUNCTIONAL, swimming: SWIMMING };
+    const src = SEEDS[sport] || FUNCTIONAL;
     const docs = src.map(e => ({ name: e.name, category: e.category, sport: sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
 

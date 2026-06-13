@@ -7,6 +7,10 @@ const TrainingStats = require('../models/TrainingStats');
 const { categoriesFor } = require('../utils/constants');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
+const { sportMeta } = require('../config/sports');
+// Generator registry — keyed by the `generator` field in config/sports.js
+const GENERATORS = { functional: generateWorkout, swim: generateSwimWorkout };
+function generatorFor(sport) { return GENERATORS[sportMeta(sport).generator] || generateWorkout; }
 router.use(auth);
 
 // Athletes linked to a coach don't generate their own workouts — they only
@@ -68,7 +72,7 @@ router.post('/regenerate', blockIfCoached, async (req, res) => {
     try { stats = await TrainingStats.findOne({ user: uid, sport: sport }).lean(); } catch(e) {}
 
     // Generate 3 variants
-    const gen = sport === 'swimming' ? generateSwimWorkout : generateWorkout;
+    const gen = generatorFor(sport);
     const seed = today + '-' + uid;
     const created = [];
     for (var v = 1; v <= 3; v++) {

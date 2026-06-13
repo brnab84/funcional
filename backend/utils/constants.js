@@ -1,13 +1,13 @@
-// Shared constants — single source of truth for sport-specific data.
-const CATEGORIES = {
-  functional: ['lower', 'upper', 'core', 'conditioning', 'power'],
-  swimming: ['stroke', 'kick', 'drill', 'pull', 'sprint', 'endurance', 'rest']
-};
+// Shared constants — now derived from the central sport registry (config/sports.js)
+// so categories/modalities live in one place. Exports below are unchanged.
+const { SPORTS } = require('../config/sports');
 
-const MODALITIES = {
-  functional: ['EMOM', 'OTM', 'AMRAP', 'ROUNDS', 'FOR TIME', 'TABATA'],
-  swimming: ['A1-A2', 'A2-A3', 'A3 SPRINT', 'A3 QUEBRADO', 'TECHNIQUE', 'ENDURANCE', 'PROGRESSIVE', 'DESCENDING', 'INTERVALS', 'RECOVERY']
-};
+const CATEGORIES = {};
+const MODALITIES = {};
+Object.keys(SPORTS).forEach(function (s) {
+  CATEGORIES[s] = SPORTS[s].categories;
+  MODALITIES[s] = SPORTS[s].modalities;
+});
 
 const WORKOUT_SOURCES = ['local', 'ai', 'manual', 'imported'];
 
