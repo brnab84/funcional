@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const auth = require('../middleware/auth');
+const sportAccess = require('../middleware/sportAccess');
 const { categoriesFor } = require('../utils/constants');
 
 const FUNCTIONAL = [
@@ -39,8 +40,25 @@ const SWIMMING = [
   {name:'Pyramid Set',category:'endurance'},
 ];
 
+const STRONG = [
+  {name:'Back Squat',category:'squat'},{name:'Front Squat',category:'squat'},{name:'Box Squat',category:'squat'},
+  {name:'Pause Squat',category:'squat'},{name:'Overhead Squat',category:'squat'},{name:'Bulgarian Split Squat',category:'squat'},
+  {name:'Deadlift',category:'hinge'},{name:'Romanian Deadlift',category:'hinge'},{name:'Sumo Deadlift',category:'hinge'},
+  {name:'Trap Bar Deadlift',category:'hinge'},{name:'Hip Thrust',category:'hinge'},{name:'Good Morning',category:'hinge'},
+  {name:'Bench Press',category:'push'},{name:'Incline Bench Press',category:'push'},{name:'Overhead Press',category:'push'},
+  {name:'Push Press',category:'push'},{name:'Close-Grip Bench',category:'push'},{name:'Dumbbell Press',category:'push'},{name:'Dips',category:'push'},
+  {name:'Pull Up',category:'pull'},{name:'Chin Up',category:'pull'},{name:'Barbell Row',category:'pull'},
+  {name:'Pendlay Row',category:'pull'},{name:'Lat Pulldown',category:'pull'},{name:'Seated Cable Row',category:'pull'},
+  {name:'Power Clean',category:'olympic'},{name:'Clean and Jerk',category:'olympic'},{name:'Snatch',category:'olympic'},
+  {name:'Hang Clean',category:'olympic'},{name:'Push Jerk',category:'olympic'},
+  {name:'Barbell Curl',category:'accessory'},{name:'Tricep Extension',category:'accessory'},{name:'Lateral Raise',category:'accessory'},
+  {name:'Leg Curl',category:'accessory'},{name:'Leg Extension',category:'accessory'},{name:'Calf Raise',category:'accessory'},
+  {name:'Plank',category:'core'},{name:'Hanging Leg Raise',category:'core'},{name:'Cable Crunch',category:'core'},
+  {name:'Ab Wheel',category:'core'},{name:'Back Extension',category:'core'},
+];
+
 // GET exercises for current user + sport
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, sportAccess, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
     const exercises = await ExerciseLibrary.find({ sport: sport, user: req.user._id }).sort('category name');
@@ -49,7 +67,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // GET categories
-router.get('/categories', auth, async (req, res) => {
+router.get('/categories', auth, sportAccess, async (req, res) => {
   try {
     const sport = req.query.sport || 'functional';
     const defaults = categoriesFor(sport).filter(function(cat) { return cat !== 'rest'; });
@@ -60,7 +78,7 @@ router.get('/categories', auth, async (req, res) => {
 });
 
 // SEED - nuclear: delete ALL for this user+sport, insert correct defaults
-router.post('/seed', auth, async (req, res) => {
+router.post('/seed', auth, sportAccess, async (req, res) => {
   const sport = (req.body && req.body.sport) || 'functional';
   const userId = req.user._id;
   try {
@@ -75,7 +93,7 @@ router.post('/seed', auth, async (req, res) => {
     await ExerciseLibrary.deleteMany({ user: { $exists: false }, sport: sport });
 
     // Insert correct defaults (seed registry — add new sports here)
-    const SEEDS = { functional: FUNCTIONAL, swimming: SWIMMING };
+    const SEEDS = { functional: FUNCTIONAL, swimming: SWIMMING, strong: STRONG };
     const src = SEEDS[sport] || FUNCTIONAL;
     const docs = src.map(e => ({ name: e.name, category: e.category, sport: sport, user: userId }));
     await ExerciseLibrary.insertMany(docs);
@@ -92,7 +110,7 @@ router.post('/seed', auth, async (req, res) => {
 });
 
 // ADD exercise
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, sportAccess, async (req, res) => {
   try {
     const { name, category, sport } = req.body;
     if (!name || !category) return res.status(400).json({ message: 'Name and category required' });
