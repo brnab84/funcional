@@ -20,11 +20,15 @@ function showToast(msg,type){
 var SPORTS={
   functional:{
     logo:'\u26A1',title:'FUNCTIONAL WOD',todayTitle:"TODAY'S WOD",
-    themeColor:'#0d0f12',bodyClass:'sport-functional'
+    themeColor:'#0d0f12',bodyClass:'sport-functional',
+    manualModalities:["EMOM","OTM","AMRAP","ROUNDS","FOR TIME","TABATA"],
+    blockModalities:['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA']
   },
   swimming:{
     logo:'\uD83C\uDFCA',title:'SWIM SESSION',todayTitle:"TODAY'S SESSION",
-    themeColor:'#071a2e',bodyClass:'sport-swimming'
+    themeColor:'#071a2e',bodyClass:'sport-swimming',
+    manualModalities:["SPRINT","ENDURANCE","TECHNIQUE","INTERVALS"],
+    blockModalities:['random','A1-A2','A2-A3','A3 SPRINT','A3 QUEBRADO','TECHNIQUE','ENDURANCE','PROGRESSIVE','DESCENDING']
   }
 };
 

@@ -19,7 +19,7 @@ function loadUserSettings(){
 }
 function renderBlockModalities(count,mods){
   var labels=['A','B','C','D'].slice(0,count);
-  var opts=currentSport==='swimming'?['random','A1-A2','A2-A3','A3 SPRINT','A3 QUEBRADO','TECHNIQUE','ENDURANCE','PROGRESSIVE','DESCENDING']:['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
+  var opts=(getSportConfig().blockModalities)||['random','EMOM','OTM','AMRAP','ROUNDS','FOR TIME','TABATA'];
   document.getElementById('block-modalities').innerHTML=labels.map(function(label){
     return'<label class="field" style="margin-top:12px"><span>Block '+label+'</span><select class="block-mod-select" data-label="'+label+'">'+opts.map(function(o){return'<option value="'+o+'"'+((mods[label]||'random')===o?' selected':'')+'>'+(o==='random'?'Random':o)+'</option>';}).join('')+'</select></label>';
   }).join('');
