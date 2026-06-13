@@ -2,7 +2,7 @@
 async function openManualBuilder(){
   var r=await apiCall("/api/exercises?sport="+currentSport);
   exerciseCache=(r&&r.data&&r.data.exercises)?r.data.exercises:[];
-  var mods=currentSport==="swimming"?["SPRINT","ENDURANCE","TECHNIQUE","INTERVALS"]:["EMOM","OTM","AMRAP","ROUNDS","FOR TIME","TABATA"];
+  var mods=(getSportConfig().manualModalities)||["EMOM","OTM","AMRAP","ROUNDS","FOR TIME","TABATA"];
   window._manualMods=mods;window._blockCount=0;
 
   var h="<h3 style=\"margin-bottom:16px\">Create Workout</h3><div class=\"manual-builder\" id=\"manual-builder\">";

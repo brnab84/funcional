@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderPwHints('','reg-pw-hints');renderPwHints('','reset-pw-hints');
   document.getElementById('btn-logout').addEventListener('click',logout);
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn){btn.addEventListener('click',function(){switchView(btn.dataset.view);});});
+  var navSport=document.getElementById('nav-sport');if(navSport)navSport.addEventListener('change',function(){switchSport(navSport.value);});
   document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});
   document.getElementById('btn-approve').addEventListener('click',approveWorkout);
   document.getElementById('btn-regenerate').addEventListener('click',regenerateWorkouts);

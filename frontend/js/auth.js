@@ -51,6 +51,7 @@ function showApp(){
     var roleLabel=currentUser.role==='admin'?'Admin':currentUser.role==='coach'?'Profesor':(currentUser.coachId?'Alumno (con profesor)':'Atleta (entrena solo)');
     document.getElementById('settings-user-info').textContent=currentUser.name+' \u00B7 '+roleLabel+' \u00B7 '+currentUser.email+' \u00B7 v'+VERSION;
     loadUserSettings();
+    loadSportSwitcher();
   }
   applySportTheme(currentSport);
   markActivity();
@@ -60,6 +61,27 @@ function showApp(){
 // True for an athlete who has been linked to a coach (not coaches/admins)
 function isCoachedAthlete(){
   return !!(currentUser&&currentUser.coachId&&currentUser.role!=='coach'&&currentUser.role!=='admin');
+}
+
+// In-app sport switcher — populated from the sports this user can access
+async function loadSportSwitcher(){
+  var sel=document.getElementById('nav-sport');
+  if(!sel)return;
+  var r=await apiCall('/api/sports');
+  var sports=(r&&r.ok&&r.data.sports)?r.data.sports:[];
+  if(sports.length<=1){sel.style.display='none';return;}
+  var keys=sports.map(function(s){return s.key;});
+  if(keys.indexOf(currentSport)<0){applySportTheme(keys[0]);}
+  sel.innerHTML=sports.map(function(s){return '<option value="'+s.key+'">'+s.icon+' '+s.label+'</option>';}).join('');
+  sel.value=currentSport;
+  sel.style.display='';
+}
+
+function switchSport(sport){
+  if(!sport||sport===currentSport)return;
+  applySportTheme(sport);
+  switchView('today');
+  loadToday();
 }
 
 async function login(){
