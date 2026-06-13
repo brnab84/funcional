@@ -73,6 +73,7 @@ app.use('/api/exercises', apiLimiter, require('./routes/exercises'));
 app.use('/api/upload', apiLimiter, require('./routes/upload'));
 app.use('/api/admin', apiLimiter, require('./routes/admin'));
 app.use('/api/coach', apiLimiter, require('./routes/coach'));
+app.use('/api/sports', apiLimiter, require('./routes/sports'));
 app.get('/api/health', (req, res) => res.json({
   status: 'ok',
   version: VERSION,
