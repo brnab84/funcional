@@ -7,9 +7,10 @@ const TrainingStats = require('../models/TrainingStats');
 const { categoriesFor } = require('../utils/constants');
 const { generateWorkout } = require('../generator');
 const { generateSwimWorkout } = require('../swim-generator');
+const { generateStrongWorkout } = require('../strong-generator');
 const { sportMeta } = require('../config/sports');
 // Generator registry — keyed by the `generator` field in config/sports.js
-const GENERATORS = { functional: generateWorkout, swim: generateSwimWorkout };
+const GENERATORS = { functional: generateWorkout, swim: generateSwimWorkout, strong: generateStrongWorkout };
 function generatorFor(sport) { return GENERATORS[sportMeta(sport).generator] || generateWorkout; }
 const sportAccess = require('../middleware/sportAccess');
 router.use(auth);
