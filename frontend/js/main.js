@@ -59,13 +59,6 @@ document.addEventListener('DOMContentLoaded',function(){
   // Check version (cache bust if new)
   checkVersion();
 
-  // Auth sport selector
-  document.querySelectorAll('.auth-sport-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      applySportTheme(btn.dataset.sport);
-    });
-  });
-
   // Restore session — but an invite link always opens a fresh registration,
   // even if this browser already has a session (e.g. the coach who shared it).
   var _inv=null;

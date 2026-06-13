@@ -3,7 +3,7 @@ function showAuth(){
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('app').classList.add('hidden');
   resetAuthForms();
-  applySportTheme(currentSport);
+  applyAuthBrand();
 }
 
 // Clear all auth sub-forms back to a fresh Login state (no stale data on logout/return)
