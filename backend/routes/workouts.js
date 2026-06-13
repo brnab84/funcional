@@ -11,7 +11,9 @@ const { sportMeta } = require('../config/sports');
 // Generator registry — keyed by the `generator` field in config/sports.js
 const GENERATORS = { functional: generateWorkout, swim: generateSwimWorkout };
 function generatorFor(sport) { return GENERATORS[sportMeta(sport).generator] || generateWorkout; }
+const sportAccess = require('../middleware/sportAccess');
 router.use(auth);
+router.use(sportAccess);
 
 // Athletes linked to a coach don't generate their own workouts — they only
 // follow what the coach assigns. Blocks self-generation routes for them.

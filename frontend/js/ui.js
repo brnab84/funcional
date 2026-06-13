@@ -29,6 +29,12 @@ var SPORTS={
     themeColor:'#071a2e',bodyClass:'sport-swimming',
     manualModalities:["SPRINT","ENDURANCE","TECHNIQUE","INTERVALS"],
     blockModalities:['random','A1-A2','A2-A3','A3 SPRINT','A3 QUEBRADO','TECHNIQUE','ENDURANCE','PROGRESSIVE','DESCENDING']
+  },
+  strong:{
+    logo:'\uD83C\uDFCB\uFE0F',title:'STRONG',todayTitle:"TODAY'S LIFT",
+    themeColor:'#120d0e',bodyClass:'sport-strong',
+    manualModalities:["STRENGTH","5x5","3x8","PYRAMID","SUPERSET","EMOM"],
+    blockModalities:['random','STRENGTH','5x5','3x8','PYRAMID','DROP SET','SUPERSET','EMOM','TEMPO']
   }
 };
 

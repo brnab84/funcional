@@ -16,6 +16,14 @@ const SPORTS = {
     modalities: ['A1-A2', 'A2-A3', 'A3 SPRINT', 'A3 QUEBRADO', 'TECHNIQUE', 'ENDURANCE', 'PROGRESSIVE', 'DESCENDING', 'INTERVALS', 'RECOVERY'],
     generator: 'swim',
     adminOnly: false
+  },
+  strong: {
+    label: 'Strong', icon: '🏋️', accent: '#e63946', themeClass: 'sport-strong',
+    title: 'STRONG', todayTitle: "TODAY'S LIFT", themeColor: '#120d0e',
+    categories: ['squat', 'hinge', 'push', 'pull', 'olympic', 'accessory', 'core'],
+    modalities: ['STRENGTH', '5x5', '3x8', 'PYRAMID', 'DROP SET', 'SUPERSET', 'EMOM', 'TEMPO'],
+    generator: 'functional',
+    adminOnly: true
   }
 };
 

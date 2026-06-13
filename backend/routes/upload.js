@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const sportAccess = require('../middleware/sportAccess');
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 
 // POST /api/upload/photo — extract exercises for library (legacy)
-router.post('/photo', auth, async (req, res) => {
+router.post('/photo', auth, sportAccess, async (req, res) => {
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(503).json({ message: 'API key not configured' });
@@ -34,7 +35,7 @@ router.post('/photo', auth, async (req, res) => {
 });
 
 // POST /api/upload/import — parse photo or text into full workout structure
-router.post('/import', auth, async (req, res) => {
+router.post('/import', auth, sportAccess, async (req, res) => {
   try {
     // Coached athletes only follow coach-assigned workouts (no self-import).
     if (req.user && req.user.coachId) return res.status(403).json({ message: 'Your coach assigns your workouts. Check the Assigned tab.' });

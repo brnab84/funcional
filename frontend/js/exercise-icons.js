@@ -33,12 +33,17 @@ var EX_ICONS = {
   pause:'<rect x="7" y="5" width="3.4" height="14" rx="1"/><rect x="13.6" y="5" width="3.4" height="14" rx="1"/>'
 };
 
-// Functional category → fallback icon key
+// Functional + swimming category → fallback icon key
 var EX_CAT_ICON = {
   lower:'leg', upper:'arm', core:'abs', conditioning:'pulse', power:'bolt',
   // Swimming
   stroke:'swimmer', kick:'kickboard', drill:'goggles', pull:'buoy',
   sprint:'bolt', endurance:'waves', rest:'pause'
+};
+// Strong has its own category names (and 'pull' means rows/pull-ups, not a buoy)
+var STRONG_CAT_ICON = {
+  squat:'squat', hinge:'deadlift', push:'press', pull:'pullbar',
+  olympic:'barbell', accessory:'dumbbell', core:'abs'
 };
 
 function _normEx(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
@@ -72,6 +77,7 @@ function iconKeyForExercise(name, category, sport){
   if(/\b(push up|pushup|dip|tricep)\b/.test(n)) return 'arm';
   if(/\b(hip thrust|wall sit|glute|step up|calf)\b/.test(n)) return 'leg';
   // Category fallback
+  if(sport==='strong' && STRONG_CAT_ICON[category]) return STRONG_CAT_ICON[category];
   if(EX_CAT_ICON[category]) return EX_CAT_ICON[category];
   return sport==='swimming' ? 'swimmer' : 'dumbbell';
 }
