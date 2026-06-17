@@ -20,8 +20,8 @@ const SPORTS = {
   strong: {
     label: 'Strong', icon: '🏋️', accent: '#e63946', themeClass: 'sport-strong',
     title: 'STRONG', todayTitle: "TODAY'S LIFT", themeColor: '#120d0e',
-    categories: ['squat', 'hinge', 'push', 'pull', 'olympic', 'accessory', 'core'],
-    modalities: ['STRENGTH', '5x5', '3x8', 'PYRAMID', 'DROP SET', 'SUPERSET', 'EMOM', 'TEMPO'],
+    categories: ['legs', 'glutes', 'hamstrings', 'chest', 'back', 'shoulders', 'biceps', 'triceps', 'core'],
+    modalities: ['PIRÁMIDE', 'FUERZA', '4x8', '3x10', '3x12', 'SUPERSET', 'AL FALLO', 'RONDAS', 'ISOMÉTRICO'],
     generator: 'strong',
     adminOnly: true
   }

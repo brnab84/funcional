@@ -33,8 +33,8 @@ var SPORTS={
   strong:{
     logo:'\uD83C\uDFCB\uFE0F',title:'STRONG',todayTitle:"TODAY'S LIFT",
     themeColor:'#120d0e',bodyClass:'sport-strong',
-    manualModalities:["STRENGTH","5x5","3x8","PYRAMID","SUPERSET","EMOM"],
-    blockModalities:['random','STRENGTH','5x5','3x8','PYRAMID','DROP SET','SUPERSET','EMOM','TEMPO']
+    manualModalities:["PIR\u00C1MIDE","FUERZA","4x8","3x10","3x12","SUPERSET","RONDAS","AL FALLO"],
+    blockModalities:['random','PIR\u00C1MIDE','FUERZA','4x8','3x10','3x12','SUPERSET','RONDAS','AL FALLO','ISOM\u00C9TRICO']
   }
 };
 
