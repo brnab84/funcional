@@ -35,7 +35,15 @@ function sportMeta(sport) { return SPORTS[sport] || SPORTS[DEFAULT_SPORT]; }
 function canUseSport(sport, user) {
   const m = SPORTS[sport];
   if (!m) return false;
-  return !m.adminOnly || (user && user.role === 'admin');
+  if (!m.adminOnly) return true;
+  if (user && user.role === 'admin') return true;
+  if (user && Array.isArray(user.extraSports) && user.extraSports.indexOf(sport) >= 0) return true;
+  return false;
+}
+
+// Admin-only sport keys (the ones that can be granted per user)
+function adminOnlySports() {
+  return listSports().filter(function (s) { return SPORTS[s].adminOnly; });
 }
 
 function availableSports(user) {
@@ -54,4 +62,4 @@ function publicSports(user) {
   });
 }
 
-module.exports = { SPORTS, DEFAULT_SPORT, listSports, sportMeta, canUseSport, availableSports, publicSports };
+module.exports = { SPORTS, DEFAULT_SPORT, listSports, sportMeta, canUseSport, availableSports, publicSports, adminOnlySports };

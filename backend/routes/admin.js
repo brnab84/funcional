@@ -7,6 +7,7 @@ const LoginActivity = require('../models/LoginActivity');
 const Workout = require('../models/Workout');
 const ExerciseLibrary = require('../models/ExerciseLibrary');
 const TrainingStats = require('../models/TrainingStats');
+const { adminOnlySports } = require('../config/sports');
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'brnab84@gmail.com').toLowerCase();
 
 // All admin routes require auth + admin role
@@ -43,7 +44,7 @@ router.get('/stats', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await User.find()
-      .select('name email role createdAt lastLogin loginCount sports coachId plan')
+      .select('name email role createdAt lastLogin loginCount sports coachId plan extraSports')
       .sort({ createdAt: -1 })
       .limit(500)
       .lean();
@@ -71,6 +72,23 @@ router.put('/users/:id/plan', async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, { $set: { plan: plan, planStatus: 'active' } }, { new: true }).select('name plan');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ message: 'Plan updated', name: user.name, plan: user.plan });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// PUT /api/admin/users/:id/sport-access — grant/revoke an admin-only sport for a user
+router.put('/users/:id/sport-access', async (req, res) => {
+  try {
+    const sport = req.body.sport;
+    const allow = !!req.body.allow;
+    if (adminOnlySports().indexOf(sport) < 0) return res.status(400).json({ message: 'Invalid sport' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const set = {};
+    (user.extraSports || []).forEach(function (s) { set[s] = true; });
+    if (allow) set[sport] = true; else delete set[sport];
+    user.extraSports = Object.keys(set);
+    await user.save();
+    res.json({ message: 'Updated', name: user.name, extraSports: user.extraSports });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 

@@ -69,16 +69,21 @@ async function loadAdmin(){
       else{roleBadge='<span class="admin-badge-role badge-solo">SOLO</span>';extra=' · entrena solo';}
       var delBtn=(u.role==='admin')?'':'<button class="admin-del" data-id="'+u._id+'" data-name="'+escapeHtml(u.name)+'" title="Delete account">&#10005;</button>';
       var planSel=(u.role==='coach')?'<select class="admin-plan" data-id="'+u._id+'" title="Plan">'+['free','pro','studio'].map(function(p){return '<option value="'+p+'"'+(((u.plan||'free')===p)?' selected':'')+'>'+p+'</option>';}).join('')+'</select>':'';
+      var strongOn=((u.extraSports||[]).indexOf('strong')>=0);
+      var sportGrant=(u.role==='admin')?'':'<label class="admin-grant" title="Dar acceso a Strong"><input type="checkbox" class="admin-sport-cb" data-id="'+u._id+'" data-sport="strong"'+(strongOn?' checked':'')+'> 🏋️</label>';
       return '<div class="admin-row"><div><strong>'+escapeHtml(u.name)+'</strong>'+roleBadge
         +'<span class="admin-row-sub">'+escapeHtml(u.email)+' · '+sportsList+extra+'</span></div>'
         +'<div class="admin-row-right"><div class="admin-row-meta">'+(u.loginCount||0)+' logins'
-        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div>'+planSel+delBtn+'</div></div>';
+        +'<span class="admin-row-sub">last: '+timeAgo(u.lastLogin)+'</span></div>'+sportGrant+planSel+delBtn+'</div></div>';
     }).join('');
     usersEl.querySelectorAll('.admin-del').forEach(function(btn){
       btn.addEventListener('click',function(){deleteAccount(btn.dataset.id,btn.dataset.name);});
     });
     usersEl.querySelectorAll('.admin-plan').forEach(function(sel){
       sel.addEventListener('change',function(){changeUserPlan(sel.dataset.id,sel.value);});
+    });
+    usersEl.querySelectorAll('.admin-sport-cb').forEach(function(cb){
+      cb.addEventListener('change',function(){grantSport(cb.dataset.id,cb.dataset.sport,cb.checked,cb);});
     });
   }
 }
@@ -87,6 +92,12 @@ async function changeUserPlan(id,plan){
   var r=await apiCall('/api/admin/users/'+id+'/plan',{method:'PUT',body:JSON.stringify({plan:plan})});
   if(!r||!r.ok){showToast((r&&r.data)?r.data.message:'Could not update plan','error');return;}
   showToast('Plan → '+plan,'success');
+}
+
+async function grantSport(id,sport,allow,cb){
+  var r=await apiCall('/api/admin/users/'+id+'/sport-access',{method:'PUT',body:JSON.stringify({sport:sport,allow:allow})});
+  if(!r||!r.ok){if(cb)cb.checked=!allow;showToast((r&&r.data)?r.data.message:'No se pudo','error');return;}
+  showToast(allow?(sport+' activado'):(sport+' quitado'),'success');
 }
 
 async function deleteAccount(id,name){
