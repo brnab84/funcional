@@ -41,20 +41,38 @@ const SWIMMING = [
 ];
 
 const STRONG = [
-  {name:'Back Squat',category:'squat'},{name:'Front Squat',category:'squat'},{name:'Box Squat',category:'squat'},
-  {name:'Pause Squat',category:'squat'},{name:'Overhead Squat',category:'squat'},{name:'Bulgarian Split Squat',category:'squat'},
-  {name:'Deadlift',category:'hinge'},{name:'Romanian Deadlift',category:'hinge'},{name:'Sumo Deadlift',category:'hinge'},
-  {name:'Trap Bar Deadlift',category:'hinge'},{name:'Hip Thrust',category:'hinge'},{name:'Good Morning',category:'hinge'},
-  {name:'Bench Press',category:'push'},{name:'Incline Bench Press',category:'push'},{name:'Overhead Press',category:'push'},
-  {name:'Push Press',category:'push'},{name:'Close-Grip Bench',category:'push'},{name:'Dumbbell Press',category:'push'},{name:'Dips',category:'push'},
-  {name:'Pull Up',category:'pull'},{name:'Chin Up',category:'pull'},{name:'Barbell Row',category:'pull'},
-  {name:'Pendlay Row',category:'pull'},{name:'Lat Pulldown',category:'pull'},{name:'Seated Cable Row',category:'pull'},
-  {name:'Power Clean',category:'olympic'},{name:'Clean and Jerk',category:'olympic'},{name:'Snatch',category:'olympic'},
-  {name:'Hang Clean',category:'olympic'},{name:'Push Jerk',category:'olympic'},
-  {name:'Barbell Curl',category:'accessory'},{name:'Tricep Extension',category:'accessory'},{name:'Lateral Raise',category:'accessory'},
-  {name:'Leg Curl',category:'accessory'},{name:'Leg Extension',category:'accessory'},{name:'Calf Raise',category:'accessory'},
-  {name:'Plank',category:'core'},{name:'Hanging Leg Raise',category:'core'},{name:'Cable Crunch',category:'core'},
-  {name:'Ab Wheel',category:'core'},{name:'Back Extension',category:'core'},
+  // Piernas (cuádriceps)
+  {name:'Sentadilla',category:'legs'},{name:'Sentadilla Smith',category:'legs'},{name:'Sentadilla Sumo',category:'legs'},
+  {name:'Sentadilla Frontal',category:'legs'},{name:'Sentadilla Isométrica',category:'legs'},{name:'Sentadilla con Banda',category:'legs'},
+  {name:'Prensa 45°',category:'legs'},{name:'Sillón Cuádriceps',category:'legs'},{name:'Estocadas',category:'legs'},
+  {name:'Estocadas Caminando',category:'legs'},{name:'Sentadilla Búlgara',category:'legs'},{name:'Step Up',category:'legs'},
+  {name:'Aductores Máquina',category:'legs'},{name:'Gemelos Guía',category:'legs'},
+  // Glúteos
+  {name:'Hip Thrust',category:'glutes'},{name:'Hip Thrust Unilateral',category:'glutes'},{name:'Patada Glúteo',category:'glutes'},
+  {name:'Abductores Máquina',category:'glutes'},{name:'Glúteos Polea',category:'glutes'},{name:'Elevación Pelvis',category:'glutes'},
+  // Isquios / cadena posterior
+  {name:'Peso Muerto',category:'hamstrings'},{name:'Peso Muerto Rumano',category:'hamstrings'},{name:'Peso Muerto Unilateral',category:'hamstrings'},
+  {name:'Camilla Isquiotibial',category:'hamstrings'},{name:'Curl Femoral',category:'hamstrings'},
+  // Pecho
+  {name:'Press Banca Plano',category:'chest'},{name:'Pecho Inclinado Mancuerna',category:'chest'},{name:'Apertura Pecho Máquina',category:'chest'},
+  {name:'Apertura en Polea',category:'chest'},{name:'Pecho Pablo Máquina',category:'chest'},{name:'Flexiones',category:'chest'},
+  // Espalda
+  {name:'Dorsal al Pecho',category:'back'},{name:'Remo Bajo',category:'back'},{name:'Remo T',category:'back'},
+  {name:'Remo Hammer',category:'back'},{name:'Remo Unilateral',category:'back'},{name:'Pull Over Polea',category:'back'},
+  {name:'Dominadas',category:'back'},{name:'Jalón Unilateral',category:'back'},{name:'Remo en Máquina',category:'back'},
+  // Hombros
+  {name:'Press Hombro Máquina',category:'shoulders'},{name:'Press Militar Barra',category:'shoulders'},{name:'Vuelos Laterales Mancuerna',category:'shoulders'},
+  {name:'Vuelos Frontales Mancuerna',category:'shoulders'},{name:'Vuelos Posteriores',category:'shoulders'},{name:'Face Pull',category:'shoulders'},
+  // Bíceps
+  {name:'Bíceps Alternado Mancuerna',category:'biceps'},{name:'Bíceps Scott',category:'biceps'},{name:'Bíceps Concentrado',category:'biceps'},
+  {name:'Curl Martillo',category:'biceps'},{name:'Curl Barra Recta',category:'biceps'},{name:'Bíceps en Polea',category:'biceps'},
+  // Tríceps
+  {name:'Dips',category:'triceps'},{name:'Dips Banco',category:'triceps'},{name:'Tríceps Francés Mancuerna',category:'triceps'},
+  {name:'Extensión Tríceps Polea',category:'triceps'},{name:'Tríceps Soga Polea',category:'triceps'},{name:'Fondos en Paralelas',category:'triceps'},
+  // Core / abdominales
+  {name:'Situp',category:'core'},{name:'Abs Crunch',category:'core'},{name:'Abs Paralelas',category:'core'},
+  {name:'Abs Bike',category:'core'},{name:'Plancha con Peso',category:'core'},{name:'Abs Rueda',category:'core'},
+  {name:'Abs Vela',category:'core'},{name:'Press Pallof',category:'core'},{name:'Elevación de Piernas',category:'core'},
 ];
 
 // GET exercises for current user + sport

@@ -1,6 +1,7 @@
-// strong-generator.js — strength sessions (main lift + secondary + accessories).
-// Same interface/output shape as generator.js / swim-generator.js so it plugs
-// into workouts.js via the sport registry.
+// strong-generator.js — strength sessions modeled on real coach plans:
+// muscle-group split days, pyramid/range/rounds/superset schemes, mobility/cardio
+// warm-up. Same interface + output shape as generator.js / swim-generator.js.
+// Learns per user via TrainingStats (exerciseFreq weighting).
 
 function seededRand(seed) {
   var s = 0;
@@ -14,12 +15,11 @@ function shuffle(arr, rand) {
 }
 function pick(arr, rand) { return arr[Math.floor(rand() * arr.length)]; }
 
-// Weighted pick from a category set (favours approved exercises via stats)
-function pickFromCats(pool, cats, n, rand, stats, used) {
-  used = used || {};
+// Weighted pick within a muscle group (favours approved exercises via stats)
+function pickFromGroup(pool, group, n, rand, stats, used) {
   var freq = (stats && stats.exerciseFreq) ? stats.exerciseFreq : {};
-  var inCats = pool.filter(function (e) { return cats.indexOf(e.category) >= 0 && !used[e.name]; });
-  var src = inCats.length ? inCats : pool.filter(function (e) { return !used[e.name]; });
+  var inGroup = pool.filter(function (e) { return e.category === group && !used[e.name]; });
+  var src = inGroup.length ? inGroup : pool.filter(function (e) { return !used[e.name]; });
   var scored = src.map(function (ex) {
     var key = ex.name.replace(/[.$]/g, '_');
     return { ex: ex, score: 1 + (freq[key] || 0) };
@@ -30,38 +30,35 @@ function pickFromCats(pool, cats, n, rand, stats, used) {
   return out;
 }
 
-var STRONG_WARMUP = [
-  { name: 'Bike / Row easy', reps: '3-5 min', category: 'accessory' },
-  { name: 'Band Pull-Apart', reps: '15', category: 'pull' },
-  { name: 'Bodyweight Squat', reps: '10-15', category: 'squat' },
-  { name: 'Hip Opener', reps: '8 c/lado', category: 'hinge' },
-  { name: 'Scapular Pull-Up', reps: '8', category: 'pull' },
-  { name: 'Push-Up', reps: '10-12', category: 'push' },
-  { name: 'Light Ramp Sets', reps: '2-3 series', category: 'accessory' }
-];
-
+// Muscle-split day templates (first block = main/heavy)
 var DAYS = [
-  { pattern: 'LOWER — SQUAT', main: ['squat'], secondary: ['hinge'] },
-  { pattern: 'LOWER — HINGE', main: ['hinge'], secondary: ['squat'] },
-  { pattern: 'UPPER — PUSH', main: ['push'], secondary: ['pull'] },
-  { pattern: 'UPPER — PULL', main: ['pull'], secondary: ['push'] },
-  { pattern: 'FULL BODY', main: ['squat', 'hinge'], secondary: ['push', 'pull'] },
-  { pattern: 'OLYMPIC + STRENGTH', main: ['olympic'], secondary: ['squat'] }
+  { pattern: 'PIERNA ANTERIOR', groups: ['legs', 'legs', 'glutes', 'core'] },
+  { pattern: 'PIERNA POSTERIOR / GLÚTEOS', groups: ['hamstrings', 'glutes', 'hamstrings', 'core'] },
+  { pattern: 'PECHO / TRÍCEPS', groups: ['chest', 'chest', 'triceps'] },
+  { pattern: 'ESPALDA / BÍCEPS', groups: ['back', 'back', 'biceps'] },
+  { pattern: 'HOMBRO / PIERNA', groups: ['shoulders', 'shoulders', 'legs', 'glutes'] },
+  { pattern: 'TORSO A', groups: ['chest', 'back', 'shoulders', 'biceps', 'triceps'] },
+  { pattern: 'TORSO B', groups: ['back', 'chest', 'shoulders', 'triceps', 'biceps'] },
+  { pattern: 'FULL BODY', groups: ['legs', 'chest', 'back', 'core'] }
 ];
 
 var MAIN_SCHEMES = [
-  { m: '5x5', reps: '5 x 5', cfg: 'Misma carga las 5 series' },
-  { m: '5/3/1', reps: '5 / 3 / 1+', cfg: 'Subí la carga cada serie' },
-  { m: '4x6', reps: '4 x 6', cfg: '@ RPE 8' },
-  { m: '3x5', reps: '3 x 5', cfg: 'Pesado, técnica perfecta' },
-  { m: 'PYRAMID', reps: '12/10/8/6', cfg: 'Sube carga, baja reps' }
+  { m: 'PIRÁMIDE', reps: '12-10-12', cfg: 'Sube carga, baja reps' },
+  { m: 'PIRÁMIDE', reps: '12-10-10-8', cfg: '4 series, sube carga' },
+  { m: 'FUERZA', reps: '4 x 6-8', cfg: 'Pesado, técnica perfecta' },
+  { m: '4x8', reps: '4 x 8', cfg: '@ RPE 8' },
+  { m: 'PIRÁMIDE', reps: '10-10-8', cfg: 'Sube carga' }
 ];
-var SECONDARY_SCHEMES = [
-  { m: '3x8', reps: '3 x 8' }, { m: '4x8', reps: '4 x 8' }, { m: '3x10', reps: '3 x 10' }
+var HYPER_SCHEMES = [
+  { m: '3x10', reps: '3 x 10' }, { m: '4x10', reps: '4 x 10' },
+  { m: '3x12', reps: '3 x 12' }, { m: '3x8-10', reps: '3 x 8-10' }, { m: '3x10-12', reps: '3 x 10-12' }
 ];
 var ACCESSORY_SCHEMES = [
-  { m: 'SUPERSET', reps: '3 x 12' }, { m: '3x12', reps: '3 x 12' },
-  { m: '3x15', reps: '3 x 15' }, { m: 'DROP SET', reps: '2 x 12 + drop' }
+  { m: '3x15', reps: '3 x 15' }, { m: '3x12-15', reps: '3 x 12-15' },
+  { m: 'SUPERSET', reps: '3 x 12' }, { m: 'AL FALLO', reps: '2 x al fallo' }
+];
+var CORE_SCHEMES = [
+  { m: 'RONDAS', reps: '3 x 20' }, { m: 'RONDAS', reps: '4 x 15' }, { m: 'RONDAS', reps: '3 x 15' }
 ];
 
 function generateStrongWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods, stats) {
@@ -69,40 +66,30 @@ function generateStrongWorkout(exercisePool, seed, variantNum, recentExercises, 
   var used = {};
   var day = DAYS[(Math.floor(rand() * DAYS.length) + (variantNum || 1)) % DAYS.length];
 
-  // Warm-up
-  var wuPool = shuffle(STRONG_WARMUP, rand);
-  var warmup = { rounds: 1, exercises: wuPool.slice(0, 5).map(function (e) { return { name: e.name, reps: e.reps, category: e.category }; }) };
+  // Warm-up: mobility or light cardio
+  var warmup = pick([
+    { rounds: 1, exercises: [{ name: 'Movilidad Articular', reps: '10 min', category: 'core' }] },
+    { rounds: 1, exercises: [{ name: 'Cinta / Aeróbico', reps: '3 km', category: 'core' }] },
+    { rounds: 1, exercises: [{ name: 'Aeróbico suave', reps: '20 min', category: 'core' }] }
+  ], rand);
 
   var blocks = [];
-
-  // Block A — main lift
-  var mainScheme = pick(MAIN_SCHEMES, rand);
-  var mainLift = pickFromCats(exercisePool, day.main, 1, rand, stats, used);
-  blocks.push({
-    label: 'A', modality: mainScheme.m, config: 'Lift principal · ' + mainScheme.cfg,
-    exercises: mainLift.map(function (ex) { return { name: ex.name, reps: mainScheme.reps, category: ex.category }; })
+  var labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+  day.groups.forEach(function (group, idx) {
+    var scheme, n;
+    if (idx === 0) { scheme = pick(MAIN_SCHEMES, rand); n = 1; }
+    else if (group === 'core') { scheme = pick(CORE_SCHEMES, rand); n = 3; }
+    else if (idx <= 1) { scheme = pick(HYPER_SCHEMES, rand); n = 2; }
+    else { scheme = pick(ACCESSORY_SCHEMES, rand); n = 2; }
+    var exs = pickFromGroup(exercisePool, group, n, rand, stats, used);
+    if (!exs.length) return;
+    blocks.push({
+      label: labels[blocks.length],
+      modality: scheme.m,
+      config: (idx === 0 ? 'Principal · ' : '') + (scheme.cfg || group),
+      exercises: exs.map(function (ex) { return { name: ex.name, reps: scheme.reps, category: ex.category }; })
+    });
   });
-
-  // Block B — secondary compound(s)
-  var secScheme = pick(SECONDARY_SCHEMES, rand);
-  var secCount = day.secondary.length > 1 ? 2 : 1;
-  var secLifts = pickFromCats(exercisePool, day.secondary, secCount, rand, stats, used);
-  if (secLifts.length) {
-    blocks.push({
-      label: 'B', modality: secScheme.m, config: 'Accesorio compuesto',
-      exercises: secLifts.map(function (ex) { return { name: ex.name, reps: secScheme.reps, category: ex.category }; })
-    });
-  }
-
-  // Block C — accessories + core
-  var accScheme = pick(ACCESSORY_SCHEMES, rand);
-  var accLifts = pickFromCats(exercisePool, ['accessory', 'core'], 3, rand, stats, used);
-  if (accLifts.length) {
-    blocks.push({
-      label: secLifts.length ? 'C' : 'B', modality: accScheme.m, config: 'Accesorios',
-      exercises: accLifts.map(function (ex) { return { name: ex.name, reps: accScheme.reps, category: ex.category }; })
-    });
-  }
 
   return { warmup: warmup, blocks: blocks, pattern: day.pattern };
 }

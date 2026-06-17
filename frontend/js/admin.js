@@ -94,6 +94,14 @@ async function changeUserPlan(id,plan){
   showToast('Plan → '+plan,'success');
 }
 
+async function seedStrongStarter(){
+  var btn=document.getElementById('btn-strong-starter');if(btn){btn.disabled=true;btn.textContent='Sembrando...';}
+  var r=await apiCall('/api/admin/strong-starter',{method:'POST'});
+  if(btn){btn.disabled=false;btn.textContent='🏋 Sembrar aprendizaje Strong';}
+  if(!r||!r.ok){showToast((r&&r.data)?r.data.message:'Error','error');return;}
+  showToast('Aprendizaje Strong sembrado ('+r.data.exercises+' ejercicios)','success');
+}
+
 async function grantSport(id,sport,allow,cb){
   var r=await apiCall('/api/admin/users/'+id+'/sport-access',{method:'PUT',body:JSON.stringify({sport:sport,allow:allow})});
   if(!r||!r.ok){if(cb)cb.checked=!allow;showToast((r&&r.data)?r.data.message:'No se pudo','error');return;}

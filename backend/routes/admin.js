@@ -75,6 +75,28 @@ router.put('/users/:id/plan', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// POST /api/admin/strong-starter — pre-seed the calling admin's Strong learning
+// (TrainingStats) so the generator favours the main compound lifts from day one.
+const STRONG_STARTER = {
+  'Sentadilla': 4, 'Peso Muerto': 4, 'Press Banca Plano': 4, 'Press Militar Barra': 3, 'Dominadas': 3,
+  'Hip Thrust': 3, 'Remo T': 3, 'Pecho Inclinado Mancuerna': 3, 'Dorsal al Pecho': 3, 'Peso Muerto Rumano': 3,
+  'Sentadilla Búlgara': 2, 'Curl Barra Recta': 2, 'Extensión Tríceps Polea': 2, 'Vuelos Laterales Mancuerna': 2, 'Sillón Cuádriceps': 2
+};
+router.post('/strong-starter', async (req, res) => {
+  try {
+    const incFreq = {};
+    Object.keys(STRONG_STARTER).forEach(function (name) {
+      incFreq['exerciseFreq.' + name.replace(/[.$]/g, '_')] = STRONG_STARTER[name];
+    });
+    await TrainingStats.findOneAndUpdate(
+      { user: req.user._id, sport: 'strong' },
+      { $inc: incFreq, $set: { updatedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ message: 'Strong learning seeded', exercises: Object.keys(STRONG_STARTER).length });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // PUT /api/admin/users/:id/sport-access — grant/revoke an admin-only sport for a user
 router.put('/users/:id/sport-access', async (req, res) => {
   try {

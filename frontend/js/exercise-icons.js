@@ -42,15 +42,33 @@ var EX_CAT_ICON = {
 };
 // Strong has its own category names (and 'pull' means rows/pull-ups, not a buoy)
 var STRONG_CAT_ICON = {
-  squat:'squat', hinge:'deadlift', push:'press', pull:'pullbar',
-  olympic:'barbell', accessory:'dumbbell', core:'abs'
+  legs:'squat', glutes:'leg', hamstrings:'deadlift', chest:'press',
+  back:'pullbar', shoulders:'press', biceps:'arm', triceps:'arm', core:'abs'
 };
 
-function _normEx(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+var _ACCENTS={'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n'};
+function _normEx(s){ return String(s||'').toLowerCase().replace(/[áéíóúüñ]/g,function(c){return _ACCENTS[c]||c;}).replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
 
 // Resolve the best icon key from an exercise name + category
 function iconKeyForExercise(name, category, sport){
   var n = _normEx(name);
+  // Strong: resolve fully here (Spanish vocabulary), never fall to swim/functional
+  if(sport==='strong'){
+    if(/sentadilla/.test(n)) return 'squat';
+    if(/peso muerto|rumano/.test(n)) return 'deadlift';
+    if(/femoral|isquio|camilla/.test(n)) return 'deadlift';
+    if(/estocada|bulgara|zancada|lunge/.test(n)) return 'lunge';
+    if(/dominada|jalon|dorsal|pull over/.test(n)) return 'pullbar';
+    if(/prensa/.test(n)) return 'squat';
+    if(/remo/.test(n)) return 'dumbbell';
+    if(/press|militar|banca|apertura|pecho|flexion|vuelo|face pull|elevacion/.test(n)) return 'press';
+    if(/curl|biceps/.test(n)) return 'arm';
+    if(/dips|fondos|tricep|frances/.test(n)) return 'arm';
+    if(/plancha|abs|abdomin|crunch|situp|pallof|vela|rueda/.test(n)) return 'abs';
+    if(/hip thrust|gluteo|patada|abduct|aduct|pelvis|gemelo|step up/.test(n)) return 'leg';
+    if(STRONG_CAT_ICON[category]) return STRONG_CAT_ICON[category];
+    return 'dumbbell';
+  }
   // Swimming-specific keywords
   if(/\b(kick|board|patada)\b/.test(n)) return 'kickboard';
   if(/\bbuoy|boya|pull buoy\b/.test(n)) return 'buoy';
