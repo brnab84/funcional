@@ -121,6 +121,18 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .opt-chip{font-size:0.78rem;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s;font-family:var(--font-body);}
 .opt-chip:hover{border-color:var(--accent);color:var(--text);}
 .opt-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(var(--accent-rgb),0.1);}
+/* Sport tools (1RM / plates / CSS zones) */
+.tool-section{margin-top:18px;}
+.tool-section:first-of-type{margin-top:6px;}
+.tool-h{font-family:var(--font-display);font-size:1.05rem;letter-spacing:1px;color:var(--accent);margin-bottom:10px;}
+.tool-row{display:flex;gap:8px;margin-bottom:8px;}
+.tool-row input,.tool-row select{flex:1;height:42px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);padding:0 12px;font-size:0.95rem;outline:none;}
+.tool-row input:focus{border-color:var(--accent);}
+.tool-big{font-family:var(--font-mono);font-size:1.05rem;color:var(--text);margin:8px 0 4px;}
+.tool-note{font-size:0.8rem;color:var(--muted);}
+.tool-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.tool-cell{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:0.72rem;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:var(--font-mono);}
+.tool-cell b{color:var(--accent);font-size:0.9rem;font-weight:700;}
 .admin-grant input{cursor:pointer;}
 .coach-usage-btn{padding:5px 12px;font-size:0.75rem;margin-left:auto;}
 /* Plans modal (upgrade path) */
