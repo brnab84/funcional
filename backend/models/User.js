@@ -41,7 +41,9 @@ const userSchema = new mongoose.Schema({
       d300: { type: Number, default: 75 },
       d400: { type: Number, default: 90 },
       d500: { type: Number, default: 120 }
-    }
+    },
+    // Per-sport options (namespaced): { functional:{...}, swimming:{...}, strong:{...} }
+    sportConfig: { type: mongoose.Schema.Types.Mixed, default: {} }
   },
   lastLogin: { type: Date },
   loginCount: { type: Number, default: 0 },

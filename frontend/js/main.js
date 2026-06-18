@@ -7,7 +7,7 @@ function switchView(name){
   document.querySelectorAll('.nav-btn[data-view]').forEach(function(b){b.classList.remove('active');});
   document.getElementById('view-'+name).classList.add('active');
   var navBtn=document.querySelector('.nav-btn[data-view="'+name+'"]');if(navBtn)navBtn.classList.add('active');
-  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();if(name==='assigned')loadAssigned();
+  if(name==='history')loadHistory();if(name==='library'){loadLibrary();loadCategories();}if(name==='admin')loadAdmin();if(name==='coach')loadCoach();if(name==='assigned')loadAssigned();if(name==='settings')renderSportOptions();
 }
 
 // VERSION CHECK + CACHE BUST

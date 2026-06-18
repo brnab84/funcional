@@ -245,6 +245,15 @@ router.put('/settings', authMW, async (req, res) => {
       if (srt.d400 !== undefined) user.settings.swimRestTimes.d400 = srt.d400;
       if (srt.d500 !== undefined) user.settings.swimRestTimes.d500 = srt.d500;
     }
+    // Per-sport options (namespaced) — merge per sport
+    if (req.body.sportConfig && typeof req.body.sportConfig === 'object') {
+      const current = user.settings.sportConfig || {};
+      Object.keys(req.body.sportConfig).forEach(function (sport) {
+        current[sport] = Object.assign({}, current[sport] || {}, req.body.sportConfig[sport] || {});
+      });
+      user.settings.sportConfig = current;
+      user.markModified('settings.sportConfig');
+    }
     await user.save();
     res.json({ settings: user.settings });
   } catch(err) { res.status(500).json({ message: err.message }); }
