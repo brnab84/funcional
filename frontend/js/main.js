@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelectorAll('.vtab').forEach(function(tab,i){tab.addEventListener('click',function(){showVariant(i);});});
   document.getElementById('btn-approve').addEventListener('click',approveWorkout);
   document.getElementById('btn-regenerate').addEventListener('click',regenerateWorkouts);
+  var btnTools=document.getElementById('btn-tools');if(btnTools)btnTools.addEventListener('click',openToolsModal);
   document.getElementById('btn-ai').addEventListener('click',generateAiVariant);
   document.getElementById('btn-manual').addEventListener('click',openManualBuilder);
   document.getElementById('btn-import').addEventListener('click',openImportModal);

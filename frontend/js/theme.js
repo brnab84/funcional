@@ -27,6 +27,9 @@ function applySportTheme(sport){
   // Show/hide swimming-specific settings
   var swimCard=document.getElementById('swim-rest-card');
   if(swimCard)swimCard.style.display=(sport==='swimming')?'':'none';
+  // Tools button (1RM/plates for strong, CSS zones for swimming)
+  var toolsBtn=document.getElementById('btn-tools');
+  if(toolsBtn)toolsBtn.style.display=(sport==='strong'||sport==='swimming')?'':'none';
 }
 
 function applyTheme(theme){
