@@ -113,6 +113,14 @@ body.sport-swimming .auth-role-btn.active{border-color:#00b4d8;color:#00b4d8;bac
 .coach-usage-warn{width:100%;font-size:0.78rem;color:var(--accent2,#ff5470);}
 .admin-plan{height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.72rem;padding:0 6px;font-family:var(--font-mono);cursor:pointer;text-transform:capitalize;}
 .admin-grant{display:inline-flex;align-items:center;gap:3px;font-size:0.9rem;cursor:pointer;user-select:none;}
+/* Per-sport options panel */
+.opt-row{margin-top:14px;}
+.opt-row:first-child{margin-top:0;}
+.opt-label{font-size:0.82rem;color:var(--muted);margin-bottom:7px;}
+.opt-chips{display:flex;flex-wrap:wrap;gap:7px;}
+.opt-chip{font-size:0.78rem;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s;font-family:var(--font-body);}
+.opt-chip:hover{border-color:var(--accent);color:var(--text);}
+.opt-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(var(--accent-rgb),0.1);}
 .admin-grant input{cursor:pointer;}
 .coach-usage-btn{padding:5px 12px;font-size:0.75rem;margin-left:auto;}
 /* Plans modal (upgrade path) */

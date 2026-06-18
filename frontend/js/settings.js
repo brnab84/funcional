@@ -16,6 +16,38 @@ function loadUserSettings(){
     document.getElementById('pool-length').value=s.poolLength||25;
   }
   document.getElementById('avoid-days').value=s.avoidRepeatDays||7;document.getElementById('days-label').textContent=s.avoidRepeatDays||7;
+  renderSportOptions();
+}
+
+// Per-sport options panel (schema-driven from SPORTS[sport].settings)
+function renderSportOptions(){
+  var body=document.getElementById('sport-options-body');if(!body)return;
+  var cfg=getSportConfig();var schema=cfg.settings||[];
+  var titleEl=document.getElementById('sport-options-title');if(titleEl)titleEl.textContent=(cfg.title||'Sport')+' · opciones';
+  var saved=((currentUser&&currentUser.settings&&currentUser.settings.sportConfig)||{})[currentSport]||{};
+  window._sportOpts={};
+  schema.forEach(function(f){window._sportOpts[f.key]=(saved[f.key]!==undefined)?saved[f.key]:f.def;});
+  if(!schema.length){body.innerHTML='<p class="card-hint">Sin opciones específicas.</p>';return;}
+  body.innerHTML=schema.map(function(f){
+    var val=window._sportOpts[f.key];
+    var chips=f.options.map(function(o){
+      var active=(f.type==='multi')?(Array.isArray(val)&&val.indexOf(o)>=0):(val===o);
+      return '<button type="button" class="opt-chip'+(active?' active':'')+'" data-key="'+f.key+'" data-val="'+o+'" data-type="'+f.type+'">'+o+'</button>';
+    }).join('');
+    return '<div class="opt-row"><div class="opt-label">'+f.label+'</div><div class="opt-chips">'+chips+'</div></div>';
+  }).join('');
+  body.querySelectorAll('.opt-chip').forEach(function(btn){btn.addEventListener('click',function(){toggleSportOpt(btn);});});
+}
+function toggleSportOpt(btn){
+  var key=btn.dataset.key,val=btn.dataset.val,type=btn.dataset.type;
+  if(type==='multi'){
+    var arr=Array.isArray(window._sportOpts[key])?window._sportOpts[key].slice():[];
+    var i=arr.indexOf(val);if(i>=0)arr.splice(i,1);else arr.push(val);
+    window._sportOpts[key]=arr;btn.classList.toggle('active');
+  }else{
+    window._sportOpts[key]=val;
+    document.querySelectorAll('.opt-chip[data-key="'+key+'"]').forEach(function(b){b.classList.toggle('active',b.dataset.val===val);});
+  }
 }
 function renderBlockModalities(count,mods){
   var labels=['A','B','C','D'].slice(0,count);
@@ -40,7 +72,8 @@ async function saveSetting(){
     };
   }
   var poolLength=parseInt(document.getElementById('pool-length').value)||25;
-  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,theme:currentTheme,poolLength:poolLength,swimRestTimes:swimRestTimes})});
+  var sportConfig={};sportConfig[currentSport]=window._sportOpts||{};
+  var r=await apiCall('/api/auth/settings',{method:'PUT',body:JSON.stringify({blockCount:bc,blockModalities:bm,avoidRepeatDays:ad,theme:currentTheme,poolLength:poolLength,swimRestTimes:swimRestTimes,sportConfig:sportConfig})});
   if(r&&r.ok){currentUser.settings=r.data.settings;localStorage.setItem('wod_user',JSON.stringify(currentUser));showToast('Settings saved','success');}
 }
 
