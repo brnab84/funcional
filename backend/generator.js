@@ -69,58 +69,63 @@ function buildWarmup(rand) {
 }
 
 // Realistic rep ranges per category
-function realisticReps(category, modality, rand) {
+function realisticReps(category, modality, rand, opts) {
+  var lm = (opts && opts.levelMult) || 1;
+  // Scale numeric reps by level (×1 = unchanged); non-numeric (e.g. 'Station') untouched
+  var scale = function(r) { var n = parseInt(r, 10); return isNaN(n) ? r : String(Math.max(1, Math.round(n * lm))); };
   if (modality === 'FOR TIME') {
     // For Time: moderate reps, completable
     var ftReps = { lower: ['15','20','25','30'], upper: ['10','15','20','25'], core: ['15','20','25','30'], conditioning: ['15','20','25'], power: ['15','20','25','30'] };
     var arr = ftReps[category] || ['15','20'];
-    return arr[Math.floor(rand() * arr.length)];
+    return scale(arr[Math.floor(rand() * arr.length)]);
   }
   if (modality === 'TABATA') return 'Station';
   // Standard: EMOM/OTM/AMRAP/ROUNDS
   var stdReps = { lower: ['8','10','12','15'], upper: ['8','10','12','15'], core: ['10','12','15','20'], conditioning: ['8','10','12'], power: ['8','10','12','15'] };
   var arr2 = stdReps[category] || ['10','12'];
-  return arr2[Math.floor(rand() * arr2.length)];
+  return scale(arr2[Math.floor(rand() * arr2.length)]);
 }
 
-function buildBlock(pool, rand, label, modality, stats) {
+function buildBlock(pool, rand, label, modality, stats, opts) {
+  // Time-domain multiplier (×1 = unchanged) applied to durations/rounds
+  var T = function(v) { return Math.max(1, Math.round(v * ((opts && opts.timeMult) || 1))); };
   if (modality === 'EMOM') {
-    var mins = [7,10,14][Math.floor(rand() * 3)];
+    var mins = T([7,10,14][Math.floor(rand() * 3)]);
     var count = mins <= 7 ? 2 : 3;
     return { label: label, modality: 'EMOM', config: mins + "'", exercises: smartPick(pool, count, rand, stats).map(function(ex) {
-      return { name: ex.name, reps: realisticReps(ex.category, 'EMOM', rand), category: ex.category };
+      return { name: ex.name, reps: realisticReps(ex.category, 'EMOM', rand, opts), category: ex.category };
     })};
   }
   if (modality === 'OTM') {
     var interval = [2, 2.5, 3, 4][Math.floor(rand() * 4)];
-    var rnds = [5,6,7][Math.floor(rand() * 3)];
+    var rnds = T([5,6,7][Math.floor(rand() * 3)]);
     return { label: label, modality: 'OTM', config: 'OTM ' + interval + "' — " + rnds + ' rounds', exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
-      return { name: ex.name, reps: realisticReps(ex.category, 'OTM', rand), category: ex.category };
+      return { name: ex.name, reps: realisticReps(ex.category, 'OTM', rand, opts), category: ex.category };
     })};
   }
   if (modality === 'AMRAP') {
-    var amMins = [5,8,10,12][Math.floor(rand() * 4)];
+    var amMins = T([5,8,10,12][Math.floor(rand() * 4)]);
     return { label: label, modality: 'AMRAP', config: amMins + "'", exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
-      return { name: ex.name, reps: realisticReps(ex.category, 'AMRAP', rand), category: ex.category };
+      return { name: ex.name, reps: realisticReps(ex.category, 'AMRAP', rand, opts), category: ex.category };
     })};
   }
   if (modality === 'FOR TIME') {
     return { label: label, modality: 'FOR TIME', config: 'A Completar', exercises: pickBalanced(pool, [5,6,7][Math.floor(rand() * 3)], rand).map(function(ex) {
-      return { name: ex.name, reps: realisticReps(ex.category, 'FOR TIME', rand), category: ex.category };
+      return { name: ex.name, reps: realisticReps(ex.category, 'FOR TIME', rand, opts), category: ex.category };
     })};
   }
   if (modality === 'TABATA') {
     var work = [40,45][Math.floor(rand() * 2)];
     var rest = [10,15][Math.floor(rand() * 2)];
-    var series = [2,3][Math.floor(rand() * 2)];
+    var series = T([2,3][Math.floor(rand() * 2)]);
     return { label: label, modality: 'TABATA', config: work + '"x' + rest + '" — ' + series + ' series', exercises: pickBalanced(pool, [7,8,9][Math.floor(rand() * 3)], rand).map(function(ex, i) {
       return { name: ex.name, reps: 'Station ' + (i + 1), category: ex.category };
     })};
   }
   // Default: ROUNDS
-  var rnds2 = [2,3,4,5][Math.floor(rand() * 4)];
+  var rnds2 = T([2,3,4,5][Math.floor(rand() * 4)]);
   return { label: label, modality: 'ROUNDS', config: rnds2 + ' Rounds', exercises: smartPick(pool, [4,5,6][Math.floor(rand() * 3)], rand, stats).map(function(ex) {
-    return { name: ex.name, reps: realisticReps(ex.category, 'ROUNDS', rand), category: ex.category };
+    return { name: ex.name, reps: realisticReps(ex.category, 'ROUNDS', rand, opts), category: ex.category };
   })};
 }
 
@@ -132,6 +137,12 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
 
   var blockCount = userSettings.blockCount || 2;
   var blockModalities = userSettings.blockModalities || {};
+  // Per-sport options (settings.sportConfig.functional) — time domain + level
+  var fcfg = (userSettings.sportConfig && userSettings.sportConfig.functional) || {};
+  var opts = {
+    timeMult: { corto: 0.7, medio: 1, largo: 1.4 }[fcfg.timeDomain] || 1,
+    levelMult: { RX: 1.15, intermedio: 1, scaled: 0.8 }[fcfg.level] || 1
+  };
 
   // Filter recent
   var recentSet = {};
@@ -175,7 +186,7 @@ function generateWorkout(exercisePool, seed, variantNum, recentExercises, userSe
     var chunk = sh.slice(i * chunkSize, (i + 1) * chunkSize);
     if (chunk.length < 3) chunk = sh; // fallback if not enough
 
-    blocks.push(buildBlock(chunk, rand, label, mod, stats));
+    blocks.push(buildBlock(chunk, rand, label, mod, stats, opts));
   });
 
   var pattern = 'EC+' + labels.join('');

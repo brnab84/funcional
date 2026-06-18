@@ -190,7 +190,9 @@ var SESSION_TYPES = [
 
 function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, userSettings, approvedMods, stats) {
   var rand = seededRand(seed + '-swim-v' + (variantNum || 1));
-  var blockCount = (userSettings && userSettings.blockCount) || 2;
+  var cfg = (userSettings && userSettings.sportConfig && userSettings.sportConfig.swimming) || {};
+  var volMap = { '1500': 1, '2500': 2, '3500': 3 };
+  var blockCount = volMap[cfg.volume] || (userSettings && userSettings.blockCount) || 2;
   var pool = (userSettings && userSettings.poolLength) || 25;
   approvedMods = approvedMods || [];
 
@@ -218,6 +220,10 @@ function generateSwimWorkout(exercisePool, seed, variantNum, recentExercises, us
       if (m.includes('ENDUR')) typePool.push(SESSION_TYPES[5]);
     });
   }
+  // Level bias (settings)
+  if (cfg.level === 'principiante') typePool.push(SESSION_TYPES[0], SESSION_TYPES[3], SESSION_TYPES[6]);
+  else if (cfg.level === 'avanzado') typePool.push(SESSION_TYPES[2], SESSION_TYPES[4], SESSION_TYPES[5]);
+
   var session = pick(typePool, rand);
 
   var warmup = buildWarmup(rand, pool);
